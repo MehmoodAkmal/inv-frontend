@@ -7,6 +7,13 @@
     @apply bg-brand-50 text-brand-900 antialiased;
     font-feature-settings: "cv02","cv03","cv04","cv11";
   }
+  .dark {
+    color-scheme: dark;
+  }
+  .dark body,
+  .dark [data-theme] {
+    @apply bg-dark-900 text-white;
+  }
   h1 { @apply text-2xl font-bold tracking-tight text-brand-900; }
   h2 { @apply text-xl font-semibold text-brand-900; }
   h3 { @apply text-base font-semibold text-brand-900; }
@@ -14,7 +21,41 @@
 
 @layer components {
 
-  /* ── Buttons ─────────────────────────────────────────────────────────── */
+  /* ── Dark mode overrides ────────────────────────────────────── */
+  .dark .card,
+  [data-theme="dark"] .card {
+    @apply bg-dark-800 border-dark-600/50 shadow-dark-card;
+  }
+  .dark .stat-card,
+  [data-theme="dark"] .stat-card {
+    @apply bg-dark-800 border-dark-600/50 shadow-dark-card;
+  }
+  .dark .input-field,
+  [data-theme="dark"] .input-field {
+    @apply bg-dark-700 border-dark-600 text-white placeholder-dark-400;
+  }
+  .dark .btn-secondary,
+  [data-theme="dark"] .btn-secondary {
+    @apply bg-dark-700 text-white border-dark-600 hover:bg-dark-600;
+  }
+  .dark .page-header,
+  [data-theme="dark"] .page-header {
+    @apply border-b border-dark-600/30;
+  }
+  .dark .empty-state-title,
+  [data-theme="dark"] .empty-state-title {
+    @apply text-brand-200;
+  }
+  .dark .empty-state-desc,
+  [data-theme="dark"] .empty-state-desc {
+    @apply text-dark-400;
+  }
+  .dark .skeleton,
+  [data-theme="dark"] .skeleton {
+    @apply bg-dark-600;
+  }
+
+  /* ── Buttons ─────────────────────────────────────────────────── */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-white
            bg-primary-600 rounded-lg shadow-sm
@@ -56,7 +97,7 @@
     @apply block text-xs font-semibold text-brand-600 uppercase tracking-wide mb-1.5;
   }
 
-  /* ── Card ────────────────────────────────────────────────────────────── */
+  /* ── Card ────────────────────────────────────────────────────── */
   .card {
     @apply bg-white rounded-2xl shadow-card border border-brand-200/70;
   }
@@ -65,7 +106,7 @@
     @apply card transition-all duration-200 hover:shadow-card-md hover:-translate-y-0.5 cursor-pointer;
   }
 
-  /* ── Badges ──────────────────────────────────────────────────────────── */
+  /* ── Badges ──────────────────────────────────────────────────── */
   .badge-active {
     @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold
            bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60;
@@ -81,7 +122,7 @@
            bg-primary-50 text-primary-700 ring-1 ring-primary-200/60;
   }
 
-  /* ── Page header ─────────────────────────────────────────────────────── */
+  /* ── Page header ─────────────────────────────────────────────── */
   .page-header {
     @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-7;
   }
@@ -94,7 +135,7 @@
     @apply text-sm text-brand-500 mt-0.5;
   }
 
-  /* ── Stat card ───────────────────────────────────────────────────────── */
+  /* ── Stat card ───────────────────────────────────────────────── */
   .stat-card {
     @apply bg-white rounded-2xl border border-brand-200/70 shadow-card p-5 relative overflow-hidden;
   }
@@ -111,7 +152,7 @@
     @apply text-xs text-brand-400 mt-1;
   }
 
-  /* ── Table ───────────────────────────────────────────────────────────── */
+  /* ── Table ───────────────────────────────────────────────────── */
   .table-th {
     @apply px-4 py-3 text-left text-xs font-semibold text-brand-500 uppercase tracking-wider
            bg-brand-50/80 whitespace-nowrap;
@@ -125,7 +166,7 @@
     @apply border-b border-brand-100 hover:bg-brand-50/60 transition-colors duration-100;
   }
 
-  /* ── Empty state ─────────────────────────────────────────────────────── */
+  /* ── Empty state ─────────────────────────────────────────────── */
   .empty-state {
     @apply flex flex-col items-center justify-center py-16 px-4 text-center;
   }
@@ -142,12 +183,12 @@
     @apply text-xs text-brand-400;
   }
 
-  /* ── Skeleton ────────────────────────────────────────────────────────── */
+  /* ── Skeleton ────────────────────────────────────────────────── */
   .skeleton {
     @apply animate-pulse bg-brand-200/60 rounded-lg;
   }
 
-  /* ── Tabs ────────────────────────────────────────────────────────────── */
+  /* ── Tabs ────────────────────────────────────────────────────────── */
   .tab-btn {
     @apply px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors duration-150 -mb-px;
   }
@@ -157,10 +198,18 @@
   .tab-btn-inactive {
     @apply border-transparent text-brand-500 hover:text-brand-700 hover:border-brand-300;
   }
+
+  /* ── Dark mode toggle ────────────────────────────────────────── */
+  .theme-toggle {
+    @apply p-2 rounded-lg text-brand-600 hover:bg-brand-100 transition-colors cursor-pointer;
+  }
+  .dark .theme-toggle,
+  [data-theme="dark"] .theme-toggle {
+    @apply text-brand-300 hover:bg-dark-700;
+  }
 }
 
-/* ── Auth page input autofill override ───────────────────────────────────── */
-/* Chrome/Safari override autofill yellow/white background on dark glass inputs */
+/* ── Auth page input autofill override ───────────────────────────── */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,

@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
@@ -7,7 +8,6 @@ export default {
         sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
       },
       colors: {
-        // ── Teal-navy palette (from image) ─────────────────────────────
         brand: {
           950: "#001220",   // darkest navy
           900: "#001B29",   // deepest navy  — sidebar bg
@@ -21,7 +21,6 @@ export default {
           100: "#E0EEEC",   // very pale mint
           50:  "#F0F7F6",   // near white mint
         },
-        // keep primary aliased to brand for btn-primary etc.
         primary: {
           50:  "#F0F7F6",
           100: "#E0EEEC",
@@ -34,11 +33,18 @@ export default {
           800: "#1E4747",
           900: "#0F2E2E",
         },
+        dark: {
+          900: "#001220",
+          800: "#001B29",
+          700: "#002D3E",
+          600: "#003D52",
+        },
       },
       boxShadow: {
         card:      "0 1px 3px 0 rgb(0 27 41 / 0.08), 0 1px 2px -1px rgb(0 27 41 / 0.06)",
         "card-md": "0 4px 6px -1px rgb(0 27 41 / 0.10), 0 2px 4px -2px rgb(0 27 41 / 0.06)",
         "card-lg": "0 10px 15px -3px rgb(0 27 41 / 0.10), 0 4px 6px -4px rgb(0 27 41 / 0.05)",
+        "dark-card": "0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.2)",
       },
       borderRadius: {
         xl:   "0.75rem",
