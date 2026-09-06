@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-export default function Modal({ isOpen, onClose, title, children }) {
+export default function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-md" }) {
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e) => e.key === "Escape" && onClose();
@@ -18,7 +18,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-card-lg border border-slate-200/60 p-6">
+      <div className={`bg-white rounded-2xl w-full ${maxWidth} shadow-card-lg border border-slate-200/60 p-6`}>
         <div className="flex items-center justify-between mb-5">
           <h2 id="modal-title" className="text-base font-bold text-slate-900">{title}</h2>
           <button

@@ -1,3 +1,4 @@
+import CustomSelect from "../components/ui/CustomSelect";
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
@@ -69,12 +70,12 @@ function RecordPaymentForm({ customers, branches, userRole, allowedBranchId, ini
       {isAdmin ? (
         <div>
           <label className="label">Branch <span className="text-rose-500">*</span></label>
-          <select name="branchId" required value={form.branchId} onChange={change} className="input-field">
+          <CustomSelect name="branchId" required value={form.branchId} onChange={change} className="input-field">
             <option value="">Select branch</option>
             {branches.filter(b => b.isActive).map(b => (
               <option key={b._id} value={b._id}>{b.name}</option>
             ))}
-          </select>
+          </CustomSelect>
         </div>
       ) : (
         <div>
@@ -85,14 +86,14 @@ function RecordPaymentForm({ customers, branches, userRole, allowedBranchId, ini
 
       <div>
         <label className="label">Customer <span className="text-rose-500">*</span></label>
-        <select name="customerId" required value={form.customerId} onChange={change} className="input-field">
+        <CustomSelect name="customerId" required value={form.customerId} onChange={change} className="input-field">
           <option value="">Select customer</option>
           {customers.filter(c => c.isActive && c.currentBalance > 0).map(c => (
             <option key={c._id} value={c._id}>
               {c.name}{c.phone ? ` — ${c.phone}` : ""} · owes {fmt(c.currentBalance)}
             </option>
           ))}
-        </select>
+        </CustomSelect>
         {selected && (
           <p className="text-xs text-amber-700 mt-1 font-medium">
             Outstanding: <strong>{fmt(selected.currentBalance)}</strong>
@@ -340,7 +341,7 @@ export default function Payments() {
         <div className="flex items-end gap-3">
           <div>
             <label className="label">Branch</label>
-            <select value={filterBranch} onChange={e => setFilterBranch(e.target.value)}
+            <CustomSelect value={filterBranch} onChange={e => setFilterBranch(e.target.value)}
               className="input-field w-auto text-sm py-2">
               <option value="">All branches</option>
               {customers
@@ -350,7 +351,7 @@ export default function Payments() {
                   return <option key={bid} value={bid}>{bid}</option>;
                 })
               }
-            </select>
+            </CustomSelect>
           </div>
         </div>
       )}

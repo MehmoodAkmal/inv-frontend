@@ -1,3 +1,4 @@
+import CustomSelect from "../components/ui/CustomSelect";
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
@@ -53,7 +54,7 @@ function LineItemRow({ line, index, items, onUpdate, onRemove }) {
       {/* Item */}
       <div className="col-span-5">
         {index === 0 && <label className="label">Item *</label>}
-        <select
+        <CustomSelect
           required
           value={line.itemId}
           onChange={(e) => {
@@ -72,7 +73,7 @@ function LineItemRow({ line, index, items, onUpdate, onRemove }) {
               {i.name}{i.sku ? ` (${i.sku})` : ""}
             </option>
           ))}
-        </select>
+        </CustomSelect>
       </div>
 
       {/* Qty */}
@@ -195,12 +196,12 @@ function NewSaleForm({ branches, items, customers, userRole, allowedBranchId, on
       {isAdmin ? (
         <div>
           <label className="label">Branch <span className="text-red-500">*</span></label>
-          <select required value={form.branchId} onChange={(e) => set("branchId", e.target.value)} className="input-field">
+          <CustomSelect required value={form.branchId} onChange={(e) => set("branchId", e.target.value)} className="input-field">
             <option value="">Select branch</option>
             {branches.filter((b) => b.isActive).map((b) => (
               <option key={b._id} value={b._id}>{b.name}</option>
             ))}
-          </select>
+          </CustomSelect>
         </div>
       ) : (
         <div>
@@ -232,7 +233,7 @@ function NewSaleForm({ branches, items, customers, userRole, allowedBranchId, on
         <label className="label">
           Customer {form.paymentType === "credit" && <span className="text-red-500">*</span>}
         </label>
-        <select
+        <CustomSelect
           required={form.paymentType === "credit"}
           value={form.customerId}
           onChange={(e) => set("customerId", e.target.value)}
@@ -242,7 +243,7 @@ function NewSaleForm({ branches, items, customers, userRole, allowedBranchId, on
           {customers.map((c) => (
             <option key={c._id} value={c._id}>{c.name}{c.phone ? ` — ${c.phone}` : ""}</option>
           ))}
-        </select>
+        </CustomSelect>
       </div>
 
       {/* Line items */}
@@ -539,21 +540,21 @@ export default function Sales() {
         {isAdmin && (
           <div>
             <label className="label text-xs">Branch</label>
-            <select value={filterBranch} onChange={(e) => { setFilterBranch(e.target.value); setPage(1); }}
+            <CustomSelect value={filterBranch} onChange={(e) => { setFilterBranch(e.target.value); setPage(1); }}
               className="input-field w-auto text-sm py-2">
               <option value="">All branches</option>
               {branches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-            </select>
+            </CustomSelect>
           </div>
         )}
         <div>
           <label className="label text-xs">Type</label>
-          <select value={filterType} onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
+          <CustomSelect value={filterType} onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
             className="input-field w-auto text-sm py-2">
             <option value="">All types</option>
             <option value="cash">Cash</option>
             <option value="credit">Credit</option>
-          </select>
+          </CustomSelect>
         </div>
         <div>
           <label className="label text-xs">From</label>

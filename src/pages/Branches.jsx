@@ -15,10 +15,15 @@ import Spinner from "../components/ui/Spinner";
 const EMPTY_FORM = { name: "", address: "" };
 
 export default function Branches() {
-  const { user } = useAuth();
+  const { user, permissions } = useAuth();
   const { search: qs } = useLocation();
   const urlOrgId = new URLSearchParams(qs).get("organizationId");
   const isSuperAdmin = user?.role === "superAdmin";
+  const can = (action) => ["admin", "superAdmin"].includes(user?.role) || Boolean(permissions?.branches?.[action]);
+  const canCreate = can("create");
+  const canEdit = can("edit");
+  const canDeactivate = can("deactivate");
+  const canManage = canCreate || canEdit || canDeactivate;
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [includeInactive, setIncludeInactive] = useState(false);
@@ -126,7 +131,7 @@ export default function Branches() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+          {(canEdit || canDeactivate) && <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={includeInactive}
@@ -134,13 +139,13 @@ export default function Branches() {
               className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
             Show inactive
-          </label>
-          <button className="btn-primary" onClick={openCreate}>
+          </label>}
+          {canCreate && <button className="btn-primary" onClick={openCreate}>
             <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Add branch
-          </button>
+          </button>}
         </div>
       </div>
 
@@ -163,7 +168,7 @@ export default function Branches() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  {["Name", "Address", "Status", "Created", "Actions"].map((h) => (
+                  {["Name", "Address", "Status", "Created", ...(canManage ? ["Actions"] : [])].map((h) => (
                     <th
                       key={h}
                       className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
@@ -178,23 +183,23 @@ export default function Branches() {
                   <tr key={b._id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-4 text-sm font-medium text-gray-900">{b.name}</td>
                     <td className="px-5 py-4 text-sm text-gray-500">{b.address || "—"}</td>
-                    <td className="px-5 py-4">
+                    {canManage && <td className="px-5 py-4">
                       <span className={b.isActive ? "badge-active" : "badge-inactive"}>
                         {b.isActive ? "Active" : "Inactive"}
                       </span>
-                    </td>
+                    </td>}
                     <td className="px-5 py-4 text-sm text-gray-500">
                       {new Date(b.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
-                        <button
+                        {canEdit && <button
                           className="btn-secondary py-1 px-3 text-xs"
                           onClick={() => openEdit(b)}
                         >
                           Edit
-                        </button>
-                        {b.isActive && (
+                        </button>}
+                        {canDeactivate && b.isActive && (
                           <button
                             className="btn-danger py-1 px-3 text-xs"
                             onClick={() => openConfirm(b)}

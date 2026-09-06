@@ -1,3 +1,4 @@
+import CustomSelect from "../components/ui/CustomSelect";
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { getItems, createItem, updateItem, deactivateItem } from "../services/itemService";
@@ -5,6 +6,7 @@ import { getCategories } from "../services/categoryService";
 import Modal from "../components/ui/Modal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import Spinner from "../components/ui/Spinner";
+import { useAuth } from "../context/AuthContext";
 
 const UNITS = ["kg", "bag", "piece", "litre", "box"];
 
@@ -27,12 +29,12 @@ function ItemFormFields({ form, onChange, categories }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="label">Category <span className="text-red-500">*</span></label>
-          <select name="categoryId" required value={form.categoryId} onChange={onChange} className="input-field">
+          <CustomSelect name="categoryId" required value={form.categoryId} onChange={onChange} className="input-field">
             <option value="">Select category</option>
             {categories.filter((c) => c.isActive).map((c) => (
               <option key={c._id} value={c._id}>{c.name}</option>
             ))}
-          </select>
+          </CustomSelect>
         </div>
         <div className="col-span-2">
           <label className="label">Item name <span className="text-red-500">*</span></label>
@@ -46,9 +48,9 @@ function ItemFormFields({ form, onChange, categories }) {
         </div>
         <div>
           <label className="label">Unit <span className="text-red-500">*</span></label>
-          <select name="unit" required value={form.unit} onChange={onChange} className="input-field">
+          <CustomSelect name="unit" required value={form.unit} onChange={onChange} className="input-field">
             {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
-          </select>
+          </CustomSelect>
         </div>
         <div>
           <label className="label">Cost price <span className="text-red-500">*</span></label>
@@ -77,6 +79,11 @@ function ItemFormFields({ form, onChange, categories }) {
 }
 
 export default function Items() {
+  const { user, permissions } = useAuth();
+  const can = (action) => ["admin", "superAdmin"].includes(user?.role) || Boolean(permissions?.items?.[action]);
+  const canCreate = can("create");
+  const canEdit = can("edit");
+  const canDeactivate = can("deactivate");
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -213,7 +220,7 @@ export default function Items() {
           <p className="text-sm text-gray-500 mt-0.5">Manage your inventory products</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <select
+          <CustomSelect
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
             className="input-field w-auto text-sm py-2"
@@ -223,8 +230,8 @@ export default function Items() {
             {categories.map((c) => (
               <option key={c._id} value={c._id}>{c.name}</option>
             ))}
-          </select>
-          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+          </CustomSelect>
+          {(canEdit || canDeactivate) && <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={includeInactive}
@@ -232,13 +239,13 @@ export default function Items() {
               className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
             Show inactive
-          </label>
-          <button className="btn-primary" onClick={() => setCreateOpen(true)}>
+          </label>}
+          {canCreate && <button className="btn-primary" onClick={() => setCreateOpen(true)}>
             <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Add item
-          </button>
+          </button>}
         </div>
       </div>
 
@@ -261,7 +268,7 @@ export default function Items() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  {["Name", "SKU", "Category", "Unit", "Cost", "Selling", "Reorder", "Status", "Actions"].map((h) => (
+                  {["Name", "SKU", "Category", "Unit", "Cost", "Selling", "Reorder", "Status", ...((canEdit || canDeactivate) ? ["Actions"] : [])].map((h) => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                       {h}
                     </th>
@@ -287,12 +294,12 @@ export default function Items() {
                         {item.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    {(canEdit || canDeactivate) && <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <button className="btn-secondary py-1 px-3 text-xs" onClick={() => openEdit(item)}>
+                        {canEdit && <button className="btn-secondary py-1 px-3 text-xs" onClick={() => openEdit(item)}>
                           Edit
-                        </button>
-                        {item.isActive && (
+                        </button>}
+                        {canDeactivate && item.isActive && (
                           <button
                             className="btn-danger py-1 px-3 text-xs"
                             onClick={() => { setDeactivateTarget(item); setConfirmOpen(true); }}
@@ -301,7 +308,7 @@ export default function Items() {
                           </button>
                         )}
                       </div>
-                    </td>
+                    </td>}
                   </tr>
                 ))}
               </tbody>

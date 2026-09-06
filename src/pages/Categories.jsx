@@ -9,10 +9,16 @@ import {
 import Modal from "../components/ui/Modal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import Spinner from "../components/ui/Spinner";
+import { useAuth } from "../context/AuthContext";
 
 const EMPTY_FORM = { name: "" };
 
 export default function Categories() {
+  const { user, permissions } = useAuth();
+  const can = (action) => ["admin", "superAdmin"].includes(user?.role) || Boolean(permissions?.categories?.[action]);
+  const canCreate = can("create");
+  const canEdit = can("edit");
+  const canDeactivate = can("deactivate");
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [includeInactive, setIncludeInactive] = useState(false);
@@ -108,7 +114,7 @@ export default function Categories() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+          {(canEdit || canDeactivate) && <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={includeInactive}
@@ -116,13 +122,13 @@ export default function Categories() {
               className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
             Show inactive
-          </label>
-          <button className="btn-primary" onClick={openCreate}>
+          </label>}
+          {canCreate && <button className="btn-primary" onClick={openCreate}>
             <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Add category
-          </button>
+          </button>}
         </div>
       </div>
 
@@ -145,7 +151,7 @@ export default function Categories() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  {["Name", "Status", "Created", "Actions"].map((h) => (
+                  {["Name", "Status", "Created", ...((canEdit || canDeactivate) ? ["Actions"] : [])].map((h) => (
                     <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       {h}
                     </th>
@@ -164,12 +170,12 @@ export default function Categories() {
                     <td className="px-5 py-4 text-sm text-gray-500">
                       {new Date(cat.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-5 py-4">
+                    {(canEdit || canDeactivate) && <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
-                        <button className="btn-secondary py-1 px-3 text-xs" onClick={() => openEdit(cat)}>
+                        {canEdit && <button className="btn-secondary py-1 px-3 text-xs" onClick={() => openEdit(cat)}>
                           Edit
-                        </button>
-                        {cat.isActive && (
+                        </button>}
+                        {canDeactivate && cat.isActive && (
                           <button
                             className="btn-danger py-1 px-3 text-xs"
                             onClick={() => { setTarget(cat); setConfirmOpen(true); }}
@@ -178,7 +184,7 @@ export default function Categories() {
                           </button>
                         )}
                       </div>
-                    </td>
+                    </td>}
                   </tr>
                 ))}
               </tbody>

@@ -1,3 +1,4 @@
+import CustomSelect from "../components/ui/CustomSelect";
 import { useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
@@ -65,11 +66,11 @@ function ProfitLossTab({ isAdmin, branches }) {
         {isAdmin && (
           <div>
             <label className="label text-xs">Branch</label>
-            <select value={filterBranch} onChange={(e) => setFilterBranch(e.target.value)}
+            <CustomSelect value={filterBranch} onChange={(e) => setFilterBranch(e.target.value)}
               className="input-field w-auto text-sm py-2">
               <option value="">All branches</option>
               {branches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-            </select>
+            </CustomSelect>
           </div>
         )}
         <div>
@@ -247,11 +248,11 @@ function LowStockTab({ isAdmin, branches }) {
         <div className="card p-4 flex flex-wrap items-end gap-3">
           <div>
             <label className="label text-xs">Branch</label>
-            <select value={filterBranch} onChange={(e) => setFilterBranch(e.target.value)}
+            <CustomSelect value={filterBranch} onChange={(e) => setFilterBranch(e.target.value)}
               className="input-field w-auto text-sm py-2">
               <option value="">All branches</option>
               {branches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-            </select>
+            </CustomSelect>
           </div>
           <button className="btn-primary" onClick={run} disabled={loading}>
             {loading && <Spinner size="sm" className="mr-2" />}

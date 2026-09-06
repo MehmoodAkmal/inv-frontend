@@ -1,3 +1,4 @@
+import CustomSelect from "../components/ui/CustomSelect";
 import { useEffect, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import {
@@ -269,7 +270,7 @@ function OrgDetailDrawer({ orgId, onClose, onStatusToggled, onPlanUpdated }) {
           <form onSubmit={handlePlanSave} className="space-y-4">
             <div>
               <label className="label">Subscription plan</label>
-              <select
+              <CustomSelect
                 value={planForm.subscriptionPlan}
                 onChange={e => setPlanForm(p => ({ ...p, subscriptionPlan: e.target.value }))}
                 className="input-field"
@@ -279,7 +280,7 @@ function OrgDetailDrawer({ orgId, onClose, onStatusToggled, onPlanUpdated }) {
                     {p.charAt(0).toUpperCase() + p.slice(1)}
                   </option>
                 ))}
-              </select>
+              </CustomSelect>
             </div>
             <div>
               <label className="label">Max branches</label>
@@ -371,31 +372,31 @@ export default function SuperAdminOrganizations() {
         </div>
         <div>
           <label className="label">Status</label>
-          <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
+          <CustomSelect value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
             className="input-field text-sm py-2 w-auto">
             <option value="">All</option>
             <option value="active">Active</option>
             <option value="suspended">Suspended</option>
-          </select>
+          </CustomSelect>
         </div>
         <div>
           <label className="label">Plan</label>
-          <select value={filterPlan} onChange={e => { setFilterPlan(e.target.value); setPage(1); }}
+          <CustomSelect value={filterPlan} onChange={e => { setFilterPlan(e.target.value); setPage(1); }}
             className="input-field text-sm py-2 w-auto">
             <option value="">All plans</option>
             {["free","basic","pro"].map(p => (
               <option key={p} value={p}>{p.charAt(0).toUpperCase()+p.slice(1)}</option>
             ))}
-          </select>
+          </CustomSelect>
         </div>
         <div>
           <label className="label">Sort</label>
-          <select value={sortBy} onChange={e => { setSortBy(e.target.value); setPage(1); }}
+          <CustomSelect value={sortBy} onChange={e => { setSortBy(e.target.value); setPage(1); }}
             className="input-field text-sm py-2 w-auto">
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
             <option value="name">Name A–Z</option>
-          </select>
+          </CustomSelect>
         </div>
       </div>
 

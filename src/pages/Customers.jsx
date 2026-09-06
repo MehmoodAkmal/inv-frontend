@@ -1,3 +1,4 @@
+import CustomSelect from "../components/ui/CustomSelect";
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
@@ -292,12 +293,12 @@ function CustomerCreateForm({ branches, userRole, allowedBranchId, form, onChang
       {isAdmin ? (
         <div>
           <label className="label">Branch <span className="text-rose-500">*</span></label>
-          <select name="branchId" required value={form.branchId} onChange={onChange} className="input-field">
+          <CustomSelect name="branchId" required value={form.branchId} onChange={onChange} className="input-field">
             <option value="">Select branch</option>
             {branches.filter(b => b.isActive).map(b => (
               <option key={b._id} value={b._id}>{b.name}</option>
             ))}
-          </select>
+          </CustomSelect>
         </div>
       ) : (
         <div>
@@ -528,11 +529,11 @@ export default function Customers() {
         {isAdmin && (
           <div>
             <label className="label">Branch</label>
-            <select value={filterBranch} onChange={e => setFilterBranch(e.target.value)}
+            <CustomSelect value={filterBranch} onChange={e => setFilterBranch(e.target.value)}
               className="input-field w-auto text-sm py-2">
               <option value="">All branches</option>
               {branches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
-            </select>
+            </CustomSelect>
           </div>
         )}
         <label className="flex items-center gap-2 text-sm text-brand-600 cursor-pointer select-none mb-0.5">

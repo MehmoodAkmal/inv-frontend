@@ -24,6 +24,7 @@ import Reports    from "./pages/Reports";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminOrganizations from "./pages/SuperAdminOrganizations";
 import SuperAdminUsers from "./pages/SuperAdminUsers";
+import Permissions from "./pages/Permissions";
 
 // Redirect to correct home based on role
 function SmartRedirect() {
@@ -64,12 +65,13 @@ export default function App() {
               {/* superAdmin is redirected away; all other authenticated roles see the Dashboard */}
               <Route path="/dashboard" element={<DashboardRoute />} />
 
-              <Route element={<RoleRoute allowedRoles={["admin","superAdmin"]} />}>
+              <Route element={<RoleRoute allowedRoles={["admin","manager","cashier","superAdmin"]} permission={["branches", "view"]} />}>
                 <Route path="/branches" element={<Branches />} />
               </Route>
 
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="/staff"     element={<Staff />} />
+                <Route path="/permissions" element={<Permissions />} />
                 <Route path="/employees" element={<Employees />} />
               </Route>
 

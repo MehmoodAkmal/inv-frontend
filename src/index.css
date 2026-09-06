@@ -158,3 +158,16 @@
     @apply border-transparent text-brand-500 hover:text-brand-700 hover:border-brand-300;
   }
 }
+
+/* ── Auth page input autofill override ───────────────────────────────────── */
+/* Chrome/Safari override autofill yellow/white background on dark glass inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px rgba(0, 30, 45, 0.9) inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+

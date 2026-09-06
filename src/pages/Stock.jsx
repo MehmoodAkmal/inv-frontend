@@ -1,3 +1,4 @@
+import CustomSelect from "../components/ui/CustomSelect";
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
@@ -47,12 +48,12 @@ function AddStockForm({ branches, items, userRole, allowedBranchId, onSubmit, on
       <div>
         <label className="label">Branch <span className="text-red-500">*</span></label>
         {userRole === "admin" ? (
-          <select name="branchId" required value={form.branchId} onChange={change} className="input-field">
+          <CustomSelect name="branchId" required value={form.branchId} onChange={change} className="input-field">
             <option value="">Select branch</option>
             {branches.filter((b) => b.isActive).map((b) => (
               <option key={b._id} value={b._id}>{b.name}</option>
             ))}
-          </select>
+          </CustomSelect>
         ) : (
           <input
             value={branches.find((b) => b._id === allowedBranchId)?.name ?? allowedBranchId ?? ""}
@@ -65,12 +66,12 @@ function AddStockForm({ branches, items, userRole, allowedBranchId, onSubmit, on
       {/* Item */}
       <div>
         <label className="label">Item <span className="text-red-500">*</span></label>
-        <select name="itemId" required value={form.itemId} onChange={change} className="input-field">
+        <CustomSelect name="itemId" required value={form.itemId} onChange={change} className="input-field">
           <option value="">Select item</option>
           {items.filter((i) => i.isActive).map((i) => (
             <option key={i._id} value={i._id}>{i.name}{i.sku ? ` — ${i.sku}` : ""}</option>
           ))}
-        </select>
+        </CustomSelect>
       </div>
 
       {/* Quantity */}
@@ -278,7 +279,7 @@ export default function Stock() {
         <div>
           {isAdmin && (
             <div className="flex items-center gap-3 mb-4">
-              <select
+              <CustomSelect
                 value={selectedBranch}
                 onChange={(e) => {
                   setSelectedBranch(e.target.value);
@@ -292,7 +293,7 @@ export default function Stock() {
                 {branches.filter((b) => b.isActive).map((b) => (
                   <option key={b._id} value={b._id}>{b.name}</option>
                 ))}
-              </select>
+              </CustomSelect>
               {lowStockCount > 0 && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                   <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
@@ -396,7 +397,7 @@ export default function Stock() {
           {/* Filters */}
           <div className="flex items-center gap-3 flex-wrap mb-4">
             {isAdmin && (
-              <select
+              <CustomSelect
                 value={movBranch}
                 onChange={(e) => { setMovBranch(e.target.value); setMovPage(1); }}
                 className="input-field w-auto text-sm py-2"
@@ -406,9 +407,9 @@ export default function Stock() {
                 {branches.map((b) => (
                   <option key={b._id} value={b._id}>{b.name}</option>
                 ))}
-              </select>
+              </CustomSelect>
             )}
-            <select
+            <CustomSelect
               value={movItem}
               onChange={(e) => { setMovItem(e.target.value); setMovPage(1); }}
               className="input-field w-auto text-sm py-2"
@@ -418,7 +419,7 @@ export default function Stock() {
               {items.map((i) => (
                 <option key={i._id} value={i._id}>{i.name}</option>
               ))}
-            </select>
+            </CustomSelect>
             <button className="btn-secondary py-2 px-4 text-sm" onClick={() => { setMovPage(1); fetchMovements(); }}>
               Apply
             </button>

@@ -6,9 +6,14 @@ import { useAuth } from "../../context/AuthContext";
  * On mismatch, redirects each role to their correct home page so there
  * is no redirect loop (superAdmin → /superadmin, others → /dashboard).
  */
-export default function RoleRoute({ allowedRoles = [] }) {
-  const { user } = useAuth();
+export default function RoleRoute({ allowedRoles = [], permission }) {
+  const { user, permissions, permissionsLoading } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
+
+  if (permission && !["admin", "superAdmin"].includes(user.role)) {
+    if (permissionsLoading) return null;
+    if (!permissions?.[permission[0]]?.[permission[1]]) return <Navigate to="/dashboard" replace />;
+  }
 
   if (allowedRoles.includes(user.role)) return <Outlet />;
 

@@ -1,3 +1,4 @@
+import CustomSelect from "../components/ui/CustomSelect";
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
@@ -71,14 +72,14 @@ function RecordPaymentForm({ employees, userRole, allowedBranchId, onSubmit, onC
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="label">Employee <span className="text-red-500">*</span></label>
-        <select name="employeeId" required value={form.employeeId} onChange={change} className="input-field">
+        <CustomSelect name="employeeId" required value={form.employeeId} onChange={change} className="input-field">
           <option value="">Select employee</option>
           {availableEmployees.filter((e) => e.isActive).map((e) => (
             <option key={e._id} value={e._id}>
               {e.name}{e.designation ? ` — ${e.designation}` : ""}
             </option>
           ))}
-        </select>
+        </CustomSelect>
         {selectedEmp && (
           <p className="text-xs text-gray-400 mt-1">Monthly salary: <strong>{fmt(selectedEmp.monthlySalary)}</strong></p>
         )}
@@ -98,11 +99,11 @@ function RecordPaymentForm({ employees, userRole, allowedBranchId, onSubmit, onC
 
       <div>
         <label className="label">Status</label>
-        <select name="status" value={form.status} onChange={change} className="input-field">
+        <CustomSelect name="status" value={form.status} onChange={change} className="input-field">
           <option value="paid">Paid (full)</option>
           <option value="partial">Partial</option>
           <option value="pending">Pending</option>
-        </select>
+        </CustomSelect>
       </div>
 
       <div>
@@ -209,11 +210,11 @@ export default function Salary() {
         {isAdmin && (
           <div>
             <label className="label text-xs">Branch</label>
-            <select value={filterBranch} onChange={(e) => { setFilterBranch(e.target.value); setPage(1); }}
+            <CustomSelect value={filterBranch} onChange={(e) => { setFilterBranch(e.target.value); setPage(1); }}
               className="input-field w-auto text-sm py-2">
               <option value="">All branches</option>
               {branches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-            </select>
+            </CustomSelect>
           </div>
         )}
         <div>
@@ -223,11 +224,11 @@ export default function Salary() {
         </div>
         <div>
           <label className="label text-xs">Employee</label>
-          <select value={filterEmployee} onChange={(e) => { setFilterEmployee(e.target.value); setPage(1); }}
+          <CustomSelect value={filterEmployee} onChange={(e) => { setFilterEmployee(e.target.value); setPage(1); }}
             className="input-field w-auto text-sm py-2">
             <option value="">All employees</option>
             {employees.map((e) => <option key={e._id} value={e._id}>{e.name}</option>)}
-          </select>
+          </CustomSelect>
         </div>
         {(filterBranch || filterMonth || filterEmployee) && (
           <button className="btn-secondary text-sm py-2" onClick={() => {

@@ -1,3 +1,4 @@
+import CustomSelect from "../components/ui/CustomSelect";
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
@@ -55,12 +56,12 @@ function ExpenseForm({ branches, userRole, allowedBranchId, form, onChange, onSu
         isAdmin ? (
           <div>
             <label className="label">Branch <span className="text-red-500">*</span></label>
-            <select name="branchId" required value={form.branchId} onChange={onChange} className="input-field">
+            <CustomSelect name="branchId" required value={form.branchId} onChange={onChange} className="input-field">
               <option value="">Select branch</option>
               {branches.filter((b) => b.isActive).map((b) => (
                 <option key={b._id} value={b._id}>{b.name}</option>
               ))}
-            </select>
+            </CustomSelect>
           </div>
         ) : (
           <div>
@@ -72,11 +73,11 @@ function ExpenseForm({ branches, userRole, allowedBranchId, form, onChange, onSu
 
       <div>
         <label className="label">Category <span className="text-red-500">*</span></label>
-        <select name="category" required value={form.category} onChange={onChange} className="input-field">
+        <CustomSelect name="category" required value={form.category} onChange={onChange} className="input-field">
           {CATEGORIES.map((c) => (
             <option key={c} value={c} className="capitalize">{c.charAt(0).toUpperCase() + c.slice(1)}</option>
           ))}
-        </select>
+        </CustomSelect>
       </div>
 
       <div>
@@ -249,20 +250,20 @@ export default function Expenses() {
         {isAdmin && (
           <div>
             <label className="label text-xs">Branch</label>
-            <select value={filterBranch} onChange={(e) => { setFilterBranch(e.target.value); setPage(1); }}
+            <CustomSelect value={filterBranch} onChange={(e) => { setFilterBranch(e.target.value); setPage(1); }}
               className="input-field w-auto text-sm py-2">
               <option value="">All branches</option>
               {branches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-            </select>
+            </CustomSelect>
           </div>
         )}
         <div>
           <label className="label text-xs">Category</label>
-          <select value={filterCategory} onChange={(e) => { setFilterCategory(e.target.value); setPage(1); }}
+          <CustomSelect value={filterCategory} onChange={(e) => { setFilterCategory(e.target.value); setPage(1); }}
             className="input-field w-auto text-sm py-2">
             <option value="">All categories</option>
             {CATEGORIES.map((c) => <option key={c} value={c} className="capitalize">{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
-          </select>
+          </CustomSelect>
         </div>
         <div>
           <label className="label text-xs">From</label>

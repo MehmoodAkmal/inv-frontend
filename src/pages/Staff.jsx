@@ -1,6 +1,10 @@
+import CustomSelect from "../components/ui/CustomSelect";
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
-import { getStaff, createStaff, updateStaff, deactivateStaff } from "../services/staffService";
+import {
+  getStaff, createStaff, updateStaff, deactivateStaff,
+  getStaffPermissions, updateStaffPermissions, resetStaffPermissions,
+} from "../services/staffService";
 import { getBranches } from "../services/branchService";
 import Modal from "../components/ui/Modal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
@@ -10,6 +14,16 @@ const EMPTY_CREATE = { firstName: "", lastName: "", email: "", password: "", rol
 const EMPTY_EDIT = { firstName: "", lastName: "", branchId: "" };
 
 const ROLE_LABELS = { manager: "Manager", cashier: "Cashier" };
+const MODULE_LABELS = {
+  sales: "Sales", stock: "Stock", customers: "Customers", payments: "Payments",
+  expenses: "Expenses", salary: "Salary", reports: "Reports", categories: "Categories",
+  items: "Items", branches: "Branches",
+};
+const ACTION_LABELS = {
+  view: "View", create: "Create", edit: "Edit", deactivate: "Deactivate",
+  addPurchase: "Add purchase", record: "Record", viewLedger: "View ledger",
+  dashboard: "Dashboard", profitLoss: "Profit & loss", lowStock: "Low stock",
+};
 
 export default function Staff() {
   const [staff, setStaff] = useState([]);
@@ -32,6 +46,15 @@ export default function Staff() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deactivateTarget, setDeactivateTarget] = useState(null);
   const [deactivating, setDeactivating] = useState(false);
+
+  // Per-user permissions modal
+  const [permissionsOpen, setPermissionsOpen] = useState(false);
+  const [permissionTarget, setPermissionTarget] = useState(null);
+  const [permissions, setPermissions] = useState({});
+  const [permissionCatalog, setPermissionCatalog] = useState({});
+  const [hasCustomPermissions, setHasCustomPermissions] = useState(false);
+  const [permissionsLoading, setPermissionsLoading] = useState(false);
+  const [permissionsSaving, setPermissionsSaving] = useState(false);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -119,6 +142,58 @@ export default function Staff() {
     }
   };
 
+  const openPermissions = async (member) => {
+    setPermissionTarget(member);
+    setPermissionsOpen(true);
+    setPermissionsLoading(true);
+    try {
+      const { data } = await getStaffPermissions(member._id);
+      setPermissions(data.data.permissions);
+      setPermissionCatalog(data.data.catalog);
+      setHasCustomPermissions(data.data.hasCustomPermissions);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to load permissions");
+      setPermissionsOpen(false);
+    } finally {
+      setPermissionsLoading(false);
+    }
+  };
+
+  const togglePermission = (module, action) => {
+    setPermissions((current) => ({
+      ...current,
+      [module]: { ...current[module], [action]: !current[module]?.[action] },
+    }));
+  };
+
+  const savePermissions = async () => {
+    setPermissionsSaving(true);
+    try {
+      await updateStaffPermissions(permissionTarget._id, permissions);
+      setHasCustomPermissions(true);
+      toast.success("Permissions updated");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update permissions");
+    } finally {
+      setPermissionsSaving(false);
+    }
+  };
+
+  const resetPermissions = async () => {
+    setPermissionsSaving(true);
+    try {
+      await resetStaffPermissions(permissionTarget._id);
+      const { data } = await getStaffPermissions(permissionTarget._id);
+      setPermissions(data.data.permissions);
+      setHasCustomPermissions(false);
+      toast.success("Permissions reset to role defaults");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to reset permissions");
+    } finally {
+      setPermissionsSaving(false);
+    }
+  };
+
   return (
     <div>
       {/* Page header */}
@@ -129,7 +204,7 @@ export default function Staff() {
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           {/* Branch filter */}
-          <select
+          <CustomSelect
             value={filterBranch}
             onChange={(e) => setFilterBranch(e.target.value)}
             className="input-field w-auto text-sm py-2"
@@ -139,7 +214,7 @@ export default function Staff() {
             {branches.map((b) => (
               <option key={b._id} value={b._id}>{b.name}</option>
             ))}
-          </select>
+          </CustomSelect>
           <button className="btn-primary" onClick={() => setCreateOpen(true)}>
             <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -201,6 +276,12 @@ export default function Staff() {
                         >
                           Edit
                         </button>
+                        <button
+                          className="btn-secondary py-1 px-3 text-xs"
+                          onClick={() => openPermissions(m)}
+                        >
+                          Permissions
+                        </button>
                         {m.isActive && (
                           <button
                             className="btn-danger py-1 px-3 text-xs"
@@ -247,21 +328,21 @@ export default function Staff() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="s-role" className="label">Role <span className="text-red-500">*</span></label>
-              <select id="s-role" name="role" required value={createForm.role}
+              <CustomSelect id="s-role" name="role" required value={createForm.role}
                 onChange={handleCreateChange} className="input-field">
                 <option value="cashier">Cashier</option>
                 <option value="manager">Manager</option>
-              </select>
+              </CustomSelect>
             </div>
             <div>
               <label htmlFor="s-branch" className="label">Branch <span className="text-red-500">*</span></label>
-              <select id="s-branch" name="branchId" required value={createForm.branchId}
+              <CustomSelect id="s-branch" name="branchId" required value={createForm.branchId}
                 onChange={handleCreateChange} className="input-field">
                 <option value="">Select branch</option>
                 {branches.filter((b) => b.isActive).map((b) => (
                   <option key={b._id} value={b._id}>{b.name}</option>
                 ))}
-              </select>
+              </CustomSelect>
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
@@ -291,13 +372,13 @@ export default function Staff() {
           </div>
           <div>
             <label htmlFor="e-branch" className="label">Branch</label>
-            <select id="e-branch" name="branchId" value={editForm.branchId}
+            <CustomSelect id="e-branch" name="branchId" value={editForm.branchId}
               onChange={handleEditChange} className="input-field">
               <option value="">Select branch</option>
               {branches.filter((b) => b.isActive).map((b) => (
                 <option key={b._id} value={b._id}>{b.name}</option>
               ))}
-            </select>
+            </CustomSelect>
           </div>
           <p className="text-xs text-gray-400">Email and role cannot be changed after creation.</p>
           <div className="flex justify-end gap-3 pt-2">
@@ -308,6 +389,59 @@ export default function Staff() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Per-user permissions modal */}
+      <Modal
+        isOpen={permissionsOpen}
+        onClose={() => setPermissionsOpen(false)}
+        title={`Permissions — ${permissionTarget?.firstName ?? ""} ${permissionTarget?.lastName ?? ""}`}
+        maxWidth="max-w-3xl"
+      >
+        {permissionsLoading ? (
+          <div className="flex justify-center py-12"><Spinner size="lg" className="text-primary-600" /></div>
+        ) : (
+          <div>
+            <p className="text-sm text-gray-500 mb-4">
+              {hasCustomPermissions
+                ? "This user has custom access settings."
+                : `Currently inheriting the ${ROLE_LABELS[permissionTarget?.role] ?? "staff"} role defaults.`}
+            </p>
+            <div className="max-h-[52vh] overflow-y-auto pr-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {Object.entries(permissionCatalog).map(([module, actions]) => (
+                <fieldset key={module} className="rounded-lg border border-gray-200 p-3">
+                  <legend className="px-1 text-sm font-semibold text-gray-800">{MODULE_LABELS[module] ?? module}</legend>
+                  <div className="space-y-2">
+                    {actions.map((action) => (
+                      <label key={action} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(permissions[module]?.[action])}
+                          onChange={() => togglePermission(module, action)}
+                          className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        {ACTION_LABELS[action] ?? action}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              ))}
+            </div>
+            <div className="flex items-center justify-between gap-3 pt-5">
+              <button type="button" className="text-sm text-primary-700 hover:text-primary-800 disabled:opacity-50"
+                onClick={resetPermissions} disabled={permissionsSaving || !hasCustomPermissions}>
+                Reset to role defaults
+              </button>
+              <div className="flex gap-3">
+                <button type="button" className="btn-secondary" onClick={() => setPermissionsOpen(false)} disabled={permissionsSaving}>Cancel</button>
+                <button type="button" className="btn-primary" onClick={savePermissions} disabled={permissionsSaving}>
+                  {permissionsSaving && <Spinner size="sm" className="mr-2" />}
+                  Save permissions
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* Deactivate confirm */}

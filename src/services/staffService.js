@@ -24,3 +24,8 @@ export const updateStaff = (id, data) => api.put(`/staff/${id}`, data);
  * @param {string} id
  */
 export const deactivateStaff = (id) => api.delete(`/staff/${id}`);
+
+export const getStaffPermissions = (id) => api.get(`/permissions/users/${id}`);
+export const updateStaffPermissions = (id, permissions) =>
+  api.put(`/permissions/users/${id}`, { permissions });
+export const resetStaffPermissions = (id) => api.delete(`/permissions/users/${id}`);

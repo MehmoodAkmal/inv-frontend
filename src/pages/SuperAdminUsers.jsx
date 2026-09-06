@@ -1,3 +1,4 @@
+import CustomSelect from "../components/ui/CustomSelect";
 import { useEffect, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import { getAllUsers } from "../services/organizationService";
@@ -149,7 +150,7 @@ export default function SuperAdminUsers() {
         </div>
         <div>
           <label className="label">Role</label>
-          <select
+          <CustomSelect
             value={filterRole}
             onChange={e => { setFilterRole(e.target.value); setPage(1); }}
             className="input-field text-sm py-2 w-auto"
@@ -158,11 +159,11 @@ export default function SuperAdminUsers() {
             <option value="admin">Admin</option>
             <option value="manager">Manager</option>
             <option value="cashier">Cashier</option>
-          </select>
+          </CustomSelect>
         </div>
         <div>
           <label className="label">Status</label>
-          <select
+          <CustomSelect
             value={filterStatus}
             onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
             className="input-field text-sm py-2 w-auto"
@@ -170,7 +171,7 @@ export default function SuperAdminUsers() {
             <option value="">All</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
-          </select>
+          </CustomSelect>
         </div>
         {(search || filterRole || filterStatus) && (
           <button

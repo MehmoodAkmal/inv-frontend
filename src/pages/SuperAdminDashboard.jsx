@@ -1,3 +1,4 @@
+import CustomSelect from "../components/ui/CustomSelect";
 import { useEffect, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
@@ -310,7 +311,7 @@ function OrgDetailDrawer({ orgId, onClose, onStatusToggled, onPlanUpdated }) {
           <form onSubmit={handlePlanSave} className="space-y-4">
             <div>
               <label className="label">Subscription plan</label>
-              <select
+              <CustomSelect
                 value={planForm.subscriptionPlan}
                 onChange={e => setPlanForm(p => ({ ...p, subscriptionPlan: e.target.value }))}
                 className="input-field"
@@ -318,7 +319,7 @@ function OrgDetailDrawer({ orgId, onClose, onStatusToggled, onPlanUpdated }) {
                 {["free","basic","pro"].map(p => (
                   <option key={p} value={p} className="capitalize">{p.charAt(0).toUpperCase() + p.slice(1)}</option>
                 ))}
-              </select>
+              </CustomSelect>
             </div>
             <div>
               <label className="label">Max branches</label>
@@ -472,13 +473,13 @@ export default function SuperAdminDashboard() {
               <h3 className="text-sm font-bold text-brand-900">New Organization Signups</h3>
               <p className="text-xs text-brand-400 mt-0.5">Organizations created per day</p>
             </div>
-            <select
+            <CustomSelect
               value={trendDays}
               onChange={e => setTrendDays(Number(e.target.value))}
               className="input-field w-auto text-xs py-1.5"
             >
               {[7,14,30,90].map(d => <option key={d} value={d}>Last {d} days</option>)}
-            </select>
+            </CustomSelect>
           </div>
           {trendLoad ? (
             <div className="h-44 flex items-center justify-center"><Spinner size="lg" className="text-primary-400" /></div>
@@ -546,25 +547,25 @@ export default function SuperAdminDashboard() {
             className="input-field text-sm py-2 w-44"
           />
           {/* Status filter */}
-          <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
+          <CustomSelect value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
             className="input-field text-sm py-2 w-auto">
             <option value="">All status</option>
             <option value="active">Active</option>
             <option value="suspended">Suspended</option>
-          </select>
+          </CustomSelect>
           {/* Plan filter */}
-          <select value={filterPlan} onChange={e => { setFilterPlan(e.target.value); setPage(1); }}
+          <CustomSelect value={filterPlan} onChange={e => { setFilterPlan(e.target.value); setPage(1); }}
             className="input-field text-sm py-2 w-auto">
             <option value="">All plans</option>
             {["free","basic","pro"].map(p => <option key={p} value={p} className="capitalize">{p.charAt(0).toUpperCase()+p.slice(1)}</option>)}
-          </select>
+          </CustomSelect>
           {/* Sort */}
-          <select value={sortBy} onChange={e => { setSortBy(e.target.value); setPage(1); }}
+          <CustomSelect value={sortBy} onChange={e => { setSortBy(e.target.value); setPage(1); }}
             className="input-field text-sm py-2 w-auto">
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
             <option value="name">Name A–Z</option>
-          </select>
+          </CustomSelect>
         </div>
 
         {/* Table */}

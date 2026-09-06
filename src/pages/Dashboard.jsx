@@ -357,7 +357,7 @@ export default function Dashboard() {
   const trend     = summary?.trend7Days ?? [];
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-5">
 
       {/* ── Header ────────────────────────────────────────────────────── */}
       <div className="flex items-end justify-between">
@@ -381,11 +381,11 @@ export default function Dashboard() {
 
       {/* ── Today vs Yesterday comparison row ─────────────────────────── */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <CardSkeleton /><CardSkeleton />
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <CompareCard
             label="Today's Sales"
             today={today}
@@ -413,33 +413,33 @@ export default function Dashboard() {
 
       {/* ── Charts row ────────────────────────────────────────────────── */}
       {loading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div className="lg:col-span-3"><CardSkeleton h="h-48" /></div>
           <div className="lg:col-span-2"><CardSkeleton h="h-48" /></div>
-          <CardSkeleton h="h-48" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div className="lg:col-span-3">
             <SalesTrendChart data={trend} />
           </div>
-          <PaymentPieChart today={today} yesterday={yesterday} />
+          <div className="lg:col-span-2"><PaymentPieChart today={today} yesterday={yesterday} /></div>
         </div>
       )}
 
       {/* ── Bar chart + secondary KPIs row ────────────────────────────── */}
       {loading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2"><CardSkeleton h="h-48" /></div>
-          <div className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div className="lg:col-span-3"><CardSkeleton h="h-48" /></div>
+          <div className="lg:col-span-2 space-y-3">
             <CardSkeleton h="h-12" /><CardSkeleton h="h-12" /><CardSkeleton h="h-12" />
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div className="lg:col-span-3">
             <SalesBarChart data={trend} />
           </div>
-          <div className="space-y-3">
+          <div className="lg:col-span-2 space-y-3">
             <KpiTile
               label="This Month"
               value={fmt(month.totalAmount)}
@@ -476,7 +476,7 @@ export default function Dashboard() {
                 <h3 className="text-[10px] font-bold text-brand-500 uppercase tracking-widest whitespace-nowrap">{group.label}</h3>
                 <div className="flex-1 h-px bg-brand-200" />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {visible.map((card) => (
                   <Link
                     key={card.href}

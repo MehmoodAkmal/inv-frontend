@@ -1,3 +1,4 @@
+import CustomSelect from "../components/ui/CustomSelect";
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { getEmployees, createEmployee, updateEmployee, deactivateEmployee } from "../services/employeeService";
@@ -16,12 +17,12 @@ function EmployeeCreateForm({ branches, form, onChange, onSubmit, onCancel, savi
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
         <label className="label">Branch <span className="text-red-500">*</span></label>
-        <select name="branchId" required value={form.branchId} onChange={onChange} className="input-field">
+        <CustomSelect name="branchId" required value={form.branchId} onChange={onChange} className="input-field">
           <option value="">Select branch</option>
           {branches.filter((b) => b.isActive).map((b) => (
             <option key={b._id} value={b._id}>{b.name}</option>
           ))}
-        </select>
+        </CustomSelect>
       </div>
       <div>
         <label className="label">Name <span className="text-red-500">*</span></label>
@@ -192,11 +193,11 @@ export default function Employees() {
       <div className="flex flex-wrap items-end gap-3 mb-4">
         <div>
           <label className="label text-xs">Branch</label>
-          <select value={filterBranch} onChange={(e) => setFilterBranch(e.target.value)}
+          <CustomSelect value={filterBranch} onChange={(e) => setFilterBranch(e.target.value)}
             className="input-field w-auto text-sm py-2">
             <option value="">All branches</option>
             {branches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-          </select>
+          </CustomSelect>
         </div>
         <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
           <input type="checkbox" checked={includeInactive} onChange={(e) => setIncludeInactive(e.target.checked)}
