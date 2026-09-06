@@ -12,7 +12,7 @@
   }
   .dark body,
   .dark [data-theme] {
-    @apply bg-dark-900 text-white;
+    @apply bg-gray-900 text-white;
   }
   h1 { @apply text-2xl font-bold tracking-tight text-brand-900; }
   h2 { @apply text-xl font-semibold text-brand-900; }
@@ -21,41 +21,163 @@
 
 @layer components {
 
-  /* ── Dark mode overrides ────────────────────────────────────── */
+  /* ── Dark mode overrides ─────────────────────────────── */
   .dark .card,
-  [data-theme="dark"] .card {
-    @apply bg-dark-800 border-dark-600/50 shadow-dark-card;
-  }
   .dark .stat-card,
-  [data-theme="dark"] .stat-card {
-    @apply bg-dark-800 border-dark-600/50 shadow-dark-card;
+  .dark .card-hover {
+    @apply bg-gray-800 border-gray-600/50 shadow-dark-card;
   }
-  .dark .input-field,
-  [data-theme="dark"] .input-field {
-    @apply bg-dark-700 border-dark-600 text-white placeholder-dark-400;
+  .dark .table-th {
+    @apply bg-gray-700/50 text-gray-300;
   }
-  .dark .btn-secondary,
-  [data-theme="dark"] .btn-secondary {
-    @apply bg-dark-700 text-white border-dark-600 hover:bg-dark-600;
+  .dark .table-td {
+    @apply text-gray-300;
   }
-  .dark .page-header,
-  [data-theme="dark"] .page-header {
-    @apply border-b border-dark-600/30;
+  .dark .table-row {
+    @apply border-gray-700 hover:bg-gray-700/50;
   }
-  .dark .empty-state-title,
-  [data-theme="dark"] .empty-state-title {
-    @apply text-brand-200;
+  .dark .input-field {
+    @apply bg-gray-800 border-gray-600 text-white placeholder-gray-400;
   }
-  .dark .empty-state-desc,
-  [data-theme="dark"] .empty-state-desc {
-    @apply text-dark-400;
+  .dark .btn-secondary {
+    @apply bg-gray-800 text-white border-gray-600 hover:bg-gray-700;
   }
-  .dark .skeleton,
-  [data-theme="dark"] .skeleton {
-    @apply bg-dark-600;
+  .dark .page-header {
+    @apply border-b border-gray-600/30;
+  }
+  .dark .page-title {
+    @apply text-white;
+  }
+  .dark .page-subtitle {
+    @apply text-gray-400;
+  }
+  .dark .stat-card-value {
+    @apply text-white;
+  }
+  .dark .stat-card-label {
+    @apply text-gray-400;
+  }
+  .dark .stat-card-sub {
+    @apply text-gray-500;
+  }
+  .dark .label {
+    @apply text-gray-400;
+  }
+  .dark .empty-state {
+    @apply bg-gray-800;
+  }
+  .dark .empty-state-icon {
+    @apply text-gray-600;
+  }
+  .dark .empty-state-title {
+    @apply text-gray-300;
+  }
+  .dark .empty-state-desc {
+    @apply text-gray-500;
+  }
+  .dark .skeleton {
+    @apply bg-gray-600;
+  }
+  .dark .tab-btn {
+    @apply text-gray-400 border-gray-700;
+  }
+  .dark .tab-btn-active {
+    @apply text-brand-400 border-brand-400;
+  }
+  .dark .tab-btn-inactive {
+    @apply text-gray-500 hover:text-gray-300 hover:border-gray-500;
+  }
+  .dark .badge-active {
+    @apply bg-gray-700 text-emerald-400 ring-1 ring-emerald-500/30;
+  }
+  .dark .badge-inactive {
+    @apply bg-gray-700 text-rose-400 ring-1 ring-rose-500/30;
+  }
+  .dark .badge-role {
+    @apply bg-gray-700 text-brand-400 ring-1 ring-primary-500/30;
+  }
+  .dark .theme-toggle {
+    @apply text-gray-400 hover:bg-gray-700;
+  }
+  .dark [data-theme="dark"] .card,
+  .dark [data-theme="dark"] .stat-card,
+  .dark [data-theme="dark"] .card-hover {
+    @apply bg-gray-800 border-gray-600/50 shadow-dark-card;
+  }
+  .dark [data-theme="dark"] .table-th {
+    @apply bg-gray-700/50 text-gray-300;
+  }
+  .dark [data-theme="dark"] .table-td {
+    @apply text-gray-300;
+  }
+  .dark [data-theme="dark"] .table-row {
+    @apply border-gray-700 hover:bg-gray-700/50;
+  }
+  .dark [data-theme="dark"] .input-field {
+    @apply bg-gray-800 border-gray-600 text-white placeholder-gray-400;
+  }
+  .dark [data-theme="dark"] .btn-secondary {
+    @apply bg-gray-800 text-white border-gray-600 hover:bg-gray-700;
+  }
+  .dark [data-theme="dark"] .page-header {
+    @apply border-b border-gray-600/30;
+  }
+  .dark [data-theme="dark"] .page-title {
+    @apply text-white;
+  }
+  .dark [data-theme="dark"] .page-subtitle {
+    @apply text-gray-400;
+  }
+  .dark [data-theme="dark"] .stat-card-value {
+    @apply text-white;
+  }
+  .dark [data-theme="dark"] .stat-card-label {
+    @apply text-gray-400;
+  }
+  .dark [data-theme="dark"] .stat-card-sub {
+    @apply text-gray-500;
+  }
+  .dark [data-theme="dark"] .label {
+    @apply text-gray-400;
+  }
+  .dark [data-theme="dark"] .empty-state {
+    @apply bg-gray-800;
+  }
+  .dark [data-theme="dark"] .empty-state-icon {
+    @apply text-gray-600;
+  }
+  .dark [data-theme="dark"] .empty-state-title {
+    @apply text-gray-300;
+  }
+  .dark [data-theme="dark"] .empty-state-desc {
+    @apply text-gray-500;
+  }
+  .dark [data-theme="dark"] .skeleton {
+    @apply bg-gray-600;
+  }
+  .dark [data-theme="dark"] .tab-btn {
+    @apply text-gray-400 border-gray-700;
+  }
+  .dark [data-theme="dark"] .tab-btn-active {
+    @apply text-brand-400 border-brand-400;
+  }
+  .dark [data-theme="dark"] .tab-btn-inactive {
+    @apply text-gray-500 hover:text-gray-300 hover:border-gray-500;
+  }
+  .dark [data-theme="dark"] .badge-active {
+    @apply bg-gray-700 text-emerald-400 ring-1 ring-emerald-500/30;
+  }
+  .dark [data-theme="dark"] .badge-inactive {
+    @apply bg-gray-700 text-rose-400 ring-1 ring-rose-500/30;
+  }
+  .dark [data-theme="dark"] .badge-role {
+    @apply bg-gray-700 text-brand-400 ring-1 ring-primary-500/30;
+  }
+  .dark [data-theme="dark"] .theme-toggle {
+    @apply text-gray-400 hover:bg-gray-700;
   }
 
-  /* ── Buttons ─────────────────────────────────────────────────── */
+  /* ── Buttons ─────────────────────────────────────────── */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-white
            bg-primary-600 rounded-lg shadow-sm
@@ -83,7 +205,7 @@
            transition-all duration-150;
   }
 
-  /* ── Form elements ───────────────────────────────────────────────────── */
+  /* ── Form elements ───────────────────────────────────────────── */
   .input-field {
     @apply block w-full px-3 py-2 text-sm text-brand-900 bg-white
            border border-brand-200 rounded-lg
@@ -188,7 +310,7 @@
     @apply animate-pulse bg-brand-200/60 rounded-lg;
   }
 
-  /* ── Tabs ────────────────────────────────────────────────────────── */
+  /* ── Tabs ────────────────────────────────────────────────────── */
   .tab-btn {
     @apply px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors duration-150 -mb-px;
   }
@@ -199,13 +321,12 @@
     @apply border-transparent text-brand-500 hover:text-brand-700 hover:border-brand-300;
   }
 
-  /* ── Dark mode toggle ────────────────────────────────────────── */
+  /* ── Theme toggle ──────────────────────────────────────────── */
   .theme-toggle {
     @apply p-2 rounded-lg text-brand-600 hover:bg-brand-100 transition-colors cursor-pointer;
   }
-  .dark .theme-toggle,
-  [data-theme="dark"] .theme-toggle {
-    @apply text-brand-300 hover:bg-dark-700;
+  .dark .theme-toggle {
+    @apply text-gray-400 hover:bg-gray-700;
   }
 }
 
@@ -219,4 +340,3 @@ input:-webkit-autofill:active {
   caret-color: #ffffff !important;
   transition: background-color 9999s ease-in-out 0s;
 }
-
