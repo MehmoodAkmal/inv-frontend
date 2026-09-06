@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Sidebar from "./Sidebar";
 import ThemeToggle from "../ui/ThemeToggle";
 import NotificationBell from "../ui/NotificationBell";
@@ -7,18 +8,32 @@ import NotificationBell from "../ui/NotificationBell";
 export default function DashboardLayout() {
   const [sidebarOpen,     setSidebarOpen]     = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const navigate = useNavigate();
+  const { data: notifData } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => Promise.resolve({ data: { count: 0 } }),
+    refetchInterval: 30000,
+    staleTime: 30000,
+  });
+  const notifCount = notifData?.data?.count ?? 0;
 
   useEffect(() => {
     const stored = localStorage.getItem("sidebar-collapsed");
     if (stored !== null) setSidebarCollapsed(stored === "true");
   }, []);
 
-  const toggleCollapse = () => {
+  useEffect(() => {
+    const handler = () => navigate("/login");
+    window.addEventListener("auth:logout", handler);
+    return () => window.removeEventListener("auth:logout", handler);
+  }, [navigate]);
+
+  const toggleCollapse = useCallback(() => {
     setSidebarCollapsed((prev) => {
       localStorage.setItem("sidebar-collapsed", String(!prev));
       return !prev;
     });
-  };
+  }, []);
 
   return (
     <div className="flex h-screen overflow-hidden bg-brand-50 dark:bg-dark-900 transition-colors duration-200">
@@ -60,7 +75,7 @@ export default function DashboardLayout() {
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <NotificationBell count={2} />
+            <NotificationBell count={notifCount} />
             <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-xs font-bold text-white">
               A
             </div>
@@ -90,7 +105,7 @@ export default function DashboardLayout() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <NotificationBell count={2} />
+            <NotificationBell count={notifCount} />
           </div>
         </header>
 

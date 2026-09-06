@@ -1,14 +1,13 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getDashboardSummary } from "../services/reportService";
 import {
   AreaChart, Area, BarChart, Bar,
   PieChart, Pie, Cell, Tooltip,
-  XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend,
+  XAxis, YAxis, CartesianGrid, ResponsiveContainer,
 } from "recharts";
 
-// ── Palette (matches brand tokens) ────────────────────────────────────────
 const C = {
   teal:     "#3D7A7A",
   tealLt:   "#7DBFB2",
@@ -24,7 +23,6 @@ const ROLE_LABELS = { superAdmin:"Super Admin", admin:"Admin", manager:"Manager"
 const fmt    = (n) => Number(n??0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtInt = (n) => Number(n??0).toLocaleString();
 
-// ── Helpers ────────────────────────────────────────────────────────────────
 function pctChange(today, yesterday) {
   if (!yesterday || yesterday === 0) return null;
   return ((today - yesterday) / yesterday) * 100;
@@ -44,7 +42,6 @@ function TrendBadge({ today, yesterday }) {
   );
 }
 
-// ── Skeleton ───────────────────────────────────────────────────────────────
 function CardSkeleton({ h = "h-32" }) {
   return (
     <div className="card p-5 animate-pulse">
@@ -55,23 +52,19 @@ function CardSkeleton({ h = "h-32" }) {
   );
 }
 
-// ── Today vs Yesterday comparison card ────────────────────────────────────
 function CompareCard({ label, today, yesterday, icon, color }) {
   const pct = pctChange(today.totalAmount, yesterday.totalAmount);
   const up  = pct === null ? true : pct >= 0;
 
   return (
     <div className="card p-5 relative overflow-hidden flex flex-col gap-3">
-      {/* Colored top bar */}
       <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl" style={{ background: color }} />
-
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold text-brand-500 uppercase tracking-wider">{label}</span>
         <div className="p-2 rounded-xl" style={{ background: color + "22" }}>
           <span style={{ color }}>{icon}</span>
         </div>
       </div>
-
       <div>
         <p className="text-3xl font-extrabold text-brand-900 tracking-tight leading-none">
           {fmt(today.totalAmount)}
@@ -81,8 +74,6 @@ function CompareCard({ label, today, yesterday, icon, color }) {
           <span className="text-xs text-brand-400">vs yesterday {fmt(yesterday.totalAmount)}</span>
         </div>
       </div>
-
-      {/* Mini inline bar: cash vs credit */}
       <div>
         <div className="flex justify-between text-[10px] text-brand-400 font-medium mb-1">
           <span>Cash <span className="font-bold text-brand-600">{fmt(today.cashSales)}</span></span>
@@ -108,13 +99,11 @@ function CompareCard({ label, today, yesterday, icon, color }) {
           </span>
         </div>
       </div>
-
       <div className="text-xs text-brand-400">{fmtInt(today.saleCount)} sale{today.saleCount !== 1 ? "s" : ""}</div>
     </div>
   );
 }
 
-// ── 7-Day Area Chart ──────────────────────────────────────────────────────
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
@@ -129,79 +118,70 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-function SalesTrendChart({ data }) {
-  return (
-    <div className="card p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-sm font-bold text-brand-900">7-Day Sales Trend</h3>
-          <p className="text-xs text-brand-400 mt-0.5">Daily revenue — cash vs credit</p>
-        </div>
-        <div className="flex items-center gap-3 text-[11px]">
-          <span className="flex items-center gap-1.5 text-brand-500">
-            <span className="w-3 h-0.5 rounded inline-block" style={{ background: C.teal }} />Cash
-          </span>
-          <span className="flex items-center gap-1.5 text-brand-500">
-            <span className="w-3 h-0.5 rounded inline-block" style={{ background: C.tealLt }} />Credit
-          </span>
-        </div>
+const SalesTrendChart = ({ data }) => (
+  <div className="card p-5">
+    <div className="flex items-center justify-between mb-4">
+      <div>
+        <h3 className="text-sm font-bold text-brand-900">7-Day Sales Trend</h3>
+        <p className="text-xs text-brand-400 mt-0.5">Daily revenue — cash vs credit</p>
       </div>
-      <ResponsiveContainer width="100%" height={200}>
-        <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-          <defs>
-            <linearGradient id="gradCash" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%"  stopColor={C.teal}   stopOpacity={0.25} />
-              <stop offset="95%" stopColor={C.teal}   stopOpacity={0.02} />
-            </linearGradient>
-            <linearGradient id="gradCredit" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%"  stopColor={C.tealLt} stopOpacity={0.25} />
-              <stop offset="95%" stopColor={C.tealLt} stopOpacity={0.02} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke={C.tealPale} strokeOpacity={0.5} />
-          <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false}
-            tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
-          <Tooltip content={<CustomTooltip />} />
-          <Area type="monotone" dataKey="cash"   name="Cash"   stroke={C.teal}   strokeWidth={2} fill="url(#gradCash)"   dot={{ r: 3, fill: C.teal,   strokeWidth: 0 }} activeDot={{ r: 5 }} />
-          <Area type="monotone" dataKey="credit" name="Credit" stroke={C.tealLt} strokeWidth={2} fill="url(#gradCredit)" dot={{ r: 3, fill: C.tealLt, strokeWidth: 0 }} activeDot={{ r: 5 }} />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-// ── Sales breakdown bar chart ──────────────────────────────────────────────
-function SalesBarChart({ data }) {
-  return (
-    <div className="card p-5">
-      <div className="mb-4">
-        <h3 className="text-sm font-bold text-brand-900">Daily Revenue</h3>
-        <p className="text-xs text-brand-400 mt-0.5">Total amount per day this week</p>
+      <div className="flex items-center gap-3 text-[11px]">
+        <span className="flex items-center gap-1.5 text-brand-500">
+          <span className="w-3 h-0.5 rounded inline-block" style={{ background: C.teal }} />Cash
+        </span>
+        <span className="flex items-center gap-1.5 text-brand-500">
+          <span className="w-3 h-0.5 rounded inline-block" style={{ background: C.tealLt }} />Credit
+        </span>
       </div>
-      <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke={C.tealPale} strokeOpacity={0.5} vertical={false} />
-          <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false}
-            tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
-          <Tooltip content={<CustomTooltip />} />
-          <Bar dataKey="total" name="Revenue" radius={[6, 6, 0, 0]} maxBarSize={40}>
-            {data.map((entry, index) => (
-              <Cell
-                key={index}
-                fill={index === data.length - 1 ? C.teal : C.tealPale}
-                stroke={index === data.length - 1 ? C.teal : "transparent"}
-              />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
     </div>
-  );
-}
+    <ResponsiveContainer width="100%" height={200}>
+      <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+        <defs>
+          <linearGradient id="gradCash" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%"  stopColor={C.teal}   stopOpacity={0.25} />
+            <stop offset="95%" stopColor={C.teal}   stopOpacity={0.02} />
+          </linearGradient>
+          <linearGradient id="gradCredit" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%"  stopColor={C.tealLt} stopOpacity={0.25} />
+            <stop offset="95%" stopColor={C.tealLt} stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke={C.tealPale} strokeOpacity={0.5} />
+        <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false}
+          tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
+        <Tooltip content={<CustomTooltip />} />
+        <Area type="monotone" dataKey="cash"   name="Cash"   stroke={C.teal}   strokeWidth={2} fill="url(#gradCash)"   dot={{ r: 3, fill: C.teal,   strokeWidth: 0 }} activeDot={{ r: 5 }} />
+        <Area type="monotone" dataKey="credit" name="Credit" stroke={C.tealLt} strokeWidth={2} fill="url(#gradCredit)" dot={{ r: 3, fill: C.tealLt, strokeWidth: 0 }} activeDot={{ r: 5 }} />
+      </AreaChart>
+    </ResponsiveContainer>
+  </div>
+);
 
-// ── Payment mix pie chart ─────────────────────────────────────────────────
+const SalesBarChart = ({ data }) => (
+  <div className="card p-5">
+    <div className="mb-4">
+      <h3 className="text-sm font-bold text-brand-900">Daily Revenue</h3>
+      <p className="text-xs text-brand-400 mt-0.5">Total amount per day this week</p>
+    </div>
+    <ResponsiveContainer width="100%" height={200}>
+      <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke={C.tealPale} strokeOpacity={0.5} vertical={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false}
+          tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
+        <Tooltip content={<CustomTooltip />} />
+        <Bar dataKey="total" name="Revenue" radius={[6, 6, 0, 0]} maxBarSize={40}>
+          {data.map((entry, index) => (
+            <Cell key={index} fill={index === data.length - 1 ? C.teal : C.tealPale}
+              stroke={index === data.length - 1 ? C.teal : "transparent"} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+);
+
 const RADIAN = Math.PI / 180;
 const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
   if (percent < 0.05) return null;
@@ -215,17 +195,15 @@ const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent
   );
 };
 
-function PaymentPieChart({ today, yesterday }) {
+const PaymentPieChart = ({ today, yesterday }) => {
   const todayData = [
     { name: "Cash",   value: today.cashSales   },
     { name: "Credit", value: today.creditSales },
   ].filter((d) => d.value > 0);
-
   const yesterdayData = [
     { name: "Cash",   value: yesterday.cashSales   },
     { name: "Credit", value: yesterday.creditSales },
   ].filter((d) => d.value > 0);
-
   const PIE_COLORS = [C.teal, C.tealLt];
 
   return (
@@ -235,7 +213,6 @@ function PaymentPieChart({ today, yesterday }) {
         <p className="text-xs text-brand-400 mt-0.5">Cash vs credit split</p>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        {/* Today */}
         <div className="flex flex-col items-center">
           <p className="text-[10px] font-bold text-brand-500 uppercase tracking-wider mb-1">Today</p>
           {todayData.length > 0 ? (
@@ -252,7 +229,6 @@ function PaymentPieChart({ today, yesterday }) {
             <div className="h-[130px] flex items-center justify-center text-xs text-brand-400">No sales yet</div>
           )}
         </div>
-        {/* Yesterday */}
         <div className="flex flex-col items-center">
           <p className="text-[10px] font-bold text-brand-500 uppercase tracking-wider mb-1">Yesterday</p>
           {yesterdayData.length > 0 ? (
@@ -270,7 +246,6 @@ function PaymentPieChart({ today, yesterday }) {
           )}
         </div>
       </div>
-      {/* Legend */}
       <div className="flex justify-center gap-4 mt-2">
         {[["Cash", C.teal], ["Credit", C.tealLt]].map(([lbl, clr]) => (
           <span key={lbl} className="flex items-center gap-1.5 text-[11px] text-brand-500">
@@ -280,9 +255,8 @@ function PaymentPieChart({ today, yesterday }) {
       </div>
     </div>
   );
-}
+};
 
-// ── Secondary KPI tile ────────────────────────────────────────────────────
 function KpiTile({ label, value, sub, icon, accent }) {
   const cfg = {
     teal:  { bar: C.teal,    bg: "#F0F7F6", ic: C.teal   },
@@ -294,10 +268,10 @@ function KpiTile({ label, value, sub, icon, accent }) {
   return (
     <div className="card p-4 relative overflow-hidden flex items-center gap-3">
       <div className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full" style={{ background: c.bar }} />
-      <div className="p-2 rounded-xl shrink-0" style={{ background: c.bg }}>
+      <div className="p-2.5 rounded-xl shrink-0" style={{ background: c.bg }}>
         <span style={{ color: c.ic }}>{icon}</span>
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="text-[10px] font-bold text-brand-500 uppercase tracking-wider">{label}</p>
         <p className="text-xl font-extrabold text-brand-900 tracking-tight leading-none mt-0.5">{value}</p>
         {sub && <p className="text-[10px] text-brand-400 mt-0.5">{sub}</p>}
@@ -306,7 +280,6 @@ function KpiTile({ label, value, sub, icon, accent }) {
   );
 }
 
-// ── Module nav groups ─────────────────────────────────────────────────────
 const CARD_GROUPS = [
   { label:"Organisation", accent:"bg-primary-50 border-primary-200/60", iconColor:"text-primary-600", cards:[
     { title:"Branches",  desc:"Manage locations",    href:"/branches",  roles:["admin","superAdmin"], icon:<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /> },
@@ -330,18 +303,17 @@ const CARD_GROUPS = [
   ]},
 ];
 
-// ── Main Dashboard ────────────────────────────────────────────────────────
 export default function Dashboard() {
   const { user }  = useAuth();
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading } = useQuery({
+    queryKey: ["dashboardSummary"],
+    queryFn: () => getDashboardSummary().then((r) => r.data.data),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    retry: 1,
+  });
 
-  useEffect(() => {
-    getDashboardSummary()
-      .then((r) => setSummary(r.data.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const summary = data;
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -350,7 +322,6 @@ export default function Dashboard() {
     return "Good evening";
   };
 
-  // empty fallback shapes
   const today     = summary?.today     ?? { saleCount:0, totalAmount:0, cashSales:0, creditSales:0 };
   const yesterday = summary?.yesterday ?? { saleCount:0, totalAmount:0, cashSales:0, creditSales:0 };
   const month     = summary?.thisMonth ?? { saleCount:0, totalAmount:0 };
@@ -358,8 +329,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-5">
-
-      {/* ── Header ────────────────────────────────────────────────────── */}
       <div className="flex items-end justify-between">
         <div>
           <p className="text-xs font-bold text-brand-400 uppercase tracking-widest mb-0.5">{greeting()}</p>
@@ -372,62 +341,36 @@ export default function Dashboard() {
             {new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}
           </p>
         </div>
-        {/* Live indicator */}
         <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <span className="text-xs font-semibold text-emerald-700">Live</span>
         </div>
       </div>
 
-      {/* ── Today vs Yesterday comparison row ─────────────────────────── */}
-      {loading ? (
+      {isLoading ? (
         <div className="grid grid-cols-2 gap-4">
           <CardSkeleton /><CardSkeleton />
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4">
-          <CompareCard
-            label="Today's Sales"
-            today={today}
-            yesterday={yesterday}
-            color={C.teal}
-            icon={
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            }
-          />
-          <CompareCard
-            label="Yesterday's Sales"
-            today={yesterday}
-            yesterday={{ ...yesterday, totalAmount: 0, cashSales: 0, creditSales: 0, saleCount: 0 }}
-            color={C.tealLt}
-            icon={
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-              </svg>
-            }
-          />
+          <CompareCard label="Today's Sales" today={today} yesterday={yesterday} color={C.teal} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+          <CompareCard label="Yesterday's Sales" today={yesterday} yesterday={{ ...yesterday, totalAmount: 0, cashSales: 0, creditSales: 0, saleCount: 0 }} color={C.tealLt} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>} />
         </div>
       )}
 
-      {/* ── Charts row ────────────────────────────────────────────────── */}
-      {loading ? (
+      {isLoading ? (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
           <div className="lg:col-span-3"><CardSkeleton h="h-48" /></div>
           <div className="lg:col-span-2"><CardSkeleton h="h-48" /></div>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-3">
-            <SalesTrendChart data={trend} />
-          </div>
+          <div className="lg:col-span-3"><SalesTrendChart data={trend} /></div>
           <div className="lg:col-span-2"><PaymentPieChart today={today} yesterday={yesterday} /></div>
         </div>
       )}
 
-      {/* ── Bar chart + secondary KPIs row ────────────────────────────── */}
-      {loading ? (
+      {isLoading ? (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
           <div className="lg:col-span-3"><CardSkeleton h="h-48" /></div>
           <div className="lg:col-span-2 space-y-3">
@@ -436,36 +379,15 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-3">
-            <SalesBarChart data={trend} />
-          </div>
+          <div className="lg:col-span-3"><SalesBarChart data={trend} /></div>
           <div className="lg:col-span-2 space-y-3">
-            <KpiTile
-              label="This Month"
-              value={fmt(month.totalAmount)}
-              sub={`${fmtInt(month.saleCount)} sales`}
-              accent="teal"
-              icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
-            />
-            <KpiTile
-              label="Outstanding Credit"
-              value={fmt(summary?.outstandingCreditTotal ?? 0)}
-              sub="Current receivables"
-              accent={summary?.outstandingCreditTotal > 0 ? "amber" : "slate"}
-              icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
-            />
-            <KpiTile
-              label="Low Stock Items"
-              value={fmtInt(summary?.lowStockItemCount ?? 0)}
-              sub="At or below reorder level"
-              accent={summary?.lowStockItemCount > 0 ? "rose" : "slate"}
-              icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}
-            />
+            <KpiTile label="This Month" value={fmt(month.totalAmount)} sub={`${fmtInt(month.saleCount)} sales`} accent="teal" icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>} />
+            <KpiTile label="Outstanding Credit" value={fmt(summary?.outstandingCreditTotal ?? 0)} sub="Current receivables" accent={summary?.outstandingCreditTotal > 0 ? "amber" : "slate"} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>} />
+            <KpiTile label="Low Stock Items" value={fmtInt(summary?.lowStockItemCount ?? 0)} sub="At or below reorder level" accent={summary?.lowStockItemCount > 0 ? "rose" : "slate"} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>} />
           </div>
         </div>
       )}
 
-      {/* ── Module nav ────────────────────────────────────────────────── */}
       <div className="space-y-5">
         {CARD_GROUPS.map((group) => {
           const visible = group.cards.filter((c) => c.roles.includes(user?.role));
@@ -478,11 +400,8 @@ export default function Dashboard() {
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {visible.map((card) => (
-                  <Link
-                    key={card.href}
-                    to={card.href}
-                    className={`group flex items-center gap-3.5 p-4 bg-white rounded-2xl border shadow-card hover:shadow-card-md hover:-translate-y-0.5 transition-all duration-200 ${group.accent}`}
-                  >
+                  <Link key={card.href} to={card.href}
+                    className={`group flex items-center gap-3.5 p-4 bg-white rounded-2xl border shadow-card hover:shadow-card-md hover:-translate-y-0.5 transition-all duration-200 ${group.accent}`}>
                     <div className={`p-2.5 rounded-xl bg-white/80 ${group.iconColor} shrink-0 border border-current/10`}>
                       <svg className="w-4.5 h-4.5" style={{width:"18px",height:"18px"}} fill="none" viewBox="0 0 24 24" stroke="currentColor">{card.icon}</svg>
                     </div>
@@ -498,7 +417,6 @@ export default function Dashboard() {
           );
         })}
       </div>
-
     </div>
   );
 }

@@ -34,13 +34,12 @@ export function AuthProvider({ children }) {
     return () => { active = false; };
   }, [token, user?.id, user?.role]);
 
-const persist = (userData, jwt, theme) => {
+  const persist = (userData, jwt) => {
     localStorage.setItem("token", jwt);
     localStorage.setItem("user", JSON.stringify(userData));
-    if (theme) localStorage.setItem("theme", theme);
     setToken(jwt);
     setUser(userData);
-};
+  };
 
   const login = useCallback(async (credentials) => {
     const { data } = await loginApi(credentials);
