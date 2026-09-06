@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { getStock, addStock, getMovements } from "../services/stockService";
-import { getBranches } from "../services/branchService";
+import { getBranches, getBranchById } from "../services/branchService";
 import { getItems } from "../services/itemService";
 import Modal from "../components/ui/Modal";
 import Spinner from "../components/ui/Spinner";
@@ -164,8 +164,13 @@ export default function Stock() {
 
   // ── Load reference data on mount ────────────────────────────────────────
   useEffect(() => {
-    // Load branches for all roles — needed for AddStock form branch name display
-    getBranches().then((r) => setBranches(r.data.data)).catch(() => {});
+    if (isAdmin) {
+      getBranches().then((r) => setBranches(r.data.data)).catch(() => {});
+    } else if (user?.branchId) {
+      getBranchById(user.branchId).then((r) => {
+        setBranches([r.data.data]);
+      }).catch(() => {});
+    }
     getItems().then((r) => setItems(r.data.data)).catch(() => {});
   }, []);
 

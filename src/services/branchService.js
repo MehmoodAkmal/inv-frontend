@@ -7,9 +7,11 @@ import api from "./api";
 export const getBranches = (params = {}) => api.get("/branches", { params });
 
 /**
- * POST /api/v1/branches
- * @param {{ name: string, address?: string }} data
+ * GET /api/v1/branches/:id
+ * @param {string} id
  */
+export const getBranchById = (id) => api.get(`/branches/${id}`);
+
 export const createBranch = (data) => api.post("/branches", data);
 
 /**
