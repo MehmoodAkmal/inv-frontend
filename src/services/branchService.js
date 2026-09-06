@@ -1,10 +1,10 @@
-import api from "./api";
+import api from './api';
 
 /**
  * GET /api/v1/branches
  * @param {{ includeInactive?: boolean, organizationId?: string }} params
  */
-export const getBranches = (params = {}) => api.get("/branches", { params });
+export const getBranches = (params = {}) => api.get('/branches', { params });
 
 /**
  * GET /api/v1/branches/:id
@@ -12,7 +12,7 @@ export const getBranches = (params = {}) => api.get("/branches", { params });
  */
 export const getBranchById = (id) => api.get(`/branches/${id}`);
 
-export const createBranch = (data) => api.post("/branches", data);
+export const createBranch = (data) => api.post('/branches', data);
 
 /**
  * PUT /api/v1/branches/:id

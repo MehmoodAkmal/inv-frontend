@@ -1,16 +1,16 @@
-import api from "./api";
+import api from './api';
 
 /**
  * GET /api/v1/staff
  * @param {{ branchId?: string }} params
  */
-export const getStaff = (params = {}) => api.get("/staff", { params });
+export const getStaff = (params = {}) => api.get('/staff', { params });
 
 /**
  * POST /api/v1/staff
  * @param {{ firstName, lastName, email, password, role, branchId }} data
  */
-export const createStaff = (data) => api.post("/staff", data);
+export const createStaff = (data) => api.post('/staff', data);
 
 /**
  * PUT /api/v1/staff/:id

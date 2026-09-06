@@ -1,26 +1,28 @@
-import CustomSelect from "../components/ui/CustomSelect";
-import { useState, useEffect, useCallback } from "react";
-import toast from "react-hot-toast";
-import { useAuth } from "../context/AuthContext";
-import { getStock, addStock, getMovements } from "../services/stockService";
-import { getBranches, getBranchById } from "../services/branchService";
-import { getItems } from "../services/itemService";
-import Modal from "../components/ui/Modal";
-import Spinner from "../components/ui/Spinner";
+import CustomSelect from '../components/ui/CustomSelect';
+import { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
+import { getStock, addStock, getMovements } from '../services/stockService';
+import { getBranches, getBranchById } from '../services/branchService';
+import { getItems } from '../services/itemService';
+import Modal from '../components/ui/Modal';
+import Spinner from '../components/ui/Spinner';
 
 // ── Movement type config ──────────────────────────────────────────────────
 const MOVEMENT_TYPE_STYLES = {
-  purchase:      { label: "Purchase",      className: "bg-green-100 text-green-800" },
-  sale:          { label: "Sale",          className: "bg-blue-100 text-blue-800"  },
-  transfer_in:   { label: "Transfer In",   className: "bg-violet-100 text-violet-800" },
-  transfer_out:  { label: "Transfer Out",  className: "bg-orange-100 text-orange-800" },
-  adjustment:    { label: "Adjustment",    className: "bg-gray-100 text-gray-700"  },
+  purchase: { label: 'Purchase', className: 'bg-green-100 text-green-800' },
+  sale: { label: 'Sale', className: 'bg-blue-100 text-blue-800' },
+  transfer_in: { label: 'Transfer In', className: 'bg-violet-100 text-violet-800' },
+  transfer_out: { label: 'Transfer Out', className: 'bg-orange-100 text-orange-800' },
+  adjustment: { label: 'Adjustment', className: 'bg-gray-100 text-gray-700' },
 };
 
 function MovementBadge({ type }) {
-  const cfg = MOVEMENT_TYPE_STYLES[type] ?? { label: type, className: "bg-gray-100 text-gray-700" };
+  const cfg = MOVEMENT_TYPE_STYLES[type] ?? { label: type, className: 'bg-gray-100 text-gray-700' };
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cfg.className}`}>
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cfg.className}`}
+    >
       {cfg.label}
     </span>
   );
@@ -29,10 +31,10 @@ function MovementBadge({ type }) {
 // ── Add Stock form (defined outside Stock to keep identity stable) ─────────
 function AddStockForm({ branches, items, userRole, allowedBranchId, onSubmit, onCancel, saving }) {
   const [form, setForm] = useState({
-    branchId: userRole !== "admin" ? (allowedBranchId ?? "") : "",
-    itemId: "",
-    quantity: "",
-    note: "",
+    branchId: userRole !== 'admin' ? (allowedBranchId ?? '') : '',
+    itemId: '',
+    quantity: '',
+    note: '',
   });
 
   const change = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -46,17 +48,29 @@ function AddStockForm({ branches, items, userRole, allowedBranchId, onSubmit, on
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Branch — admin picks, manager/cashier see their branch as read-only */}
       <div>
-        <label className="label">Branch <span className="text-red-500">*</span></label>
-        {userRole === "admin" ? (
-          <CustomSelect name="branchId" required value={form.branchId} onChange={change} className="input-field">
+        <label className="label">
+          Branch <span className="text-red-500">*</span>
+        </label>
+        {userRole === 'admin' ? (
+          <CustomSelect
+            name="branchId"
+            required
+            value={form.branchId}
+            onChange={change}
+            className="input-field"
+          >
             <option value="">Select branch</option>
-            {branches.filter((b) => b.isActive).map((b) => (
-              <option key={b._id} value={b._id}>{b.name}</option>
-            ))}
+            {branches
+              .filter((b) => b.isActive)
+              .map((b) => (
+                <option key={b._id} value={b._id}>
+                  {b.name}
+                </option>
+              ))}
           </CustomSelect>
         ) : (
           <input
-            value={branches.find((b) => b._id === allowedBranchId)?.name ?? allowedBranchId ?? ""}
+            value={branches.find((b) => b._id === allowedBranchId)?.name ?? allowedBranchId ?? ''}
             disabled
             className="input-field"
           />
@@ -65,22 +79,43 @@ function AddStockForm({ branches, items, userRole, allowedBranchId, onSubmit, on
 
       {/* Item */}
       <div>
-        <label className="label">Item <span className="text-red-500">*</span></label>
-        <CustomSelect name="itemId" required value={form.itemId} onChange={change} className="input-field">
+        <label className="label">
+          Item <span className="text-red-500">*</span>
+        </label>
+        <CustomSelect
+          name="itemId"
+          required
+          value={form.itemId}
+          onChange={change}
+          className="input-field"
+        >
           <option value="">Select item</option>
-          {items.filter((i) => i.isActive).map((i) => (
-            <option key={i._id} value={i._id}>{i.name}{i.sku ? ` — ${i.sku}` : ""}</option>
-          ))}
+          {items
+            .filter((i) => i.isActive)
+            .map((i) => (
+              <option key={i._id} value={i._id}>
+                {i.name}
+                {i.sku ? ` — ${i.sku}` : ''}
+              </option>
+            ))}
         </CustomSelect>
       </div>
 
       {/* Quantity */}
       <div>
-        <label className="label">Quantity <span className="text-red-500">*</span></label>
+        <label className="label">
+          Quantity <span className="text-red-500">*</span>
+        </label>
         <input
-          name="quantity" type="number" min="1" step="1" required
-          value={form.quantity} onChange={change}
-          className="input-field" placeholder="e.g. 50"
+          name="quantity"
+          type="number"
+          min="1"
+          step="1"
+          required
+          value={form.quantity}
+          onChange={change}
+          className="input-field"
+          placeholder="e.g. 50"
         />
       </div>
 
@@ -88,13 +123,19 @@ function AddStockForm({ branches, items, userRole, allowedBranchId, onSubmit, on
       <div>
         <label className="label">Note</label>
         <input
-          name="note" type="text" value={form.note} onChange={change}
-          className="input-field" placeholder="Optional note (e.g. supplier name)"
+          name="note"
+          type="text"
+          value={form.note}
+          onChange={change}
+          className="input-field"
+          placeholder="Optional note (e.g. supplier name)"
         />
       </div>
 
       <div className="flex justify-end gap-3 pt-2">
-        <button type="button" className="btn-secondary" onClick={onCancel} disabled={saving}>Cancel</button>
+        <button type="button" className="btn-secondary" onClick={onCancel} disabled={saving}>
+          Cancel
+        </button>
         <button type="submit" className="btn-primary" disabled={saving}>
           {saving && <Spinner size="sm" className="mr-2" />}
           Add stock
@@ -136,16 +177,16 @@ function Pagination({ pagination, onPageChange }) {
 // ── Main page ──────────────────────────────────────────────────────────────
 export default function Stock() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === 'admin';
 
-  const [tab, setTab] = useState("stock"); // "stock" | "movements"
+  const [tab, setTab] = useState('stock'); // "stock" | "movements"
 
   // Shared reference data
   const [branches, setBranches] = useState([]);
   const [items, setItems] = useState([]);
 
   // ── Stock levels tab ────────────────────────────────────────────────────
-  const [selectedBranch, setSelectedBranch] = useState("");
+  const [selectedBranch, setSelectedBranch] = useState('');
   const [stockRows, setStockRows] = useState([]);
   const [stockLoading, setStockLoading] = useState(false);
   const [stockFetched, setStockFetched] = useState(false);
@@ -155,8 +196,8 @@ export default function Stock() {
   const [saving, setSaving] = useState(false);
 
   // ── Movement history tab ────────────────────────────────────────────────
-  const [movBranch, setMovBranch] = useState("");
-  const [movItem, setMovItem] = useState("");
+  const [movBranch, setMovBranch] = useState('');
+  const [movItem, setMovItem] = useState('');
   const [movements, setMovements] = useState([]);
   const [movPagination, setMovPagination] = useState(null);
   const [movPage, setMovPage] = useState(1);
@@ -165,30 +206,39 @@ export default function Stock() {
   // ── Load reference data on mount ────────────────────────────────────────
   useEffect(() => {
     if (isAdmin) {
-      getBranches().then((r) => setBranches(r.data.data)).catch(() => {});
+      getBranches()
+        .then((r) => setBranches(r.data.data))
+        .catch(() => {});
     } else if (user?.branchId) {
-      getBranchById(user.branchId).then((r) => {
-        setBranches([r.data.data]);
-      }).catch(() => {});
+      getBranchById(user.branchId)
+        .then((r) => {
+          setBranches([r.data.data]);
+        })
+        .catch(() => {});
     }
-    getItems().then((r) => setItems(r.data.data)).catch(() => {});
+    getItems()
+      .then((r) => setItems(r.data.data))
+      .catch(() => {});
   }, []);
 
   // ── Fetch stock levels ───────────────────────────────────────────────────
-  const fetchStock = useCallback(async (branchId) => {
-    setStockLoading(true);
-    setStockFetched(false);
-    try {
-      const params = isAdmin ? { branchId } : {};
-      const { data } = await getStock(params);
-      setStockRows(data.data);
-      setStockFetched(true);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to load stock");
-    } finally {
-      setStockLoading(false);
-    }
-  }, [isAdmin]);
+  const fetchStock = useCallback(
+    async (branchId) => {
+      setStockLoading(true);
+      setStockFetched(false);
+      try {
+        const params = isAdmin ? { branchId } : {};
+        const { data } = await getStock(params);
+        setStockRows(data.data);
+        setStockFetched(true);
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Failed to load stock');
+      } finally {
+        setStockLoading(false);
+      }
+    },
+    [isAdmin]
+  );
 
   // Non-admin roles load their own branch stock on mount
   useEffect(() => {
@@ -206,14 +256,14 @@ export default function Stock() {
       setMovements(data.data);
       setMovPagination(data.pagination);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to load movements");
+      toast.error(err.response?.data?.message || 'Failed to load movements');
     } finally {
       setMovLoading(false);
     }
   }, [isAdmin, movBranch, movItem, movPage]);
 
   useEffect(() => {
-    if (tab === "movements") fetchMovements();
+    if (tab === 'movements') fetchMovements();
   }, [tab, fetchMovements]);
 
   // ── Add stock ────────────────────────────────────────────────────────────
@@ -226,13 +276,13 @@ export default function Stock() {
         payload.branchId = user?.branchId;
       }
       await addStock(payload);
-      toast.success("Stock added successfully");
+      toast.success('Stock added successfully');
       setAddOpen(false);
       // Re-fetch stock for whichever branch is currently shown
       if (isAdmin && selectedBranch) fetchStock(selectedBranch);
       else if (!isAdmin) fetchStock();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to add stock");
+      toast.error(err.response?.data?.message || 'Failed to add stock');
     } finally {
       setSaving(false);
     }
@@ -247,12 +297,19 @@ export default function Stock() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Stock</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Track inventory levels and purchase history</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Track inventory levels and purchase history
+          </p>
         </div>
-        {(user?.role === "admin" || user?.role === "manager") && (
+        {(user?.role === 'admin' || user?.role === 'manager') && (
           <button className="btn-primary" onClick={() => setAddOpen(true)}>
             <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
             </svg>
             Add stock
           </button>
@@ -262,16 +319,16 @@ export default function Stock() {
       {/* Tabs */}
       <div className="flex gap-1 mb-5 border-b border-gray-200">
         {[
-          { key: "stock", label: "Stock Levels" },
-          { key: "movements", label: "Movement History" },
+          { key: 'stock', label: 'Stock Levels' },
+          { key: 'movements', label: 'Movement History' },
         ].map(({ key, label }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
               tab === key
-                ? "border-primary-600 text-primary-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             {label}
@@ -280,7 +337,7 @@ export default function Stock() {
       </div>
 
       {/* ── Stock Levels tab ────────────────────────────────────────────── */}
-      {tab === "stock" && (
+      {tab === 'stock' && (
         <div>
           {isAdmin && (
             <div className="flex items-center gap-3 mb-4">
@@ -295,14 +352,22 @@ export default function Stock() {
                 aria-label="Select branch to view stock"
               >
                 <option value="">Select a branch…</option>
-                {branches.filter((b) => b.isActive).map((b) => (
-                  <option key={b._id} value={b._id}>{b.name}</option>
-                ))}
+                {branches
+                  .filter((b) => b.isActive)
+                  .map((b) => (
+                    <option key={b._id} value={b._id}>
+                      {b.name}
+                    </option>
+                  ))}
               </CustomSelect>
               {lowStockCount > 0 && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                   <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    <path
+                      fillRule="evenodd"
+                      d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   {lowStockCount} low stock
                 </span>
@@ -314,9 +379,13 @@ export default function Stock() {
             <div className="mb-4">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 000-2 1 1 0 000 2z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 000-2 1 1 0 000 2z"
+                    clipRule="evenodd"
+                  />
                 </svg>
-                {lowStockCount} item{lowStockCount > 1 ? "s" : ""} below reorder level
+                {lowStockCount} item{lowStockCount > 1 ? 's' : ''} below reorder level
               </span>
             </div>
           )}
@@ -328,17 +397,35 @@ export default function Stock() {
               </div>
             ) : isAdmin && !selectedBranch ? (
               <div className="text-center py-16 text-gray-400">
-                <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
+                <svg
+                  className="w-10 h-10 mx-auto mb-3 opacity-40"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"
+                  />
                 </svg>
                 <p className="text-sm">Select a branch to view its stock levels</p>
               </div>
             ) : stockFetched && stockRows.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
-                <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+                <svg
+                  className="w-10 h-10 mx-auto mb-3 opacity-40"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"
+                  />
                 </svg>
                 <p className="text-sm">No stock found. Add stock to get started.</p>
               </div>
@@ -347,8 +434,11 @@ export default function Stock() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      {["Item", "SKU", "Unit", "Quantity", "Reorder Level", "Status"].map((h) => (
-                        <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                      {['Item', 'SKU', 'Unit', 'Quantity', 'Reorder Level', 'Status'].map((h) => (
+                        <th
+                          key={h}
+                          className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                        >
                           {h}
                         </th>
                       ))}
@@ -358,19 +448,21 @@ export default function Stock() {
                     {stockRows.map((row) => (
                       <tr
                         key={row._id}
-                        className={`transition-colors ${row.isLowStock ? "bg-amber-50 hover:bg-amber-100" : "hover:bg-gray-50"}`}
+                        className={`transition-colors ${row.isLowStock ? 'bg-amber-50 hover:bg-amber-100' : 'hover:bg-gray-50'}`}
                       >
                         <td className="px-5 py-4 text-sm font-medium text-gray-900">
-                          {row.itemId?.name ?? "—"}
+                          {row.itemId?.name ?? '—'}
                         </td>
                         <td className="px-5 py-4 text-sm text-gray-500 font-mono">
-                          {row.itemId?.sku || "—"}
+                          {row.itemId?.sku || '—'}
                         </td>
                         <td className="px-5 py-4 text-sm text-gray-500">
-                          {row.itemId?.unit ?? "—"}
+                          {row.itemId?.unit ?? '—'}
                         </td>
                         <td className="px-5 py-4">
-                          <span className={`text-sm font-semibold ${row.isLowStock ? "text-amber-700" : "text-gray-900"}`}>
+                          <span
+                            className={`text-sm font-semibold ${row.isLowStock ? 'text-amber-700' : 'text-gray-900'}`}
+                          >
                             {row.quantity}
                           </span>
                         </td>
@@ -397,35 +489,51 @@ export default function Stock() {
       )}
 
       {/* ── Movement History tab ─────────────────────────────────────────── */}
-      {tab === "movements" && (
+      {tab === 'movements' && (
         <div>
           {/* Filters */}
           <div className="flex items-center gap-3 flex-wrap mb-4">
             {isAdmin && (
               <CustomSelect
                 value={movBranch}
-                onChange={(e) => { setMovBranch(e.target.value); setMovPage(1); }}
+                onChange={(e) => {
+                  setMovBranch(e.target.value);
+                  setMovPage(1);
+                }}
                 className="input-field w-auto text-sm py-2"
                 aria-label="Filter movements by branch"
               >
                 <option value="">All branches</option>
                 {branches.map((b) => (
-                  <option key={b._id} value={b._id}>{b.name}</option>
+                  <option key={b._id} value={b._id}>
+                    {b.name}
+                  </option>
                 ))}
               </CustomSelect>
             )}
             <CustomSelect
               value={movItem}
-              onChange={(e) => { setMovItem(e.target.value); setMovPage(1); }}
+              onChange={(e) => {
+                setMovItem(e.target.value);
+                setMovPage(1);
+              }}
               className="input-field w-auto text-sm py-2"
               aria-label="Filter movements by item"
             >
               <option value="">All items</option>
               {items.map((i) => (
-                <option key={i._id} value={i._id}>{i.name}</option>
+                <option key={i._id} value={i._id}>
+                  {i.name}
+                </option>
               ))}
             </CustomSelect>
-            <button className="btn-secondary py-2 px-4 text-sm" onClick={() => { setMovPage(1); fetchMovements(); }}>
+            <button
+              className="btn-secondary py-2 px-4 text-sm"
+              onClick={() => {
+                setMovPage(1);
+                fetchMovements();
+              }}
+            >
               Apply
             </button>
           </div>
@@ -437,9 +545,18 @@ export default function Stock() {
               </div>
             ) : movements.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
-                <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                <svg
+                  className="w-10 h-10 mx-auto mb-3 opacity-40"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
                 </svg>
                 <p className="text-sm">No movement records found.</p>
               </div>
@@ -449,11 +566,16 @@ export default function Stock() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        {["Date", "Item", "Type", "Qty", "Before", "After", "Note", "By"].map((h) => (
-                          <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                            {h}
-                          </th>
-                        ))}
+                        {['Date', 'Item', 'Type', 'Qty', 'Before', 'After', 'Note', 'By'].map(
+                          (h) => (
+                            <th
+                              key={h}
+                              className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                            >
+                              {h}
+                            </th>
+                          )
+                        )}
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
@@ -463,9 +585,11 @@ export default function Stock() {
                             {new Date(m.createdAt).toLocaleString()}
                           </td>
                           <td className="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">
-                            {m.itemId?.name ?? "—"}
+                            {m.itemId?.name ?? '—'}
                             {m.itemId?.sku && (
-                              <span className="ml-1 text-xs text-gray-400 font-mono">{m.itemId.sku}</span>
+                              <span className="ml-1 text-xs text-gray-400 font-mono">
+                                {m.itemId.sku}
+                              </span>
                             )}
                           </td>
                           <td className="px-4 py-3">
@@ -477,12 +601,10 @@ export default function Stock() {
                           <td className="px-4 py-3 text-sm text-gray-500">{m.previousQuantity}</td>
                           <td className="px-4 py-3 text-sm text-gray-500">{m.newQuantity}</td>
                           <td className="px-4 py-3 text-sm text-gray-400 max-w-[160px] truncate">
-                            {m.note || "—"}
+                            {m.note || '—'}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
-                            {m.createdBy
-                              ? `${m.createdBy.firstName} ${m.createdBy.lastName}`
-                              : "—"}
+                            {m.createdBy ? `${m.createdBy.firstName} ${m.createdBy.lastName}` : '—'}
                           </td>
                         </tr>
                       ))}

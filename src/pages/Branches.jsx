@@ -1,28 +1,29 @@
-import { useState, useEffect, useCallback } from "react";
-import { useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import toast from "react-hot-toast";
+import { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 import {
   getBranches,
   createBranch,
   updateBranch,
   deactivateBranch,
-} from "../services/branchService";
-import Modal from "../components/ui/Modal";
-import ConfirmDialog from "../components/ui/ConfirmDialog";
-import Spinner from "../components/ui/Spinner";
+} from '../services/branchService';
+import Modal from '../components/ui/Modal';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Spinner from '../components/ui/Spinner';
 
-const EMPTY_FORM = { name: "", address: "" };
+const EMPTY_FORM = { name: '', address: '' };
 
 export default function Branches() {
   const { user, permissions } = useAuth();
   const { search: qs } = useLocation();
-  const urlOrgId = new URLSearchParams(qs).get("organizationId");
-  const isSuperAdmin = user?.role === "superAdmin";
-  const can = (action) => ["admin", "superAdmin"].includes(user?.role) || Boolean(permissions?.branches?.[action]);
-  const canCreate = can("create");
-  const canEdit = can("edit");
-  const canDeactivate = can("deactivate");
+  const urlOrgId = new URLSearchParams(qs).get('organizationId');
+  const isSuperAdmin = user?.role === 'superAdmin';
+  const can = (action) =>
+    ['admin', 'superAdmin'].includes(user?.role) || Boolean(permissions?.branches?.[action]);
+  const canCreate = can('create');
+  const canEdit = can('edit');
+  const canDeactivate = can('deactivate');
   const canManage = canCreate || canEdit || canDeactivate;
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +48,7 @@ export default function Branches() {
       const { data } = await getBranches(params);
       setBranches(data.data);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to load branches");
+      toast.error(err.response?.data?.message || 'Failed to load branches');
     } finally {
       setLoading(false);
     }
@@ -66,7 +67,7 @@ export default function Branches() {
 
   const openEdit = (branch) => {
     setEditing(branch);
-    setForm({ name: branch.name, address: branch.address ?? "" });
+    setForm({ name: branch.name, address: branch.address ?? '' });
     setModalOpen(true);
   };
 
@@ -76,8 +77,7 @@ export default function Branches() {
     setForm(EMPTY_FORM);
   };
 
-  const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -85,15 +85,15 @@ export default function Branches() {
     try {
       if (editing) {
         await updateBranch(editing._id, form);
-        toast.success("Branch updated");
+        toast.success('Branch updated');
       } else {
         await createBranch(form);
-        toast.success("Branch created");
+        toast.success('Branch created');
       }
       closeModal();
       fetchBranches();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Operation failed");
+      toast.error(err.response?.data?.message || 'Operation failed');
     } finally {
       setSaving(false);
     }
@@ -109,12 +109,12 @@ export default function Branches() {
     setDeactivating(true);
     try {
       await deactivateBranch(targetBranch._id);
-      toast.success("Branch deactivated");
+      toast.success('Branch deactivated');
       setConfirmOpen(false);
       setTargetBranch(null);
       fetchBranches();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to deactivate");
+      toast.error(err.response?.data?.message || 'Failed to deactivate');
     } finally {
       setDeactivating(false);
     }
@@ -126,26 +126,33 @@ export default function Branches() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Branches</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Manage your organization&apos;s locations
-          </p>
+          <p className="text-sm text-gray-500 mt-0.5">Manage your organization&apos;s locations</p>
         </div>
         <div className="flex items-center gap-3">
-          {(canEdit || canDeactivate) && <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={includeInactive}
-              onChange={(e) => setIncludeInactive(e.target.checked)}
-              className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-            />
-            Show inactive
-          </label>}
-          {canCreate && <button className="btn-primary" onClick={openCreate}>
-            <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Add branch
-          </button>}
+          {(canEdit || canDeactivate) && (
+            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={includeInactive}
+                onChange={(e) => setIncludeInactive(e.target.checked)}
+                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              />
+              Show inactive
+            </label>
+          )}
+          {canCreate && (
+            <button className="btn-primary" onClick={openCreate}>
+              <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Add branch
+            </button>
+          )}
         </div>
       </div>
 
@@ -157,9 +164,18 @@ export default function Branches() {
           </div>
         ) : branches.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
-            <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
+            <svg
+              className="w-10 h-10 mx-auto mb-3 opacity-40"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"
+              />
             </svg>
             <p className="text-sm">No branches found. Add your first one.</p>
           </div>
@@ -168,37 +184,43 @@ export default function Branches() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  {["Name", "Address", "Status", "Created", ...(canManage ? ["Actions"] : [])].map((h) => (
-                    <th
-                      key={h}
-                      className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  {['Name', 'Address', 'Status', 'Created', ...(canManage ? ['Actions'] : [])].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                      >
+                        {h}
+                      </th>
+                    )
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
                 {branches.map((b) => (
                   <tr key={b._id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-4 text-sm font-medium text-gray-900">{b.name}</td>
-                    <td className="px-5 py-4 text-sm text-gray-500">{b.address || "—"}</td>
-                    {canManage && <td className="px-5 py-4">
-                      <span className={b.isActive ? "badge-active" : "badge-inactive"}>
-                        {b.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </td>}
+                    <td className="px-5 py-4 text-sm text-gray-500">{b.address || '—'}</td>
+                    {canManage && (
+                      <td className="px-5 py-4">
+                        <span className={b.isActive ? 'badge-active' : 'badge-inactive'}>
+                          {b.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                    )}
                     <td className="px-5 py-4 text-sm text-gray-500">
                       {new Date(b.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
-                        {canEdit && <button
-                          className="btn-secondary py-1 px-3 text-xs"
-                          onClick={() => openEdit(b)}
-                        >
-                          Edit
-                        </button>}
+                        {canEdit && (
+                          <button
+                            className="btn-secondary py-1 px-3 text-xs"
+                            onClick={() => openEdit(b)}
+                          >
+                            Edit
+                          </button>
+                        )}
                         {canDeactivate && b.isActive && (
                           <button
                             className="btn-danger py-1 px-3 text-xs"
@@ -218,14 +240,12 @@ export default function Branches() {
       </div>
 
       {/* Create / Edit modal */}
-      <Modal
-        isOpen={modalOpen}
-        onClose={closeModal}
-        title={editing ? "Edit branch" : "Add branch"}
-      >
+      <Modal isOpen={modalOpen} onClose={closeModal} title={editing ? 'Edit branch' : 'Add branch'}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="b-name" className="label">Branch name <span className="text-red-500">*</span></label>
+            <label htmlFor="b-name" className="label">
+              Branch name <span className="text-red-500">*</span>
+            </label>
             <input
               id="b-name"
               name="name"
@@ -238,7 +258,9 @@ export default function Branches() {
             />
           </div>
           <div>
-            <label htmlFor="b-address" className="label">Address</label>
+            <label htmlFor="b-address" className="label">
+              Address
+            </label>
             <input
               id="b-address"
               name="address"
@@ -255,7 +277,7 @@ export default function Branches() {
             </button>
             <button type="submit" className="btn-primary" disabled={saving}>
               {saving && <Spinner size="sm" className="mr-2" />}
-              {editing ? "Save changes" : "Create branch"}
+              {editing ? 'Save changes' : 'Create branch'}
             </button>
           </div>
         </form>
@@ -264,7 +286,10 @@ export default function Branches() {
       {/* Deactivate confirm */}
       <ConfirmDialog
         isOpen={confirmOpen}
-        onClose={() => { setConfirmOpen(false); setTargetBranch(null); }}
+        onClose={() => {
+          setConfirmOpen(false);
+          setTargetBranch(null);
+        }}
         onConfirm={handleDeactivate}
         loading={deactivating}
         title="Deactivate branch"

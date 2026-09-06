@@ -1,7 +1,14 @@
-import Modal from "./Modal";
-import Spinner from "./Spinner";
+import Modal from './Modal';
+import Spinner from './Spinner';
 
-export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, loading = false }) {
+export default function ConfirmDialog({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  loading = false,
+}) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <p className="text-sm text-gray-600 mb-6">{message}</p>

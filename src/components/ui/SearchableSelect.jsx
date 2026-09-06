@@ -1,20 +1,24 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from 'react';
 
-export default function SearchableSelect({ options = [], value, onChange, placeholder = "Search...", loading }) {
+export default function SearchableSelect({
+  options = [],
+  value,
+  onChange,
+  placeholder = 'Search...',
+  loading,
+}) {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const rootRef = useRef(null);
 
-  const filtered = options.filter((opt) =>
-    opt.label.toLowerCase().includes(query.toLowerCase())
-  );
+  const filtered = options.filter((opt) => opt.label.toLowerCase().includes(query.toLowerCase()));
 
   useEffect(() => {
     const handler = (e) => {
       if (!rootRef.current?.contains(e.target)) setOpen(false);
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   return (
@@ -22,7 +26,10 @@ export default function SearchableSelect({ options = [], value, onChange, placeh
       <input
         type="text"
         value={query}
-        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+        }}
         onFocus={() => setOpen(true)}
         placeholder={placeholder}
         className="input-field text-sm"
@@ -38,9 +45,15 @@ export default function SearchableSelect({ options = [], value, onChange, placeh
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => { onChange?.(opt.value); setQuery(opt.label); setOpen(false); }}
+                onClick={() => {
+                  onChange?.(opt.value);
+                  setQuery(opt.label);
+                  setOpen(false);
+                }}
                 className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
-                  value === opt.value ? "bg-primary-50 text-primary-700 font-medium" : "text-brand-800 hover:bg-brand-50"
+                  value === opt.value
+                    ? 'bg-primary-50 text-primary-700 font-medium'
+                    : 'text-brand-800 hover:bg-brand-50'
                 }`}
               >
                 <span className="truncate">{opt.label}</span>

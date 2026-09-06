@@ -1,16 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import Sidebar from "./Sidebar";
-import ThemeToggle from "../ui/ThemeToggle";
-import NotificationBell from "../ui/NotificationBell";
+import { useState, useEffect, useCallback } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import Sidebar from './Sidebar';
+import ThemeToggle from '../ui/ThemeToggle';
+import NotificationBell from '../ui/NotificationBell';
 
 export default function DashboardLayout() {
-  const [sidebarOpen,     setSidebarOpen]     = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const navigate = useNavigate();
   const { data: notifData } = useQuery({
-    queryKey: ["notifications"],
+    queryKey: ['notifications'],
     queryFn: () => Promise.resolve({ data: { count: 0 } }),
     refetchInterval: 30000,
     staleTime: 30000,
@@ -18,26 +18,25 @@ export default function DashboardLayout() {
   const notifCount = notifData?.data?.count ?? 0;
 
   useEffect(() => {
-    const stored = localStorage.getItem("sidebar-collapsed");
-    if (stored !== null) setSidebarCollapsed(stored === "true");
+    const stored = localStorage.getItem('sidebar-collapsed');
+    if (stored !== null) setSidebarCollapsed(stored === 'true');
   }, []);
 
   useEffect(() => {
-    const handler = () => navigate("/login");
-    window.addEventListener("auth:logout", handler);
-    return () => window.removeEventListener("auth:logout", handler);
+    const handler = () => navigate('/login');
+    window.addEventListener('auth:logout', handler);
+    return () => window.removeEventListener('auth:logout', handler);
   }, [navigate]);
 
   const toggleCollapse = useCallback(() => {
     setSidebarCollapsed((prev) => {
-      localStorage.setItem("sidebar-collapsed", String(!prev));
+      localStorage.setItem('sidebar-collapsed', String(!prev));
       return !prev;
     });
   }, []);
 
   return (
     <div className="flex h-screen overflow-hidden bg-brand-50 dark:bg-dark-900 transition-colors duration-200">
-
       {/* ── Desktop sidebar ─────────────────────────────────────────── */}
       <div className="hidden lg:flex lg:shrink-0">
         <Sidebar collapsed={sidebarCollapsed} onToggle={toggleCollapse} />
@@ -52,26 +51,34 @@ export default function DashboardLayout() {
             aria-hidden="true"
           />
           <div className="relative z-50">
-            <Sidebar
-              collapsed={false}
-              onClose={() => setSidebarOpen(false)}
-            />
+            <Sidebar collapsed={false} onClose={() => setSidebarOpen(false)} />
           </div>
         </div>
       )}
 
       {/* ── Main content ────────────────────────────────────────────── */}
       <div className="flex flex-col flex-1 overflow-hidden">
-
         {/* Desktop topbar */}
         <header className="hidden lg:flex items-center justify-between px-6 py-3 bg-white dark:bg-dark-800 border-b border-brand-200/50 dark:border-dark-600/30 shadow-sm shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-primary-600 flex items-center justify-center shrink-0">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+              <svg
+                className="w-4 h-4 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"
+                />
               </svg>
             </div>
-            <span className="font-bold text-sm text-brand-900 dark:text-white">Inventory Manager</span>
+            <span className="font-bold text-sm text-brand-900 dark:text-white">
+              Inventory Manager
+            </span>
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
@@ -90,17 +97,35 @@ export default function DashboardLayout() {
               className="p-2 rounded-lg text-brand-600 hover:bg-brand-100 transition-colors"
               aria-label="Open menu"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-primary-600 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+                <svg
+                  className="w-4 h-4 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"
+                  />
                 </svg>
               </div>
-              <span className="font-bold text-sm text-brand-900 dark:text-white">Inventory Manager</span>
+              <span className="font-bold text-sm text-brand-900 dark:text-white">
+                Inventory Manager
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-2">

@@ -5,7 +5,7 @@
 @layer base {
   body {
     @apply bg-brand-50 text-brand-900 antialiased;
-    font-feature-settings: "cv02","cv03","cv04","cv11";
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
   .dark {
     color-scheme: dark;
@@ -14,13 +14,18 @@
   .dark [data-theme] {
     @apply bg-gray-900 text-white;
   }
-  h1 { @apply text-2xl font-bold tracking-tight text-brand-900; }
-  h2 { @apply text-xl font-semibold text-brand-900; }
-  h3 { @apply text-base font-semibold text-brand-900; }
+  h1 {
+    @apply text-2xl font-bold tracking-tight text-brand-900;
+  }
+  h2 {
+    @apply text-xl font-semibold text-brand-900;
+  }
+  h3 {
+    @apply text-base font-semibold text-brand-900;
+  }
 }
 
 @layer components {
-
   /* ── Dark mode overrides ─────────────────────────────── */
   .dark .card,
   .dark .stat-card,
@@ -99,81 +104,81 @@
   .dark .theme-toggle {
     @apply text-gray-400 hover:bg-gray-700;
   }
-  .dark [data-theme="dark"] .card,
-  .dark [data-theme="dark"] .stat-card,
-  .dark [data-theme="dark"] .card-hover {
+  .dark [data-theme='dark'] .card,
+  .dark [data-theme='dark'] .stat-card,
+  .dark [data-theme='dark'] .card-hover {
     @apply bg-gray-800 border-gray-600/50 shadow-dark-card;
   }
-  .dark [data-theme="dark"] .table-th {
+  .dark [data-theme='dark'] .table-th {
     @apply bg-gray-700/50 text-gray-300;
   }
-  .dark [data-theme="dark"] .table-td {
+  .dark [data-theme='dark'] .table-td {
     @apply text-gray-300;
   }
-  .dark [data-theme="dark"] .table-row {
+  .dark [data-theme='dark'] .table-row {
     @apply border-gray-700 hover:bg-gray-700/50;
   }
-  .dark [data-theme="dark"] .input-field {
+  .dark [data-theme='dark'] .input-field {
     @apply bg-gray-800 border-gray-600 text-white placeholder-gray-400;
   }
-  .dark [data-theme="dark"] .btn-secondary {
+  .dark [data-theme='dark'] .btn-secondary {
     @apply bg-gray-800 text-white border-gray-600 hover:bg-gray-700;
   }
-  .dark [data-theme="dark"] .page-header {
+  .dark [data-theme='dark'] .page-header {
     @apply border-b border-gray-600/30;
   }
-  .dark [data-theme="dark"] .page-title {
+  .dark [data-theme='dark'] .page-title {
     @apply text-white;
   }
-  .dark [data-theme="dark"] .page-subtitle {
+  .dark [data-theme='dark'] .page-subtitle {
     @apply text-gray-400;
   }
-  .dark [data-theme="dark"] .stat-card-value {
+  .dark [data-theme='dark'] .stat-card-value {
     @apply text-white;
   }
-  .dark [data-theme="dark"] .stat-card-label {
+  .dark [data-theme='dark'] .stat-card-label {
     @apply text-gray-400;
   }
-  .dark [data-theme="dark"] .stat-card-sub {
+  .dark [data-theme='dark'] .stat-card-sub {
     @apply text-gray-500;
   }
-  .dark [data-theme="dark"] .label {
+  .dark [data-theme='dark'] .label {
     @apply text-gray-400;
   }
-  .dark [data-theme="dark"] .empty-state {
+  .dark [data-theme='dark'] .empty-state {
     @apply bg-gray-800;
   }
-  .dark [data-theme="dark"] .empty-state-icon {
+  .dark [data-theme='dark'] .empty-state-icon {
     @apply text-gray-600;
   }
-  .dark [data-theme="dark"] .empty-state-title {
+  .dark [data-theme='dark'] .empty-state-title {
     @apply text-gray-300;
   }
-  .dark [data-theme="dark"] .empty-state-desc {
+  .dark [data-theme='dark'] .empty-state-desc {
     @apply text-gray-500;
   }
-  .dark [data-theme="dark"] .skeleton {
+  .dark [data-theme='dark'] .skeleton {
     @apply bg-gray-600;
   }
-  .dark [data-theme="dark"] .tab-btn {
+  .dark [data-theme='dark'] .tab-btn {
     @apply text-gray-400 border-gray-700;
   }
-  .dark [data-theme="dark"] .tab-btn-active {
+  .dark [data-theme='dark'] .tab-btn-active {
     @apply text-brand-400 border-brand-400;
   }
-  .dark [data-theme="dark"] .tab-btn-inactive {
+  .dark [data-theme='dark'] .tab-btn-inactive {
     @apply text-gray-500 hover:text-gray-300 hover:border-gray-500;
   }
-  .dark [data-theme="dark"] .badge-active {
+  .dark [data-theme='dark'] .badge-active {
     @apply bg-gray-700 text-emerald-400 ring-1 ring-emerald-500/30;
   }
-  .dark [data-theme="dark"] .badge-inactive {
+  .dark [data-theme='dark'] .badge-inactive {
     @apply bg-gray-700 text-rose-400 ring-1 ring-rose-500/30;
   }
-  .dark [data-theme="dark"] .badge-role {
+  .dark [data-theme='dark'] .badge-role {
     @apply bg-gray-700 text-brand-400 ring-1 ring-primary-500/30;
   }
-  .dark [data-theme="dark"] .theme-toggle {
+  .dark [data-theme='dark'] .theme-toggle {
     @apply text-gray-400 hover:bg-gray-700;
   }
 

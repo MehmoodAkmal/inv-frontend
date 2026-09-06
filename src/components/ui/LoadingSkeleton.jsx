@@ -1,4 +1,9 @@
-export default function LoadingSkeleton({ h = "h-32", w = "w-full", rounded = "rounded-xl", count = 1 }) {
+export default function LoadingSkeleton({
+  h = 'h-32',
+  w = 'w-full',
+  rounded = 'rounded-xl',
+  count = 1,
+}) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (

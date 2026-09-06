@@ -1,16 +1,16 @@
-import api from "./api";
+import api from './api';
 
 /**
  * GET /api/v1/categories
  * @param {{ includeInactive?: boolean }} params
  */
-export const getCategories = (params = {}) => api.get("/categories", { params });
+export const getCategories = (params = {}) => api.get('/categories', { params });
 
 /**
  * POST /api/v1/categories
  * @param {{ name: string }} data
  */
-export const createCategory = (data) => api.post("/categories", data);
+export const createCategory = (data) => api.post('/categories', data);
 
 /**
  * PUT /api/v1/categories/:id
