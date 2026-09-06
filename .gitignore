@@ -1,24 +1,5 @@
-# Dependencies
-node_modules
-
-# Build output
-dist
-dist-ssr
-
-# Environment files
+node_modules/
+dist/
 .env
 .env.local
-.env.*.local
-
-# Editor
-.vscode
-.idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Logs
 *.log
-npm-debug.log*
