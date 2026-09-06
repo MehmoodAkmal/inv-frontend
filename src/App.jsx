@@ -76,10 +76,10 @@ export default function App() {
               </Route>
 
 <Route element={<RoleRoute allowedRoles={["admin","manager","cashier"]} />}>
-                <Route element={<RoleRoute permission={["categories", "view"]} />}>
+                <Route element={<RoleRoute allowedRoles={["admin","manager","cashier"]} permission={["categories", "view"]} />}>
                     <Route path="/categories" element={<Categories />} />
                 </Route>
-                <Route element={<RoleRoute permission={["items", "view"]} />}>
+                <Route element={<RoleRoute allowedRoles={["admin","manager","cashier"]} permission={["items", "view"]} />}>
                     <Route path="/items"      element={<Items />} />
                 </Route>
                 <Route element={<RoleRoute allowedRoles={["admin","manager"]} permission={["expenses", "view"]} />}>
@@ -88,7 +88,7 @@ export default function App() {
                 <Route element={<RoleRoute allowedRoles={["admin","manager"]} permission={["salary", "view"]} />}>
                     <Route path="/salary"     element={<Salary />} />
                 </Route>
-                <Route element={<RoleRoute permission={["reports", "dashboard"]} />}>
+                <Route element={<RoleRoute allowedRoles={["admin","manager","cashier"]} permission={["reports", "dashboard"]} />}>
                     <Route path="/reports"    element={<Reports />} />
                 </Route>
             </Route>

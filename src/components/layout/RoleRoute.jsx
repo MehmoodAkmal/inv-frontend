@@ -15,9 +15,8 @@ export default function RoleRoute({ allowedRoles = [], permission }) {
     if (!permissions?.[permission[0]]?.[permission[1]]) return <Navigate to="/dashboard" replace />;
   }
 
-  if (allowedRoles.includes(user.role)) return <Outlet />;
+  if (allowedRoles.length === 0 || allowedRoles.includes(user.role)) return <Outlet />;
 
-  // Send each role to their correct home — avoids loops
   const home = user.role === "superAdmin" ? "/superadmin" : "/dashboard";
   return <Navigate to={home} replace />;
 }
