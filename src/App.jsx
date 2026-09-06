@@ -85,7 +85,7 @@ function AppContent() {
               <Route path="/superadmin/organizations" element={<SuperAdminOrganizations />} />
               <Route path="/superadmin/users" element={<SuperAdminUsers />} />
             </Route>
-            <Route path="/dashboard" element={<DashboardRoute />} />
+            <Route path="/dashboard" element={<Dashboard />} />
 
             <Route element={<RoleRoute allowedRoles={["admin","manager","cashier","superAdmin"]} permission={["branches", "view"]} />}>
               <Route path="/branches" element={<Branches />} />
@@ -124,8 +124,8 @@ function AppContent() {
           </Route>
         </Route>
 
-        <Route path="/" element={<SmartRedirect />} />
-        <Route path="*" element={<SmartRedirect />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </div>
   );
