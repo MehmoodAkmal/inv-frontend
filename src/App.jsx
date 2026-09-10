@@ -16,20 +16,29 @@ import Signup from './pages/Signup';
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Branches = lazy(() => import('./pages/Branches'));
 const Staff = lazy(() => import('./pages/Staff'));
+const AppUsersStaff = lazy(() => import('./pages/AppUsersStaff'));
 const Categories = lazy(() => import('./pages/Categories'));
 const Items = lazy(() => import('./pages/Items'));
+const ItemsCatalog = lazy(() => import('./pages/ItemsCatalog'));
 const Stock = lazy(() => import('./pages/Stock'));
+const StockInventory = lazy(() => import('./pages/StockInventory'));
+const PurchaseEntry = lazy(() => import('./pages/PurchaseEntry'));
 const Sales = lazy(() => import('./pages/Sales'));
 const Customers = lazy(() => import('./pages/Customers'));
+const CustomerLedgers = lazy(() => import('./pages/CustomerLedgers'));
+const CustomerStatement = lazy(() => import('./pages/CustomerStatement'));
 const Payments = lazy(() => import('./pages/Payments'));
 const Employees = lazy(() => import('./pages/Employees'));
 const Salary = lazy(() => import('./pages/Salary'));
+const SalaryPayroll = lazy(() => import('./pages/SalaryPayroll'));
 const Expenses = lazy(() => import('./pages/Expenses'));
 const Reports = lazy(() => import('./pages/Reports'));
 const SuperAdminDashboard = lazy(() => import('./pages/SuperAdminDashboard'));
 const SuperAdminOrganizations = lazy(() => import('./pages/SuperAdminOrganizations'));
 const SuperAdminUsers = lazy(() => import('./pages/SuperAdminUsers'));
 const Permissions = lazy(() => import('./pages/Permissions'));
+const BranchComparison = lazy(() => import('./pages/BranchComparison'));
+const ProfitLoss = lazy(() => import('./pages/ProfitLoss'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,21 +67,17 @@ function AppContent() {
               </Route>
               <Route path="/dashboard" element={<Dashboard />} />
 
-              <Route
-                element={
-                  <RoleRoute
-                    allowedRoles={['admin', 'manager', 'cashier', 'superAdmin']}
-                    permission={['branches', 'view']}
-                  />
-                }
-              >
+              <Route element={<RoleRoute allowedRoles={['admin', 'superAdmin']} />}>
                 <Route path="/branches" element={<Branches />} />
+                <Route path="/staff" element={<AppUsersStaff />} />
+                <Route path="/app-users-staff" element={<AppUsersStaff />} />
+                <Route path="/permissions" element={<Permissions />} />
+                <Route path="/employees" element={<AppUsersStaff />} />
+                <Route path="/branch-comparison" element={<BranchComparison />} />
               </Route>
 
-              <Route element={<RoleRoute allowedRoles={['admin']} />}>
-                <Route path="/staff" element={<Staff />} />
-                <Route path="/permissions" element={<Permissions />} />
-                <Route path="/employees" element={<Employees />} />
+              <Route element={<RoleRoute allowedRoles={['admin', 'manager']} />}>
+                <Route path="/profit-loss" element={<ProfitLoss />} />
               </Route>
 
               <Route element={<RoleRoute allowedRoles={['admin', 'manager', 'cashier']} />}>
@@ -94,7 +99,8 @@ function AppContent() {
                     />
                   }
                 >
-                  <Route path="/items" element={<Items />} />
+                  <Route path="/items" element={<ItemsCatalog />} />
+                  <Route path="/items-catalog" element={<ItemsCatalog />} />
                 </Route>
                 <Route
                   element={
@@ -114,7 +120,8 @@ function AppContent() {
                     />
                   }
                 >
-                  <Route path="/salary" element={<Salary />} />
+                  <Route path="/salary" element={<SalaryPayroll />} />
+                  <Route path="/salary-payroll" element={<SalaryPayroll />} />
                 </Route>
                 <Route
                   element={
@@ -129,9 +136,13 @@ function AppContent() {
               </Route>
 
               <Route element={<RoleRoute allowedRoles={['admin', 'manager', 'cashier']} />}>
-                <Route path="/stock" element={<Stock />} />
+                <Route path="/stock" element={<StockInventory />} />
+                <Route path="/stock-inventory" element={<StockInventory />} />
+                <Route path="/purchase-entry" element={<PurchaseEntry />} />
                 <Route path="/sales" element={<Sales />} />
                 <Route path="/customers" element={<Customers />} />
+                <Route path="/customer-ledgers" element={<CustomerLedgers />} />
+                <Route path="/customers/:id/ledger" element={<CustomerStatement />} />
                 <Route path="/payments" element={<Payments />} />
               </Route>
             </Route>

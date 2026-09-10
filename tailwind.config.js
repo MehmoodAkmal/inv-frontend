@@ -5,51 +5,109 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        sans: ['Inter', '"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        mono: ['"JetBrains Mono"', '"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       colors: {
         brand: {
-          950: "#001220",   // darkest navy
-          900: "#001B29",   // deepest navy  — sidebar bg
-          800: "#002D3E",   // dark teal-navy — sidebar sections/hover
-          700: "#003D52",   // mid navy
-          600: "#3D7A7A",   // muted teal    — primary brand / active
-          500: "#4E9090",   // teal
-          400: "#7DBFB2",   // soft teal     — accent / highlights
-          300: "#A0CFC8",   // light teal
-          200: "#C5D8D5",   // pale mint     — borders / subtle bg
-          100: "#E0EEEC",   // very pale mint
-          50:  "#F0F7F6",   // near white mint
+          950: "#07241c",
+          900: "#0d3b2e",   // dark green sidebar
+          800: "#134a3a",   // dark green sidebar hover / section
+          700: "#1c5d47",
+          600: "#2b7a5e",
+          500: "#3d9675",
+          400: "#5eb892",
+          300: "#7fd4a8",   // mint accent
+          200: "#abebd7",
+          100: "#d3f5e9",
+          50:  "#f0faf5",
+          accent: "#7fd4a8", // mint-green accent
+        },
+        success: {
+          50:  "#f0fdf4",
+          100: "#dcfce7",
+          200: "#bbf7d0",
+          300: "#86efac",
+          400: "#4ade80",
+          500: "#22c55e",
+          600: "#16a34a",
+          700: "#15803d",
+          800: "#166534",
+          900: "#14532d",
+          DEFAULT: "#16a34a",
+        },
+        warning: {
+          50:  "#fffbeb",
+          100: "#fef3c7",
+          200: "#fde68a",
+          300: "#fcd34d",
+          400: "#fbbf24",
+          500: "#f59e0b",
+          600: "#d97706",
+          700: "#b45309",
+          800: "#92400e",
+          900: "#78350f",
+          DEFAULT: "#f59e0b",
+        },
+        danger: {
+          50:  "#fef2f2",
+          100: "#fee2e2",
+          200: "#fecaca",
+          300: "#fca5a5",
+          400: "#f87171",
+          500: "#ef4444",
+          600: "#dc2626",
+          700: "#b91c1c",
+          800: "#991b1b",
+          900: "#7f1d1d",
+          DEFAULT: "#ef4444",
+        },
+        neutral: {
+          50:  "#f9fafb",
+          100: "#f3f4f6",
+          200: "#e5e7eb",
+          300: "#d1d5db",
+          400: "#9ca3af",
+          500: "#6b7280",
+          600: "#4b5563",
+          700: "#374151",
+          800: "#1f2937",
+          900: "#111827",
+          950: "#030712",
+          DEFAULT: "#6b7280",
         },
         primary: {
-          50:  "#F0F7F6",
-          100: "#E0EEEC",
-          200: "#C5D8D5",
-          300: "#A0CFC8",
-          400: "#7DBFB2",
-          500: "#4E9090",
-          600: "#3D7A7A",
-          700: "#2E6060",
-          800: "#1E4747",
-          900: "#0F2E2E",
+          50:  "#f0faf5",
+          100: "#d3f5e9",
+          200: "#abebd7",
+          300: "#7fd4a8",
+          400: "#5eb892",
+          500: "#3d9675",
+          600: "#1c5d47",
+          700: "#134a3a",
+          800: "#0d3b2e",
+          900: "#07241c",
+          accent: "#7fd4a8",
+          DEFAULT: "#1c5d47",
         },
         dark: {
-          900: "#001220",
-          800: "#001B29",
-          700: "#002D3E",
-          600: "#003D52",
-          400: "#9CA3AF",
+          900: "#0a0f0d",
+          800: "#111a16",
+          700: "#17241f",
+          600: "#22332c",
+          400: "#9ca3af",
         },
       },
-      boxShadow: {
-        card:      "0 1px 3px 0 rgb(0 27 41 / 0.08), 0 1px 2px -1px rgb(0 27 41 / 0.06)",
-        "card-md": "0 4px 6px -1px rgb(0 27 41 / 0.10), 0 2px 4px -2px rgb(0 27 41 / 0.06)",
-        "card-lg": "0 10px 15px -3px rgb(0 27 41 / 0.10), 0 4px 6px -4px rgb(0 27 41 / 0.05)",
-        "dark-card": "0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.2)",
-      },
       borderRadius: {
+        card: "8px",
         xl:   "0.75rem",
         "2xl":"1rem",
+      },
+      boxShadow: {
+        card:      "0 1px 3px 0 rgb(13 59 46 / 0.06), 0 1px 2px -1px rgb(13 59 46 / 0.04)",
+        "card-md": "0 4px 6px -1px rgb(13 59 46 / 0.08), 0 2px 4px -2px rgb(13 59 46 / 0.04)",
+        "card-lg": "0 10px 15px -3px rgb(13 59 46 / 0.08), 0 4px 6px -4px rgb(13 59 46 / 0.04)",
+        "dark-card": "0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.2)",
       },
     },
   },

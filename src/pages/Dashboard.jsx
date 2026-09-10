@@ -1,899 +1,699 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { getDashboardSummary } from '../services/reportService';
 import {
-  AreaChart,
-  Area,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
   XAxis,
   YAxis,
   CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
 } from 'recharts';
 
-const C = {
-  teal: '#3D7A7A',
-  tealLt: '#7DBFB2',
-  tealPale: '#C5D8D5',
-  navy: '#001B29',
-  mint: '#F0F7F6',
-  amber: '#f59e0b',
-  rose: '#f43f5e',
-  emerald: '#10b981',
-};
+import {
+  StatCard,
+  Badge,
+  DataTable,
+  DashboardLayout,
+} from '../components/ui';
 
-const ROLE_LABELS = {
-  superAdmin: 'Super Admin',
-  admin: 'Admin',
-  manager: 'Manager',
-  cashier: 'Cashier',
-};
+import { getDashboardSummary } from '../services/reportService';
+import { getSales } from '../services/saleService';
+import { getBranches } from '../services/branchService';
+import { getItems } from '../services/itemService';
+import { getExpenses } from '../services/expenseService';
+import { getSalaryPayments } from '../services/salaryService';
+
+// Currency and numeric formatters
 const fmt = (n) =>
-  Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const fmtInt = (n) => Number(n ?? 0).toLocaleString();
-
-function pctChange(today, yesterday) {
-  if (!yesterday || yesterday === 0) return null;
-  return ((today - yesterday) / yesterday) * 100;
-}
-
-function TrendBadge({ today, yesterday }) {
-  const pct = pctChange(today, yesterday);
-  if (pct === null) return <span className="text-xs text-brand-400">No prior data</span>;
-  const up = pct >= 0;
-  return (
-    <span
-      className={`inline-flex items-center gap-0.5 text-xs font-bold ${up ? 'text-emerald-600' : 'text-rose-500'}`}
-    >
-      <svg
-        className="w-3 h-3"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={3}
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d={up ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'}
-        />
-      </svg>
-      {Math.abs(pct).toFixed(1)}%
-    </span>
-  );
-}
-
-function CardSkeleton({ h = 'h-32' }) {
-  return (
-    <div className="card p-5 animate-pulse">
-      <div className="skeleton h-3 w-20 mb-3 rounded" />
-      <div className={`skeleton ${h} w-full rounded-xl mb-2`} />
-      <div className="skeleton h-2.5 w-24 rounded" />
-    </div>
-  );
-}
-
-function CompareCard({ label, today, yesterday, icon, color }) {
-  const pct = pctChange(today.totalAmount, yesterday.totalAmount);
-  const up = pct === null ? true : pct >= 0;
-
-  return (
-    <div className="card p-5 relative overflow-hidden flex flex-col gap-3">
-      <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl" style={{ background: color }} />
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-brand-500 uppercase tracking-wider">{label}</span>
-        <div className="p-2 rounded-xl" style={{ background: color + '22' }}>
-          <span style={{ color }}>{icon}</span>
-        </div>
-      </div>
-      <div>
-        <p className="text-3xl font-extrabold text-brand-900 tracking-tight leading-none">
-          {fmt(today.totalAmount)}
-        </p>
-        <div className="flex items-center gap-2 mt-1.5">
-          <TrendBadge today={today.totalAmount} yesterday={yesterday.totalAmount} />
-          <span className="text-xs text-brand-400">vs yesterday {fmt(yesterday.totalAmount)}</span>
-        </div>
-      </div>
-      <div>
-        <div className="flex justify-between text-[10px] text-brand-400 font-medium mb-1">
-          <span>
-            Cash <span className="font-bold text-brand-600">{fmt(today.cashSales)}</span>
-          </span>
-          <span>
-            Credit <span className="font-bold text-brand-600">{fmt(today.creditSales)}</span>
-          </span>
-        </div>
-        <div className="h-1.5 bg-brand-100 rounded-full overflow-hidden">
-          {today.totalAmount > 0 && (
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: `${(today.cashSales / today.totalAmount) * 100}%`,
-                background: `linear-gradient(90deg, ${C.teal}, ${C.tealLt})`,
-              }}
-            />
-          )}
-        </div>
-        <div className="flex items-center gap-3 mt-1.5">
-          <span className="flex items-center gap-1 text-[10px] text-brand-400">
-            <span className="w-2 h-2 rounded-full inline-block" style={{ background: C.teal }} />
-            Cash
-          </span>
-          <span className="flex items-center gap-1 text-[10px] text-brand-400">
-            <span
-              className="w-2 h-2 rounded-full inline-block"
-              style={{ background: C.tealPale }}
-            />
-            Credit
-          </span>
-        </div>
-      </div>
-      <div className="text-xs text-brand-400">
-        {fmtInt(today.saleCount)} sale{today.saleCount !== 1 ? 's' : ''}
-      </div>
-    </div>
-  );
-}
-
-const CustomTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-brand-900 text-white rounded-xl px-3 py-2 shadow-card-lg text-xs">
-      <p className="font-bold mb-1">{label}</p>
-      {payload.map((p) => (
-        <p key={p.dataKey} style={{ color: p.color }}>
-          {p.name}: {fmt(p.value)}
-        </p>
-      ))}
-    </div>
-  );
-};
-
-const SalesTrendChart = ({ data }) => (
-  <div className="card p-5">
-    <div className="flex items-center justify-between mb-4">
-      <div>
-        <h3 className="text-sm font-bold text-brand-900">7-Day Sales Trend</h3>
-        <p className="text-xs text-brand-400 mt-0.5">Daily revenue — cash vs credit</p>
-      </div>
-      <div className="flex items-center gap-3 text-[11px]">
-        <span className="flex items-center gap-1.5 text-brand-500">
-          <span className="w-3 h-0.5 rounded inline-block" style={{ background: C.teal }} />
-          Cash
-        </span>
-        <span className="flex items-center gap-1.5 text-brand-500">
-          <span className="w-3 h-0.5 rounded inline-block" style={{ background: C.tealLt }} />
-          Credit
-        </span>
-      </div>
-    </div>
-    <ResponsiveContainer width="100%" height={200}>
-      <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-        <defs>
-          <linearGradient id="gradCash" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={C.teal} stopOpacity={0.25} />
-            <stop offset="95%" stopColor={C.teal} stopOpacity={0.02} />
-          </linearGradient>
-          <linearGradient id="gradCredit" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={C.tealLt} stopOpacity={0.25} />
-            <stop offset="95%" stopColor={C.tealLt} stopOpacity={0.02} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke={C.tealPale} strokeOpacity={0.5} />
-        <XAxis
-          dataKey="label"
-          tick={{ fontSize: 10, fill: '#64748b' }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <YAxis
-          tick={{ fontSize: 10, fill: '#64748b' }}
-          axisLine={false}
-          tickLine={false}
-          tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
-        />
-        <Tooltip content={<CustomTooltip />} />
-        <Area
-          type="monotone"
-          dataKey="cash"
-          name="Cash"
-          stroke={C.teal}
-          strokeWidth={2}
-          fill="url(#gradCash)"
-          dot={{ r: 3, fill: C.teal, strokeWidth: 0 }}
-          activeDot={{ r: 5 }}
-        />
-        <Area
-          type="monotone"
-          dataKey="credit"
-          name="Credit"
-          stroke={C.tealLt}
-          strokeWidth={2}
-          fill="url(#gradCredit)"
-          dot={{ r: 3, fill: C.tealLt, strokeWidth: 0 }}
-          activeDot={{ r: 5 }}
-        />
-      </AreaChart>
-    </ResponsiveContainer>
-  </div>
-);
-
-const SalesBarChart = ({ data }) => (
-  <div className="card p-5">
-    <div className="mb-4">
-      <h3 className="text-sm font-bold text-brand-900">Daily Revenue</h3>
-      <p className="text-xs text-brand-400 mt-0.5">Total amount per day this week</p>
-    </div>
-    <ResponsiveContainer width="100%" height={200}>
-      <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-        <CartesianGrid
-          strokeDasharray="3 3"
-          stroke={C.tealPale}
-          strokeOpacity={0.5}
-          vertical={false}
-        />
-        <XAxis
-          dataKey="label"
-          tick={{ fontSize: 10, fill: '#64748b' }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <YAxis
-          tick={{ fontSize: 10, fill: '#64748b' }}
-          axisLine={false}
-          tickLine={false}
-          tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
-        />
-        <Tooltip content={<CustomTooltip />} />
-        <Bar dataKey="total" name="Revenue" radius={[6, 6, 0, 0]} maxBarSize={40}>
-          {data.map((entry, index) => (
-            <Cell
-              key={index}
-              fill={index === data.length - 1 ? C.teal : C.tealPale}
-              stroke={index === data.length - 1 ? C.teal : 'transparent'}
-            />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
-  </div>
-);
-
-const RADIAN = Math.PI / 180;
-const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-  if (percent < 0.05) return null;
-  const r = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const x = cx + r * Math.cos(-midAngle * RADIAN);
-  const y = cy + r * Math.sin(-midAngle * RADIAN);
-  return (
-    <text
-      x={x}
-      y={y}
-      fill="white"
-      textAnchor="middle"
-      dominantBaseline="central"
-      fontSize={11}
-      fontWeight={700}
-    >
-      {`${(percent * 100).toFixed(0)}%`}
-    </text>
-  );
-};
-
-const PaymentPieChart = ({ today, yesterday }) => {
-  const todayData = [
-    { name: 'Cash', value: today.cashSales },
-    { name: 'Credit', value: today.creditSales },
-  ].filter((d) => d.value > 0);
-  const yesterdayData = [
-    { name: 'Cash', value: yesterday.cashSales },
-    { name: 'Credit', value: yesterday.creditSales },
-  ].filter((d) => d.value > 0);
-  const PIE_COLORS = [C.teal, C.tealLt];
-
-  return (
-    <div className="card p-5">
-      <div className="mb-4">
-        <h3 className="text-sm font-bold text-brand-900">Payment Mix</h3>
-        <p className="text-xs text-brand-400 mt-0.5">Cash vs credit split</p>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="flex flex-col items-center">
-          <p className="text-[10px] font-bold text-brand-500 uppercase tracking-wider mb-1">
-            Today
-          </p>
-          {todayData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={130}>
-              <PieChart>
-                <Pie
-                  data={todayData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={55}
-                  innerRadius={28}
-                  labelLine={false}
-                  label={renderCustomLabel}
-                  dataKey="value"
-                  strokeWidth={0}
-                >
-                  {todayData.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % 2]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(v) => fmt(v)}
-                  contentStyle={{
-                    background: C.navy,
-                    border: 'none',
-                    borderRadius: '12px',
-                    color: 'white',
-                    fontSize: 11,
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-[130px] flex items-center justify-center text-xs text-brand-400">
-              No sales yet
-            </div>
-          )}
-        </div>
-        <div className="flex flex-col items-center">
-          <p className="text-[10px] font-bold text-brand-500 uppercase tracking-wider mb-1">
-            Yesterday
-          </p>
-          {yesterdayData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={130}>
-              <PieChart>
-                <Pie
-                  data={yesterdayData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={55}
-                  innerRadius={28}
-                  labelLine={false}
-                  label={renderCustomLabel}
-                  dataKey="value"
-                  strokeWidth={0}
-                >
-                  {yesterdayData.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % 2]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(v) => fmt(v)}
-                  contentStyle={{
-                    background: C.navy,
-                    border: 'none',
-                    borderRadius: '12px',
-                    color: 'white',
-                    fontSize: 11,
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-[130px] flex items-center justify-center text-xs text-brand-400">
-              No data
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="flex justify-center gap-4 mt-2">
-        {[
-          ['Cash', C.teal],
-          ['Credit', C.tealLt],
-        ].map(([lbl, clr]) => (
-          <span key={lbl} className="flex items-center gap-1.5 text-[11px] text-brand-500">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: clr }} />
-            {lbl}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-function KpiTile({ label, value, sub, icon, accent }) {
-  const cfg = {
-    teal: { bar: C.teal, bg: '#F0F7F6', ic: C.teal },
-    amber: { bar: C.amber, bg: '#fffbeb', ic: C.amber },
-    rose: { bar: C.rose, bg: '#fff1f2', ic: C.rose },
-    slate: { bar: '#94a3b8', bg: '#f8fafc', ic: '#94a3b8' },
-  };
-  const c = cfg[accent] ?? cfg.slate;
-  return (
-    <div className="card p-4 relative overflow-hidden flex items-center gap-3">
-      <div
-        className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full"
-        style={{ background: c.bar }}
-      />
-      <div className="p-2.5 rounded-xl shrink-0" style={{ background: c.bg }}>
-        <span style={{ color: c.ic }}>{icon}</span>
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-bold text-brand-500 uppercase tracking-wider">{label}</p>
-        <p className="text-xl font-extrabold text-brand-900 tracking-tight leading-none mt-0.5">
-          {value}
-        </p>
-        {sub && <p className="text-[10px] text-brand-400 mt-0.5">{sub}</p>}
-      </div>
-    </div>
-  );
-}
-
-const CARD_GROUPS = [
-  {
-    label: 'Organisation',
-    accent: 'bg-primary-50 border-primary-200/60',
-    iconColor: 'text-primary-600',
-    cards: [
-      {
-        title: 'Branches',
-        desc: 'Manage locations',
-        href: '/branches',
-        roles: ['admin', 'superAdmin'],
-        icon: (
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.75}
-            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-          />
-        ),
-      },
-      {
-        title: 'App Users',
-        desc: 'Managers & cashiers',
-        href: '/staff',
-        roles: ['admin'],
-        icon: (
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.75}
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-          />
-        ),
-      },
-      {
-        title: 'Employees',
-        desc: 'Salaried staff',
-        href: '/employees',
-        roles: ['admin'],
-        icon: (
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.75}
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-          />
-        ),
-      },
-    ],
-  },
-  {
-    label: 'Inventory',
-    accent: 'bg-violet-50 border-violet-100',
-    iconColor: 'text-violet-600',
-    cards: [
-      {
-        title: 'Categories',
-        desc: 'Organise by type',
-        href: '/categories',
-        roles: ['admin', 'manager'],
-        icon: (
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.75}
-            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-          />
-        ),
-      },
-      {
-        title: 'Items',
-        desc: 'Products & pricing',
-        href: '/items',
-        roles: ['admin', 'manager'],
-        icon: (
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.75}
-            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"
-          />
-        ),
-      },
-      {
-        title: 'Stock',
-        desc: 'Levels & history',
-        href: '/stock',
-        roles: ['admin', 'manager', 'cashier'],
-        icon: (
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.75}
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-          />
-        ),
-      },
-    ],
-  },
-  {
-    label: 'Sales & Credit',
-    accent: 'bg-emerald-50 border-emerald-100',
-    iconColor: 'text-emerald-600',
-    cards: [
-      {
-        title: 'Sales',
-        desc: 'Cash & credit sales',
-        href: '/sales',
-        roles: ['admin', 'manager', 'cashier'],
-        icon: (
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.75}
-            d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        ),
-      },
-      {
-        title: 'Customers',
-        desc: 'Credit accounts',
-        href: '/customers',
-        roles: ['admin', 'manager', 'cashier'],
-        icon: (
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.75}
-            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-          />
-        ),
-      },
-      {
-        title: 'Payments',
-        desc: 'Collect & ledgers',
-        href: '/payments',
-        roles: ['admin', 'manager', 'cashier'],
-        icon: (
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.75}
-            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        ),
-      },
-    ],
-  },
-  {
-    label: 'Finance',
-    accent: 'bg-amber-50 border-amber-100',
-    iconColor: 'text-amber-600',
-    cards: [
-      {
-        title: 'Expenses',
-        desc: 'Branch costs',
-        href: '/expenses',
-        roles: ['admin', 'manager'],
-        icon: (
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.75}
-            d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"
-          />
-        ),
-      },
-      {
-        title: 'Salary',
-        desc: 'Monthly payments',
-        href: '/salary',
-        roles: ['admin', 'manager'],
-        icon: (
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.75}
-            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        ),
-      },
-      {
-        title: 'Reports',
-        desc: 'P&L & comparisons',
-        href: '/reports',
-        roles: ['admin', 'manager'],
-        icon: (
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.75}
-            d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
-          />
-        ),
-      },
-    ],
-  },
-];
-
-export default function Dashboard() {
-  const { user } = useAuth();
-  const { data, isLoading } = useQuery({
-    queryKey: ['dashboardSummary'],
-    queryFn: () => getDashboardSummary().then((r) => r.data.data),
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: true,
-    retry: 1,
+  Number(n ?? 0).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   });
 
-  const summary = data;
+const fmtInt = (n) => Number(n ?? 0).toLocaleString('en-US');
 
-  const greeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
-  };
+// Custom chart tooltip
+function ChartTooltip({ active, payload, label }) {
+  if (active && payload && payload.length) {
+    const cash = payload.find((p) => p.dataKey === 'cash')?.value || 0;
+    const credit = payload.find((p) => p.dataKey === 'credit')?.value || 0;
+    const total = cash + credit;
 
-  const today = summary?.today ?? { saleCount: 0, totalAmount: 0, cashSales: 0, creditSales: 0 };
-  const yesterday = summary?.yesterday ?? {
-    saleCount: 0,
+    return (
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-3 shadow-lg text-xs">
+        <p className="font-semibold text-neutral-800 dark:text-neutral-200 mb-2">{label}</p>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-6">
+            <span className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#0d3b2e] dark:bg-[#1c5d47]" />
+              Cash Sales:
+            </span>
+            <span className="font-mono font-semibold text-neutral-900 dark:text-neutral-100">
+              ${fmt(cash)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-6">
+            <span className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#7fd4a8]" />
+              Credit Sales:
+            </span>
+            <span className="font-mono font-semibold text-neutral-900 dark:text-neutral-100">
+              ${fmt(credit)}
+            </span>
+          </div>
+          <div className="pt-2 mt-1 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between gap-6">
+            <span className="font-medium text-neutral-500 dark:text-neutral-400">Total:</span>
+            <span className="font-mono font-bold text-neutral-900 dark:text-neutral-50">
+              ${fmt(total)}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
+export default function Dashboard() {
+  const [loading, setLoading] = useState(true);
+  const [summaryData, setSummaryData] = useState(null);
+  const [recentSales, setRecentSales] = useState([]);
+  const [branches, setBranches] = useState([]);
+  const [itemsCount, setItemsCount] = useState(0);
+  const [expensesMtd, setExpensesMtd] = useState(0);
+  const [payrollStatus, setPayrollStatus] = useState('Up to date');
+  const [chartData, setChartData] = useState([]);
+
+  // Fetch consolidated dashboard data on mount
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadDashboard() {
+      setLoading(true);
+      try {
+        const today = new Date();
+        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+          .toISOString()
+          .slice(0, 10);
+        const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+        const fourteenDaysAgo = new Date(today);
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13);
+        const fourteenDaysAgoStr = fourteenDaysAgo.toISOString().slice(0, 10);
+
+        // Run API requests in parallel with existing auth pattern
+        const [
+          summaryRes,
+          salesRes,
+          branchesRes,
+          itemsRes,
+          fourteenDaySalesRes,
+          expensesRes,
+          salaryRes,
+        ] = await Promise.allSettled([
+          getDashboardSummary(),
+          getSales({ limit: 5 }),
+          getBranches(),
+          getItems(),
+          getSales({ startDate: fourteenDaysAgoStr, limit: 200 }),
+          getExpenses({ startDate: firstDayOfMonth, limit: 100 }),
+          getSalaryPayments({ month: currentMonthStr, limit: 20 }),
+        ]);
+
+        if (!isMounted) return;
+
+        // 1. Dashboard summary
+        if (summaryRes.status === 'fulfilled' && summaryRes.value?.data?.success) {
+          setSummaryData(summaryRes.value.data.data);
+        }
+
+        // 2. Recent Sales
+        if (salesRes.status === 'fulfilled' && salesRes.value?.data?.success) {
+          setRecentSales(salesRes.value.data.data || []);
+        }
+
+        // 3. Branches
+        if (branchesRes.status === 'fulfilled' && branchesRes.value?.data?.success) {
+          setBranches(branchesRes.value.data.data || []);
+        }
+
+        // 4. Items count
+        if (itemsRes.status === 'fulfilled' && itemsRes.value?.data?.success) {
+          setItemsCount(itemsRes.value.data.data?.length || 0);
+        }
+
+        // 5. Total Expenses (MTD)
+        if (expensesRes.status === 'fulfilled' && expensesRes.value?.data?.success) {
+          const expList = expensesRes.value.data.data || [];
+          const totalExp = expList.reduce((sum, item) => sum + (item.amount || 0), 0);
+          setExpensesMtd(totalExp);
+        }
+
+        // 6. Payroll status
+        if (salaryRes.status === 'fulfilled' && salaryRes.value?.data?.success) {
+          const salaries = salaryRes.value.data.data || [];
+          const hasPending = salaries.some((s) => s.status === 'pending');
+          setPayrollStatus(hasPending ? 'Pending Review' : 'Disbursed');
+        }
+
+        // 7. Process 14-day chart data
+        const dateMap = {};
+        for (let i = 0; i < 14; i++) {
+          const d = new Date(fourteenDaysAgo);
+          d.setDate(d.getDate() + i);
+          const dateKey = d.toISOString().slice(0, 10);
+          const dayLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          dateMap[dateKey] = {
+            date: dateKey,
+            day: dayLabel,
+            cash: 0,
+            credit: 0,
+            total: 0,
+          };
+        }
+
+        if (fourteenDaySalesRes.status === 'fulfilled' && fourteenDaySalesRes.value?.data?.success) {
+          const salesList = fourteenDaySalesRes.value.data.data || [];
+          salesList.forEach((sale) => {
+            const saleDate = sale.createdAt?.slice(0, 10);
+            if (dateMap[saleDate]) {
+              const amt = Number(sale.totalAmount || 0);
+              if (sale.paymentType === 'cash') {
+                dateMap[saleDate].cash += amt;
+              } else {
+                dateMap[saleDate].credit += amt;
+              }
+              dateMap[saleDate].total += amt;
+            }
+          });
+        }
+
+        // Fallback to trend7Days if 14-day sales had no entries but trend7Days has entries
+        const generatedDays = Object.values(dateMap);
+        const hasSalesIn14Days = generatedDays.some((d) => d.total > 0);
+        if (
+          !hasSalesIn14Days &&
+          summaryRes.status === 'fulfilled' &&
+          Array.isArray(summaryRes.value?.data?.data?.trend7Days)
+        ) {
+          const trend7 = summaryRes.value.data.data.trend7Days;
+          trend7.forEach((item) => {
+            if (dateMap[item.date]) {
+              dateMap[item.date].cash = item.cash || 0;
+              dateMap[item.date].credit = item.credit || 0;
+              dateMap[item.date].total = item.total || 0;
+            }
+          });
+        }
+
+        setChartData(Object.values(dateMap));
+      } catch (err) {
+        console.error('Failed to load dashboard data:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    loadDashboard();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Compute branch lookup map
+  const branchMap = useMemo(() => {
+    const map = {};
+    branches.forEach((b) => {
+      map[b._id] = b.name;
+    });
+    return map;
+  }, [branches]);
+
+  // Derived metrics from summaryData
+  const todaySales = summaryData?.today || {
     totalAmount: 0,
     cashSales: 0,
     creditSales: 0,
+    saleCount: 0,
   };
-  const month = summary?.thisMonth ?? { saleCount: 0, totalAmount: 0 };
-  const trend = summary?.trend7Days ?? [];
+  const yesterdaySales = summaryData?.yesterday || { totalAmount: 0 };
+  const monthSales = summaryData?.thisMonth || { totalAmount: 0, saleCount: 0 };
+  const outstandingCredit = summaryData?.outstandingCreditTotal ?? 0;
+  const lowStockCount = summaryData?.lowStockItemCount ?? 0;
 
-  return (
-    <div className="space-y-5">
-      <div className="flex items-end justify-between">
-        <div>
-          <p className="text-xs font-bold text-brand-400 uppercase tracking-widest mb-0.5">
-            {greeting()}
-          </p>
-          <h1 className="text-3xl font-extrabold tracking-tight text-brand-900 leading-none">
-            {user?.firstName} {user?.lastName}
-          </h1>
-          <p className="text-sm text-brand-500 mt-1.5">
-            {ROLE_LABELS[user?.role] ?? user?.role}
-            <span className="mx-2 text-brand-300">·</span>
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </p>
-        </div>
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-xs font-semibold text-emerald-700">Live</span>
-        </div>
-      </div>
+  // Trend calculation
+  const todayTrend = useMemo(() => {
+    if (!yesterdaySales.totalAmount || yesterdaySales.totalAmount <= 0) return null;
+    const pct = ((todaySales.totalAmount - yesterdaySales.totalAmount) / yesterdaySales.totalAmount) * 100;
+    return {
+      value: `${Math.abs(pct).toFixed(1)}%`,
+      direction: pct >= 0 ? 'up' : 'down',
+    };
+  }, [todaySales.totalAmount, yesterdaySales.totalAmount]);
 
-      {isLoading ? (
-        <div className="grid grid-cols-2 gap-4">
-          <CardSkeleton />
-          <CardSkeleton />
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-4">
-          <CompareCard
-            label="Today's Sales"
-            today={today}
-            yesterday={yesterday}
-            color={C.teal}
-            icon={
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            }
-          />
-          <CompareCard
-            label="Yesterday's Sales"
-            today={yesterday}
-            yesterday={{ ...yesterday, totalAmount: 0, cashSales: 0, creditSales: 0, saleCount: 0 }}
-            color={C.tealLt}
-            icon={
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-            }
-          />
-        </div>
-      )}
+  // Daily run-rate
+  const dailyRunRate = useMemo(() => {
+    const dayOfMonth = new Date().getDate();
+    return dayOfMonth > 0 ? monthSales.totalAmount / dayOfMonth : 0;
+  }, [monthSales.totalAmount]);
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-3">
-            <CardSkeleton h="h-48" />
-          </div>
-          <div className="lg:col-span-2">
-            <CardSkeleton h="h-48" />
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-3">
-            <SalesTrendChart data={trend} />
-          </div>
-          <div className="lg:col-span-2">
-            <PaymentPieChart today={today} yesterday={yesterday} />
-          </div>
-        </div>
-      )}
-
-      {isLoading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-3">
-            <CardSkeleton h="h-48" />
-          </div>
-          <div className="lg:col-span-2 space-y-3">
-            <CardSkeleton h="h-12" />
-            <CardSkeleton h="h-12" />
-            <CardSkeleton h="h-12" />
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-3">
-            <SalesBarChart data={trend} />
-          </div>
-          <div className="lg:col-span-2 space-y-3">
-            <KpiTile
-              label="This Month"
-              value={fmt(month.totalAmount)}
-              sub={`${fmtInt(month.saleCount)} sales`}
-              accent="teal"
-              icon={
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  />
-                </svg>
-              }
-            />
-            <KpiTile
-              label="Outstanding Credit"
-              value={fmt(summary?.outstandingCreditTotal ?? 0)}
-              sub="Current receivables"
-              accent={summary?.outstandingCreditTotal > 0 ? 'amber' : 'slate'}
-              icon={
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-              }
-            />
-            <KpiTile
-              label="Low Stock Items"
-              value={fmtInt(summary?.lowStockItemCount ?? 0)}
-              sub="At or below reorder level"
-              accent={summary?.lowStockItemCount > 0 ? 'rose' : 'slate'}
-              icon={
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
-              }
-            />
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-5">
-        {CARD_GROUPS.map((group) => {
-          const visible = group.cards.filter((c) => c.roles.includes(user?.role));
-          if (!visible.length) return null;
+  // Table column configuration
+  const columns = useMemo(
+    () => [
+      {
+        key: 'invoiceNumber',
+        label: 'Invoice #',
+        render: (_, row) => (
+          <span className="font-mono text-xs font-semibold text-brand-900 dark:text-brand-accent">
+            {row.invoiceNumber || `INV-${(row._id || '').slice(-6).toUpperCase()}`}
+          </span>
+        ),
+      },
+      {
+        key: 'createdAt',
+        label: 'Timestamp',
+        render: (val) => {
+          if (!val) return '—';
+          const d = new Date(val);
           return (
-            <div key={group.label}>
-              <div className="flex items-center gap-3 mb-3">
-                <h3 className="text-[10px] font-bold text-brand-500 uppercase tracking-widest whitespace-nowrap">
-                  {group.label}
-                </h3>
-                <div className="flex-1 h-px bg-brand-200" />
-              </div>
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {visible.map((card) => (
-                  <Link
-                    key={card.href}
-                    to={card.href}
-                    className={`group flex items-center gap-3.5 p-4 bg-white rounded-2xl border shadow-card hover:shadow-card-md hover:-translate-y-0.5 transition-all duration-200 ${group.accent}`}
-                  >
-                    <div
-                      className={`p-2.5 rounded-xl bg-white/80 ${group.iconColor} shrink-0 border border-current/10`}
-                    >
-                      <svg
-                        className="w-4.5 h-4.5"
-                        style={{ width: '18px', height: '18px' }}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        {card.icon}
-                      </svg>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-brand-800 group-hover:text-primary-600 transition-colors truncate">
-                        {card.title}
-                      </p>
-                      <p className="text-xs text-brand-400 truncate">{card.desc}</p>
-                    </div>
-                    <svg
-                      className="w-3.5 h-3.5 text-brand-300 group-hover:text-primary-400 transition-colors shrink-0"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2.5}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                ))}
-              </div>
+            <div className="text-xs">
+              <span className="text-neutral-800 dark:text-neutral-200 block">
+                {d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+              <span className="text-[11px] text-neutral-400 font-mono block">
+                {d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </div>
           );
-        })}
+        },
+      },
+      {
+        key: 'branchId',
+        label: 'Branch',
+        render: (val, row) => (
+          <span className="text-xs text-neutral-700 dark:text-neutral-300">
+            {branchMap[val] || row.branchName || 'Main Branch'}
+          </span>
+        ),
+      },
+      {
+        key: 'customerId',
+        label: 'Customer',
+        render: (val) => (
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-brand-50 dark:bg-brand-900/60 text-brand-800 dark:text-brand-accent flex items-center justify-center text-[10px] font-mono font-bold">
+              {(val?.name?.[0] || 'W').toUpperCase()}
+            </div>
+            <span className="text-xs font-medium text-neutral-800 dark:text-neutral-200 truncate max-w-[140px]">
+              {val?.name || 'Walk-in Customer'}
+            </span>
+          </div>
+        ),
+      },
+      {
+        key: 'itemsCount',
+        label: 'Items',
+        type: 'number',
+        align: 'right',
+        render: (_, row) => (
+          <span className="font-mono text-xs text-neutral-600 dark:text-neutral-300">
+            {row.items?.length || 1}
+          </span>
+        ),
+      },
+      {
+        key: 'paymentType',
+        label: 'Payment Mode',
+        align: 'center',
+        render: (val) => (
+          <Badge
+            variant={val === 'cash' ? 'success' : 'warning'}
+            label={val === 'cash' ? 'CASH' : 'CREDIT'}
+            dot
+          />
+        ),
+      },
+      {
+        key: 'totalAmount',
+        label: 'Total',
+        type: 'currency',
+        align: 'right',
+        render: (val) => (
+          <span className="font-mono font-bold text-sm text-neutral-900 dark:text-white">
+            ${fmt(val)}
+          </span>
+        ),
+      },
+    ],
+    [branchMap]
+  );
+
+  // Formatted current date for page header
+  const currentDateFormatted = useMemo(() => {
+    return new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  }, []);
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* ── Page Header ────────────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-neutral-200/80 dark:border-neutral-800">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
+                Executive Business Overview
+              </h1>
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-brand-50 text-brand-800 dark:bg-brand-900/60 dark:text-brand-accent border border-brand-200/60 dark:border-brand-700/50">
+                Live
+              </span>
+            </div>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+              Consolidated real-time operational performance, revenue breakdowns, and inventory posture.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Date Display */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-xs text-neutral-600 dark:text-neutral-300 shadow-sm">
+              <svg className="w-3.5 h-3.5 text-brand-700 dark:text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="font-medium">{currentDateFormatted}</span>
+            </div>
+
+            {/* Export Placeholder Button */}
+            <button
+              type="button"
+              onClick={() => alert('Exporting dashboard summary report (CSV/PDF)...')}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs font-semibold text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors shadow-sm"
+              title="Export report snapshot"
+            >
+              <svg className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Export</span>
+            </button>
+          </div>
+        </div>
+
+        {/* ── 4 Hero StatCards in a Grid ─────────────────────────────── */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-5 animate-pulse">
+                <div className="h-3 w-24 bg-neutral-200 dark:bg-neutral-800 rounded mb-4" />
+                <div className="h-8 w-36 bg-neutral-200 dark:bg-neutral-800 rounded mb-3" />
+                <div className="h-3 w-20 bg-neutral-100 dark:bg-neutral-800/60 rounded" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
+            {/* Card 1: Today's Sales */}
+            <StatCard
+              label="Today's Sales"
+              value={`$${fmt(todaySales.totalAmount)}`}
+              accentColor="mint"
+              trend={todayTrend}
+              secondaryStats={[
+                { label: 'Cash', value: `$${fmt(todaySales.cashSales)}` },
+                { label: 'Credit', value: `$${fmt(todaySales.creditSales)}` },
+              ]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
+
+            {/* Card 2: Month Revenue */}
+            <StatCard
+              label="Month Revenue"
+              value={`$${fmt(monthSales.totalAmount)}`}
+              accentColor="brand"
+              secondaryStats={[
+                { label: 'Orders', value: fmtInt(monthSales.saleCount) },
+                { label: 'Run Rate', value: `$${fmt(dailyRunRate)}/d` },
+              ]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              }
+            />
+
+            {/* Card 3: Outstanding Credit */}
+            <StatCard
+              label="Outstanding Credit"
+              value={`$${fmt(outstandingCredit)}`}
+              accentColor="warning"
+              secondaryStats={[
+                { label: 'Receivables', value: 'Active' },
+                { label: 'Risk State', value: 'Unsettled' },
+              ]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              }
+            />
+
+            {/* Card 4: Low Stock Items */}
+            <StatCard
+              label="Low Stock Items"
+              value={fmtInt(lowStockCount)}
+              accentColor="danger"
+              secondaryStats={[
+                { label: 'Action', value: lowStockCount > 0 ? 'Restock Req.' : 'Optimal' },
+                { label: 'Threshold', value: '≤ Reorder' },
+              ]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              }
+            />
+          </div>
+        )}
+
+        {/* ── Secondary Row of Smaller Stat Tiles ────────────────────── */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          {/* Tile 1: Branches Count */}
+          <Link
+            to="/branches"
+            className="group bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-brand-300 dark:hover:border-brand-700 rounded-card p-4 shadow-card hover:shadow-card-md transition-all duration-150 flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between text-neutral-400 group-hover:text-brand-800 dark:group-hover:text-brand-accent transition-colors">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                Branches
+              </span>
+              <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="font-mono text-xl font-bold text-neutral-900 dark:text-white">
+                {loading ? '—' : branches.length || 1}
+              </span>
+              <span className="text-[11px] text-neutral-400">Locations</span>
+            </div>
+          </Link>
+
+          {/* Tile 2: Total SKUs */}
+          <Link
+            to="/items"
+            className="group bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-brand-300 dark:hover:border-brand-700 rounded-card p-4 shadow-card hover:shadow-card-md transition-all duration-150 flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between text-neutral-400 group-hover:text-brand-800 dark:group-hover:text-brand-accent transition-colors">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                Total SKUs
+              </span>
+              <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="font-mono text-xl font-bold text-neutral-900 dark:text-white">
+                {loading ? '—' : fmtInt(itemsCount)}
+              </span>
+              <span className="text-[11px] text-neutral-400">Products</span>
+            </div>
+          </Link>
+
+          {/* Tile 3: This Month's Transaction Count */}
+          <Link
+            to="/sales"
+            className="group bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-brand-300 dark:hover:border-brand-700 rounded-card p-4 shadow-card hover:shadow-card-md transition-all duration-150 flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between text-neutral-400 group-hover:text-brand-800 dark:group-hover:text-brand-accent transition-colors">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                Month Orders
+              </span>
+              <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="font-mono text-xl font-bold text-neutral-900 dark:text-white">
+                {loading ? '—' : fmtInt(monthSales.saleCount)}
+              </span>
+              <span className="text-[11px] text-neutral-400">Completed</span>
+            </div>
+          </Link>
+
+          {/* Tile 4: Total Expenses (MTD) */}
+          <Link
+            to="/expenses"
+            className="group bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-brand-300 dark:hover:border-brand-700 rounded-card p-4 shadow-card hover:shadow-card-md transition-all duration-150 flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between text-neutral-400 group-hover:text-brand-800 dark:group-hover:text-brand-accent transition-colors">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                Total Expenses
+              </span>
+              <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="font-mono text-xl font-bold text-neutral-900 dark:text-white">
+                {loading ? '—' : `$${fmt(expensesMtd)}`}
+              </span>
+              <span className="text-[11px] text-neutral-400">MTD</span>
+            </div>
+          </Link>
+
+          {/* Tile 5: Payroll Status */}
+          <Link
+            to="/salary"
+            className="group bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-brand-300 dark:hover:border-brand-700 rounded-card p-4 shadow-card hover:shadow-card-md transition-all duration-150 flex flex-col justify-between col-span-2 sm:col-span-1"
+          >
+            <div className="flex items-center justify-between text-neutral-400 group-hover:text-brand-800 dark:group-hover:text-brand-accent transition-colors">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                Payroll Status
+              </span>
+              <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 truncate">
+                {loading ? '—' : payrollStatus}
+              </span>
+              <span className={`w-2 h-2 rounded-full ${payrollStatus === 'Disbursed' ? 'bg-success-500' : 'bg-warning-500'}`} />
+            </div>
+          </Link>
+        </div>
+
+        {/* ── Stacked Bar Chart Section ──────────────────────────────── */}
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-5 shadow-card">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+            <div>
+              <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
+                Revenue Dynamics (Last 14 Days)
+              </h3>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                Stacked daily comparison of cash settlements vs. credit extensions.
+              </p>
+            </div>
+
+            {/* Custom Legend */}
+            <div className="flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm bg-[#0d3b2e] dark:bg-[#1c5d47]" />
+                <span className="text-neutral-600 dark:text-neutral-300 font-medium">Cash Sales</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm bg-[#7fd4a8]" />
+                <span className="text-neutral-600 dark:text-neutral-300 font-medium">Credit Sales</span>
+              </div>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="h-64 flex items-center justify-center animate-pulse">
+              <div className="space-y-3 w-full">
+                <div className="h-40 bg-neutral-100 dark:bg-neutral-800/60 rounded w-full" />
+                <div className="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-1/3 mx-auto" />
+              </div>
+            </div>
+          ) : (
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" className="dark:stroke-neutral-800" />
+                  <XAxis
+                    dataKey="day"
+                    stroke="#9ca3af"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <YAxis
+                    stroke="#9ca3af"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(val) => (val >= 1000 ? `$${(val / 1000).toFixed(0)}k` : `$${val}`)}
+                  />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(13, 59, 46, 0.04)' }} />
+                  <Bar
+                    dataKey="cash"
+                    name="Cash"
+                    stackId="sales"
+                    fill="#0d3b2e"
+                    className="dark:fill-[#1c5d47]"
+                  />
+                  <Bar
+                    dataKey="credit"
+                    name="Credit"
+                    stackId="sales"
+                    fill="#7fd4a8"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+
+        {/* ── Recent Sales Transactions Section ──────────────────────── */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
+                Recent Sales Transactions
+              </h3>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                Most recently recorded point of sale order receipts.
+              </p>
+            </div>
+
+            <Link
+              to="/sales"
+              className="text-xs font-semibold text-brand-800 dark:text-brand-accent hover:underline inline-flex items-center gap-1"
+            >
+              <span>View All Sales</span>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+
+          <DataTable
+            columns={columns}
+            data={recentSales}
+            loading={loading}
+            emptyMessage="No sales recorded yet"
+            emptySubMessage="When orders are processed at the POS terminal, they will display here in real time."
+          />
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

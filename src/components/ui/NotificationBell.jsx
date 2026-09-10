@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import toast from 'react-hot-toast';
 
 export default function NotificationBell({ count = 0 }) {
   const [open, setOpen] = useState(false);

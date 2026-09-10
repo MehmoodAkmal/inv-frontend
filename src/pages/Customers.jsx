@@ -1,5 +1,6 @@
 import CustomSelect from '../components/ui/CustomSelect';
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -841,6 +842,12 @@ export default function Customers() {
                     </td>
                     <td className="table-td" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1.5">
+                        <Link
+                          to={`/customers/${c._id}/ledger`}
+                          className="btn-secondary py-1 px-2.5 text-xs text-brand-700 hover:text-brand-900"
+                        >
+                          Ledger
+                        </Link>
                         <button
                           className="btn-secondary py-1 px-2.5 text-xs"
                           onClick={(e) => openEdit(c, e)}
