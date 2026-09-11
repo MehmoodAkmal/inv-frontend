@@ -8,6 +8,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import PrivateRoute from './components/layout/PrivateRoute';
 import RoleRoute from './components/layout/RoleRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
+import SuperAdminLayout from './components/layout/SuperAdminLayout';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 
 import Login from './pages/Login';
@@ -33,8 +34,8 @@ const Salary = lazy(() => import('./pages/Salary'));
 const SalaryPayroll = lazy(() => import('./pages/SalaryPayroll'));
 const Expenses = lazy(() => import('./pages/Expenses'));
 const Reports = lazy(() => import('./pages/Reports'));
-const SuperAdminDashboard = lazy(() => import('./pages/SuperAdminDashboard'));
-const SuperAdminOrganizations = lazy(() => import('./pages/SuperAdminOrganizations'));
+const PlatformDashboard = lazy(() => import('./pages/superadmin/PlatformDashboard'));
+const SuperAdminDashboard = lazy(() => import('./pages/superadmin/PlatformDashboard'));
 const SuperAdminUsers = lazy(() => import('./pages/SuperAdminUsers'));
 const Permissions = lazy(() => import('./pages/Permissions'));
 const BranchComparison = lazy(() => import('./pages/BranchComparison'));
@@ -80,16 +81,24 @@ function AppContent() {
               <Route path="/pos/lookup" element={<CashierStockLookup />} />
             </Route>
 
-            {/* General Dashboard Layout for Admin / Manager */}
-            <Route element={<DashboardLayout />}>
-              <Route element={<RoleRoute allowedRoles={['superAdmin']} />}>
-                <Route path="/superadmin" element={<SuperAdminDashboard />} />
-                <Route path="/superadmin/organizations" element={<SuperAdminOrganizations />} />
+            {/* SuperAdmin Platform Management Section */}
+            <Route element={<RoleRoute allowedRoles={['superAdmin']} />}>
+              <Route path="/superadmin" element={<PlatformDashboard />} />
+              <Route path="/superadmin/dashboard" element={<PlatformDashboard />} />
+              <Route path="/superadmin/organizations" element={<PlatformDashboard initialTab="organizations" />} />
+              <Route path="/superadmin/signup-trends" element={<PlatformDashboard initialTab="trends" />} />
+              <Route path="/superadmin/activity" element={<PlatformDashboard initialTab="activity" />} />
+              <Route element={<SuperAdminLayout />}>
                 <Route path="/superadmin/users" element={<SuperAdminUsers />} />
               </Route>
+              <Route path="/superadmin/*" element={<Navigate to="/superadmin" replace />} />
+            </Route>
+
+            {/* General Dashboard Layout for Admin / Manager */}
+            <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
 
-              <Route element={<RoleRoute allowedRoles={['admin', 'superAdmin']} />}>
+              <Route element={<RoleRoute allowedRoles={['admin']} />}>
                 <Route path="/branches" element={<Branches />} />
                 <Route path="/staff" element={<AppUsersStaff />} />
                 <Route path="/app-users-staff" element={<AppUsersStaff />} />

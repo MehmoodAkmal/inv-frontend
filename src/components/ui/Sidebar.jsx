@@ -2,18 +2,18 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 
-export const DEFAULT_NAV_GROUPS = [
+export const SUPERADMIN_NAV_GROUPS = [
   {
-    label: 'Platform',
+    label: 'Platform Administration',
     items: [
       {
         to: '/superadmin',
-        label: 'Overview',
+        label: 'Platform Dashboard',
         roles: ['superAdmin'],
         end: true,
         icon: (
           <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
           </svg>
         ),
       },
@@ -28,17 +28,31 @@ export const DEFAULT_NAV_GROUPS = [
         ),
       },
       {
-        to: '/superadmin/users',
-        label: 'Users',
+        to: '/superadmin/signup-trends',
+        label: 'Signup Trends',
         roles: ['superAdmin'],
         icon: (
           <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        ),
+      },
+      {
+        to: '/superadmin/activity',
+        label: 'Activity',
+        roles: ['superAdmin'],
+        icon: (
+          <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
         ),
       },
     ],
   },
+];
+
+export const DEFAULT_NAV_GROUPS = [
+  SUPERADMIN_NAV_GROUPS[0],
   {
     label: 'Overview & Analytics',
     items: [
@@ -216,7 +230,7 @@ export const DEFAULT_NAV_GROUPS = [
       {
         to: '/branches',
         label: 'Branches',
-        roles: ['admin', 'superAdmin'],
+        roles: ['admin'],
         permission: ['branches', 'view'],
         icon: (
           <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -334,8 +348,16 @@ export default function Sidebar({
 
       {/* Nav Items List */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-2 space-y-5">
-        {navGroups.map((group, groupIdx) => {
+        {(user?.role === 'superAdmin' && navGroups === DEFAULT_NAV_GROUPS
+          ? SUPERADMIN_NAV_GROUPS
+          : navGroups
+        ).map((group, groupIdx) => {
           const visibleItems = group.items.filter((item) => {
+            // SuperAdmin: strictly allow only superadmin routes, no business items
+            if (user?.role === 'superAdmin') {
+              if (!item.to.startsWith('/superadmin')) return false;
+            }
+
             // Manager role: hide Branch Comparison, Branches, and App Users & Staff entirely
             if (user?.role === 'manager') {
               const hiddenLabels = ['Branch Comparison', 'Branches', 'App Users & Staff'];

@@ -14,6 +14,7 @@ export default function TopBar({
 }) {
   const { user } = useAuth();
   const isManager = user?.role === 'manager';
+  const isSuperAdmin = user?.role === 'superAdmin';
 
   const [assignedBranchName, setAssignedBranchName] = useState(() => {
     if (typeof user?.branchId === 'object' && user?.branchId?.name) {
@@ -86,7 +87,7 @@ export default function TopBar({
           </button>
         )}
 
-        {/* Branch Selector Slot */}
+        {/* Branch Selector Slot -> Replaced with Organization Search for superAdmin */}
         <div className="min-w-0">
           {isManager ? (
             <div
@@ -99,6 +100,21 @@ export default function TopBar({
             </div>
           ) : branchSelector !== undefined ? (
             branchSelector
+          ) : isSuperAdmin ? (
+            <div className="relative w-48 sm:w-72">
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-neutral-400">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                data-testid="org-search-topbar"
+                placeholder="Search organizations..."
+                aria-label="Search organizations"
+                className="w-full pl-8 pr-3 py-1 text-xs bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-accent"
+              />
+            </div>
           ) : (
             <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
               <span className="w-2 h-2 rounded-full bg-brand-accent animate-pulse" />
@@ -114,7 +130,7 @@ export default function TopBar({
       <div className="flex-1 max-w-md hidden md:block mx-4">
         {searchSlot !== undefined ? (
           searchSlot
-        ) : (
+        ) : isSuperAdmin ? null : (
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutral-400">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
