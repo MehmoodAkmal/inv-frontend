@@ -19,7 +19,13 @@ export default function Login() {
     try {
       const data = await login(form);
       toast.success(`Welcome back, ${data.user.firstName}!`);
-      navigate('/dashboard');
+      if (data.user?.role === 'cashier') {
+        navigate('/pos');
+      } else if (data.user?.role === 'superAdmin') {
+        navigate('/superadmin');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed. Please try again.');
     } finally {

@@ -1,5 +1,6 @@
 export default function StatCard({
   label,
+  title,
   value,
   icon,
   trend,
@@ -7,6 +8,7 @@ export default function StatCard({
   secondaryStats,
   className = '',
 }) {
+  const cardLabel = label || title;
   // Map accent colors to tinted background and icon text colors
   const accentClasses = {
     brand: 'bg-brand-50 text-brand-800 dark:bg-brand-900/50 dark:text-brand-accent border border-brand-200/50 dark:border-brand-700/40',
@@ -46,7 +48,7 @@ export default function StatCard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 truncate">
-              {label}
+              {cardLabel}
             </p>
             <div className="mt-2 flex items-baseline gap-2 flex-wrap">
               <span className="font-mono text-2xl lg:text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">

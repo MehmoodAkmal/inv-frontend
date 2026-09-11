@@ -2,7 +2,7 @@ import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from './context/AuthContext';
+import { useAuth, AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 
 import PrivateRoute from './components/layout/PrivateRoute';
@@ -39,6 +39,9 @@ const SuperAdminUsers = lazy(() => import('./pages/SuperAdminUsers'));
 const Permissions = lazy(() => import('./pages/Permissions'));
 const BranchComparison = lazy(() => import('./pages/BranchComparison'));
 const ProfitLoss = lazy(() => import('./pages/ProfitLoss'));
+const CashierPOS = lazy(() => import('./pages/CashierPOS'));
+const CashierSalesHistory = lazy(() => import('./pages/CashierSalesHistory'));
+const CashierStockLookup = lazy(() => import('./pages/CashierStockLookup'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,6 +53,14 @@ const queryClient = new QueryClient({
   },
 });
 
+function HomeRedirect() {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role === 'superAdmin') return <Navigate to="/superadmin" replace />;
+  if (user.role === 'cashier') return <Navigate to="/pos" replace />;
+  return <Navigate to="/dashboard" replace />;
+}
+
 function AppContent() {
   return (
     <ErrorBoundary>
@@ -59,6 +70,17 @@ function AppContent() {
           <Route path="/signup" element={<Signup />} />
 
           <Route element={<PrivateRoute />}>
+            {/* Cashier Station / MinimalLayout Routes (Counter Ergonomics) */}
+            <Route element={<RoleRoute allowedRoles={['cashier', 'admin', 'manager']} />}>
+              <Route path="/pos" element={<CashierPOS />} />
+              <Route path="/cashier-pos" element={<CashierPOS />} />
+              <Route path="/pos/sales" element={<CashierSalesHistory />} />
+              <Route path="/pos/history" element={<CashierSalesHistory />} />
+              <Route path="/pos/stock" element={<CashierStockLookup />} />
+              <Route path="/pos/lookup" element={<CashierStockLookup />} />
+            </Route>
+
+            {/* General Dashboard Layout for Admin / Manager */}
             <Route element={<DashboardLayout />}>
               <Route element={<RoleRoute allowedRoles={['superAdmin']} />}>
                 <Route path="/superadmin" element={<SuperAdminDashboard />} />
@@ -148,8 +170,8 @@ function AppContent() {
             </Route>
           </Route>
 
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<HomeRedirect />} />
+          <Route path="*" element={<HomeRedirect />} />
         </Routes>
       </div>
     </ErrorBoundary>

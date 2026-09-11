@@ -12,11 +12,12 @@ export default function RoleRoute({ allowedRoles = [], permission }) {
 
   if (permission && !['admin', 'superAdmin'].includes(user.role)) {
     if (permissionsLoading) return null;
-    if (!permissions?.[permission[0]]?.[permission[1]]) return <Navigate to="/dashboard" replace />;
+    const fallback = user.role === 'cashier' ? '/pos' : '/dashboard';
+    if (!permissions?.[permission[0]]?.[permission[1]]) return <Navigate to={fallback} replace />;
   }
 
   if (allowedRoles.length === 0 || allowedRoles.includes(user.role)) return <Outlet />;
 
-  const home = user.role === 'superAdmin' ? '/superadmin' : '/dashboard';
+  const home = user.role === 'superAdmin' ? '/superadmin' : user.role === 'cashier' ? '/pos' : '/dashboard';
   return <Navigate to={home} replace />;
 }

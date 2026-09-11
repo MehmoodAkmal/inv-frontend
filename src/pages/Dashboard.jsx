@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
   BarChart,
   Bar,
@@ -76,6 +77,11 @@ function ChartTooltip({ active, payload, label }) {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  if (user?.role === 'cashier') {
+    return <Navigate to="/pos" replace />;
+  }
+
   const [loading, setLoading] = useState(true);
   const [summaryData, setSummaryData] = useState(null);
   const [recentSales, setRecentSales] = useState([]);
