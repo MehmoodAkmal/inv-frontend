@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   AreaChart,
@@ -73,8 +73,10 @@ function ActivityTooltip({ active, payload, label }) {
   return null;
 }
 
-export default function PlatformDashboard({ initialTab = 'overview' }) {
+export default function PlatformDashboard({ initialTab = 'overview', view }) {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // Route-level security check
   if (!user) {
@@ -84,6 +86,54 @@ export default function PlatformDashboard({ initialTab = 'overview' }) {
     const fallback = user.role === 'cashier' ? '/pos' : '/dashboard';
     return <Navigate to={fallback} replace />;
   }
+
+  // Determine active view: 'overview' | 'organizations' | 'trends' | 'activity'
+  const activeView = useMemo(() => {
+    if (view) return view;
+    const path = location.pathname;
+    if (path.includes('/organizations')) return 'organizations';
+    if (path.includes('/signup-trends')) return 'trends';
+    if (path.includes('/activity')) return 'activity';
+    if (initialTab === 'organizations') return 'organizations';
+    if (initialTab === 'trends') return 'trends';
+    if (initialTab === 'activity') return 'activity';
+    return 'overview';
+  }, [view, location.pathname, initialTab]);
+
+  // View Meta (Title, Badges, Subtitles)
+  const viewMeta = useMemo(() => {
+    switch (activeView) {
+      case 'organizations':
+        return {
+          title: 'Organizations Directory',
+          badge: 'Tenant Management',
+          badgeColor: 'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200/60 dark:border-blue-700/50',
+          subtitle: 'Provisioned tenant organizations, subscription plans, quotas, and operational switches.',
+        };
+      case 'trends':
+        return {
+          title: 'Signup Trends & Onboarding Velocity',
+          badge: 'Growth Telemetry',
+          badgeColor: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-700/50',
+          subtitle: 'Historical registration trajectory and daily onboarding telemetry across tenants.',
+        };
+      case 'activity':
+        return {
+          title: 'Platform Activity & Tenant Usage',
+          badge: 'Operational Telemetry',
+          badgeColor: 'bg-teal-50 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300 border-teal-200/60 dark:border-teal-700/50',
+          subtitle: 'Cross-tenant operational engagement, ranked strictly by processed transaction volume.',
+        };
+      case 'overview':
+      default:
+        return {
+          title: 'Platform Dashboard',
+          badge: 'SuperAdmin',
+          badgeColor: 'bg-purple-50 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border-purple-200/60 dark:border-purple-700/50',
+          subtitle: 'Cross-tenant telemetry, organization provisioning posture, and global platform health.',
+        };
+    }
+  }, [activeView]);
 
   // State: Overall loading
   const [statsLoading, setStatsLoading] = useState(true);
@@ -121,6 +171,28 @@ export default function PlatformDashboard({ initialTab = 'overview' }) {
   const [editPlan, setEditPlan] = useState('');
   const [editMaxBranches, setEditMaxBranches] = useState(1);
   const [savingPlan, setSavingPlan] = useState(false);
+
+  // Computed Telemetry Aggregates
+  const trendTotal = useMemo(() => {
+    return signupTrend.reduce((acc, cur) => acc + (Number(cur.count) || 0), 0);
+  }, [signupTrend]);
+
+  const peakSignups = useMemo(() => {
+    return signupTrend.reduce((max, cur) => Math.max(max, Number(cur.count) || 0), 0);
+  }, [signupTrend]);
+
+  const avgSignups = useMemo(() => {
+    if (!trendDays) return '0.0';
+    return (trendTotal / trendDays).toFixed(1);
+  }, [trendTotal, trendDays]);
+
+  const topActiveOrg = useMemo(() => {
+    return activeOrgs[0] || null;
+  }, [activeOrgs]);
+
+  const totalActivityOrders = useMemo(() => {
+    return activeOrgs.reduce((acc, cur) => acc + (Number(cur.saleCount) || 0), 0);
+  }, [activeOrgs]);
 
   // 1. Fetch Platform Stats
   const loadStats = useCallback(async () => {
@@ -210,24 +282,6 @@ export default function PlatformDashboard({ initialTab = 'overview' }) {
     loadCharts();
   }, [loadCharts]);
 
-  // Scroll to section if initialTab is specified
-  useEffect(() => {
-    let targetId = null;
-    if (initialTab === 'organizations') targetId = 'organizations-section';
-    else if (initialTab === 'trends') targetId = 'trends-section';
-    else if (initialTab === 'activity') targetId = 'activity-section';
-
-    if (targetId) {
-      const timer = setTimeout(() => {
-        const el = document.getElementById(targetId);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 150);
-      return () => clearTimeout(timer);
-    }
-  }, [initialTab]);
-
   // Toggle Organization Status (Active <-> Suspended)
   const handleToggleStatus = async (orgId, currentActive) => {
     setTogglingId(orgId);
@@ -284,7 +338,6 @@ export default function PlatformDashboard({ initialTab = 'overview' }) {
       }
     } catch (err) {
       console.error('Failed to fetch org details:', err);
-      // Fallback to row data already present
     } finally {
       setModalLoading(false);
     }
@@ -328,12 +381,7 @@ export default function PlatformDashboard({ initialTab = 'overview' }) {
     let variant = 'neutral';
     if (p === 'pro') variant = 'primary';
     else if (p === 'basic') variant = 'brand';
-    return (
-      <Badge
-        variant={variant}
-        label={p.toUpperCase()}
-      />
-    );
+    return <Badge variant={variant} label={p.toUpperCase()} />;
   };
 
   // DataTable Column Definitions
@@ -466,33 +514,361 @@ export default function PlatformDashboard({ initialTab = 'overview' }) {
         onChange={(e) => {
           setSearchQuery(e.target.value);
           setPage(1);
+          if (activeView !== 'overview' && activeView !== 'organizations') {
+            navigate('/superadmin/organizations');
+          }
         }}
         className="w-full pl-9 pr-3 py-1.5 text-xs bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-accent"
       />
     </div>
   );
 
+  // ── Render: Organizations Directory Table Component ─────────────────────────
+  const renderOrganizationsTable = (isCompact = false) => (
+    <div id="organizations-section" className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
+            {isCompact ? 'Organizations Preview' : 'Organizations Directory'}
+          </h3>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+            Provisioned tenants, subscription tiers, and real-time operational switches.
+          </p>
+        </div>
+
+        {/* Table Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Status Filter */}
+          <select
+            aria-label="Filter by Status"
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
+            className="text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md px-2.5 py-1.5 text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-brand-accent shadow-sm"
+          >
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+          </select>
+
+          {/* Plan Filter */}
+          <select
+            aria-label="Filter by Plan"
+            value={planFilter}
+            onChange={(e) => {
+              setPlanFilter(e.target.value);
+              setPage(1);
+            }}
+            className="text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md px-2.5 py-1.5 text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-brand-accent shadow-sm"
+          >
+            <option value="">All Plans</option>
+            <option value="free">Free</option>
+            <option value="basic">Basic</option>
+            <option value="pro">Pro</option>
+          </select>
+
+          {/* Reset Filters */}
+          {(statusFilter || planFilter || searchQuery) && (
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter('');
+                setPlanFilter('');
+                setSearchQuery('');
+                setPage(1);
+              }}
+              className="text-xs font-semibold text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 px-2 py-1 transition-colors"
+            >
+              Clear Filters
+            </button>
+          )}
+
+          {isCompact && (
+            <Link
+              to="/superadmin/organizations"
+              className="text-xs font-semibold text-brand-700 dark:text-brand-accent hover:underline ml-2"
+            >
+              View Full Directory &rarr;
+            </Link>
+          )}
+        </div>
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={organizations}
+        loading={tableLoading}
+        emptyMessage="No organizations found"
+        emptySubMessage={
+          searchQuery || statusFilter || planFilter
+            ? 'Try adjusting your search criteria or filter selections.'
+            : 'No organizations have onboarded yet.'
+        }
+      />
+
+      {/* Pagination Controls */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between pt-3 text-xs text-neutral-500 dark:text-neutral-400">
+          <span>
+            Showing page <span className="font-semibold">{pagination.page}</span> of{' '}
+            <span className="font-semibold">{pagination.totalPages}</span> ({pagination.total} total orgs)
+          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="px-2.5 py-1 rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 font-medium text-neutral-700 dark:text-neutral-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              disabled={page >= pagination.totalPages}
+              onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+              className="px-2.5 py-1 rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 font-medium text-neutral-700 dark:text-neutral-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // ── Render: Signup Velocity Chart Card ──────────────────────────────────────
+  const renderSignupTrendChart = (fullWidth = false) => (
+    <div
+      id="trends-section"
+      className={`${
+        fullWidth ? 'col-span-12' : 'lg:col-span-7'
+      } bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-5 shadow-card flex flex-col justify-between`}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div>
+          <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
+            Tenant Signup Velocity
+          </h3>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+            Daily onboarded organizations over the selected telemetry window.
+          </p>
+        </div>
+
+        {/* 30 / 90 Days Toggle */}
+        <div className="inline-flex rounded-md p-0.5 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setTrendDays(30)}
+            className={`px-3 py-1 font-semibold rounded transition-colors ${
+              trendDays === 30
+                ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm'
+                : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+            }`}
+          >
+            30 Days
+          </button>
+          <button
+            type="button"
+            onClick={() => setTrendDays(90)}
+            className={`px-3 py-1 font-semibold rounded transition-colors ${
+              trendDays === 90
+                ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm'
+                : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+            }`}
+          >
+            90 Days
+          </button>
+        </div>
+      </div>
+
+      {chartsLoading ? (
+        <div className="h-64 flex items-center justify-center animate-pulse">
+          <div className="h-44 w-full bg-neutral-100 dark:bg-neutral-800/60 rounded" />
+        </div>
+      ) : (
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={signupTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="signupGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" className="dark:stroke-neutral-800" />
+              <XAxis
+                dataKey="formattedDate"
+                stroke="#9ca3af"
+                fontSize={11}
+                tickLine={false}
+                axisLine={{ stroke: '#e5e7eb' }}
+              />
+              <YAxis
+                stroke="#9ca3af"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                allowDecimals={false}
+              />
+              <Tooltip content={<SignupTooltip />} />
+              <Area
+                type="monotone"
+                dataKey="count"
+                stroke="#10b981"
+                strokeWidth={2}
+                fill="url(#signupGradient)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </div>
+  );
+
+  // ── Render: Most Active Organizations Chart Card ────────────────────────────
+  const renderActiveOrgsChart = (fullWidth = false) => (
+    <div
+      id="activity-section"
+      className={`${
+        fullWidth ? 'col-span-12' : 'lg:col-span-5'
+      } bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-5 shadow-card flex flex-col justify-between`}
+    >
+      <div>
+        <div className="flex items-center justify-between gap-3 mb-1">
+          <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
+            Most Active Organizations
+          </h3>
+          <span className="text-[11px] font-mono text-neutral-400">
+            Last 30 Days
+          </span>
+        </div>
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
+          Top tenants ranked strictly by processed transaction volume.
+        </p>
+
+        {chartsLoading ? (
+          <div className="h-56 flex items-center justify-center animate-pulse">
+            <div className="h-40 w-full bg-neutral-100 dark:bg-neutral-800/60 rounded" />
+          </div>
+        ) : activeOrgs.length === 0 ? (
+          <div className="h-56 flex flex-col items-center justify-center text-xs text-neutral-400">
+            <span>No recorded sales activity in this window</span>
+          </div>
+        ) : (
+          <div className="h-56 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={activeOrgs}
+                layout="vertical"
+                margin={{ top: 5, right: 15, left: 10, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" className="dark:stroke-neutral-800" />
+                <XAxis
+                  type="number"
+                  stroke="#9ca3af"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="organizationName"
+                  stroke="#9ca3af"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  width={90}
+                  tickFormatter={(name) => (name.length > 12 ? `${name.slice(0, 12)}…` : name)}
+                />
+                <Tooltip content={<ActivityTooltip />} />
+                <Bar
+                  dataKey="saleCount"
+                  fill="#3D7A7A"
+                  radius={[0, 4, 4, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+
+      {/* Mandatory Privacy Caption */}
+      <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-4 pt-2.5 border-t border-neutral-100 dark:border-neutral-800 flex items-center gap-1.5">
+        <svg className="w-3.5 h-3.5 text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <span>Financial data is private to each organization and not shown here.</span>
+      </p>
+    </div>
+  );
+
   return (
     <SuperAdminLayout branchSelector={orgSearchInput}>
       <div className="space-y-6">
-        {/* ── Page Header ────────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-neutral-200/80 dark:border-neutral-800">
+        {/* ── Page Header & Tab Pills ──────────────────────────────────── */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-neutral-200/80 dark:border-neutral-800">
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
-                Platform Dashboard
+                {viewMeta.title}
               </h1>
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200/60 dark:border-purple-700/50">
-                SuperAdmin
+              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider border ${viewMeta.badgeColor}`}>
+                {viewMeta.badge}
               </span>
             </div>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-              Cross-tenant telemetry, organization provisioning posture, and global platform health.
+              {viewMeta.subtitle}
             </p>
           </div>
 
-          {/* Quick Refresh Button */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* View Selector Navigation Pills */}
+            <div className="flex items-center gap-1 p-1 bg-neutral-100 dark:bg-neutral-800/80 rounded-lg border border-neutral-200/80 dark:border-neutral-700/80 text-xs">
+              <Link
+                to="/superadmin"
+                className={`px-3 py-1.5 rounded-md font-semibold transition-all ${
+                  activeView === 'overview'
+                    ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-sm'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                }`}
+              >
+                Overview
+              </Link>
+              <Link
+                to="/superadmin/organizations"
+                className={`px-3 py-1.5 rounded-md font-semibold transition-all ${
+                  activeView === 'organizations'
+                    ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-sm'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                }`}
+              >
+                Organizations
+              </Link>
+              <Link
+                to="/superadmin/signup-trends"
+                className={`px-3 py-1.5 rounded-md font-semibold transition-all ${
+                  activeView === 'trends'
+                    ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-sm'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                }`}
+              >
+                Signup Trends
+              </Link>
+              <Link
+                to="/superadmin/activity"
+                className={`px-3 py-1.5 rounded-md font-semibold transition-all ${
+                  activeView === 'activity'
+                    ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-sm'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                }`}
+              >
+                Activity
+              </Link>
+            </div>
+
+            {/* Quick Refresh Button */}
             <button
               type="button"
               onClick={() => {
@@ -512,9 +888,9 @@ export default function PlatformDashboard({ initialTab = 'overview' }) {
           </div>
         </div>
 
-        {/* ── 5 StatCards from GET /admin/stats ───────────────────────── */}
+        {/* ── StatCards Row: Dynamically Scoped per View ────────────────── */}
         {statsLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-5 animate-pulse">
                 <div className="h-3 w-20 bg-neutral-200 dark:bg-neutral-800 rounded mb-3" />
@@ -523,9 +899,9 @@ export default function PlatformDashboard({ initialTab = 'overview' }) {
               </div>
             ))}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* 1. Total Organizations */}
+        ) : activeView === 'organizations' ? (
+          /* Organizations View: 4 Tailored Cards */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               label="Total Organizations"
               value={fmtInt(stats.totalOrganizations)}
@@ -540,8 +916,6 @@ export default function PlatformDashboard({ initialTab = 'overview' }) {
                 </svg>
               }
             />
-
-            {/* 2. Active Organizations */}
             <StatCard
               label="Active Organizations"
               value={fmtInt(stats.activeOrganizations)}
@@ -560,8 +934,19 @@ export default function PlatformDashboard({ initialTab = 'overview' }) {
                 </svg>
               }
             />
-
-            {/* 3. New Signups This Month */}
+            <StatCard
+              label="Suspended Organizations"
+              value={fmtInt(stats.suspendedOrganizations)}
+              accentColor="danger"
+              secondaryStats={[
+                { label: 'Posture', value: stats.suspendedOrganizations === 0 ? 'Optimal' : 'Needs Review' },
+              ]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              }
+            />
             <StatCard
               label="New Signups This Month"
               value={fmtInt(stats.newOrganizationsThisMonth)}
@@ -575,30 +960,174 @@ export default function PlatformDashboard({ initialTab = 'overview' }) {
                 </svg>
               }
             />
-
-            {/* 4. Total Users */}
+          </div>
+        ) : activeView === 'trends' ? (
+          /* Signup Trends View: 4 Tailored Cards */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
-              label="Total Users"
+              label="New Signups This Month"
+              value={fmtInt(stats.newOrganizationsThisMonth)}
+              accentColor="warning"
+              secondaryStats={[{ label: 'Cadence', value: 'Current Month' }]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+              }
+            />
+            <StatCard
+              label="Window Registrations"
+              value={fmtInt(trendTotal)}
+              accentColor="mint"
+              secondaryStats={[{ label: 'Window', value: `${trendDays} Days` }]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              }
+            />
+            <StatCard
+              label="Peak Day Signups"
+              value={fmtInt(peakSignups)}
+              accentColor="purple"
+              secondaryStats={[{ label: 'Max / Day', value: 'In Window' }]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              }
+            />
+            <StatCard
+              label="Daily Average Signups"
+              value={avgSignups}
+              accentColor="primary"
+              secondaryStats={[{ label: 'Daily Rate', value: 'Tenants / Day' }]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              }
+            />
+          </div>
+        ) : activeView === 'activity' ? (
+          /* Activity View: 4 Tailored Cards */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              label="Active Organizations"
+              value={fmtInt(stats.activeOrganizations)}
+              accentColor="mint"
+              secondaryStats={[
+                {
+                  label: 'Ratio',
+                  value: stats.totalOrganizations
+                    ? `${((stats.activeOrganizations / stats.totalOrganizations) * 100).toFixed(0)}% Active`
+                    : '100%',
+                },
+              ]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
+            <StatCard
+              label="Most Active Tenant"
+              value={topActiveOrg ? topActiveOrg.organizationName : 'None'}
+              accentColor="brand"
+              secondaryStats={[
+                { label: 'Volume', value: topActiveOrg ? `${fmtInt(topActiveOrg.saleCount)} Orders` : '0 Orders' },
+              ]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              }
+            />
+            <StatCard
+              label="Total Branches"
+              value={fmtInt(stats.totalBranches)}
+              accentColor="purple"
+              secondaryStats={[{ label: 'Storefronts', value: 'Cross-Tenant' }]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+                </svg>
+              }
+            />
+            <StatCard
+              label="System Users"
               value={fmtInt(stats.totalUsers)}
               accentColor="primary"
-              secondaryStats={[
-                { label: 'Scope', value: 'Tenant Staff' },
-              ]}
+              secondaryStats={[{ label: 'Staff Accounts', value: 'Active' }]}
               icon={
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               }
             />
-
-            {/* 5. Total Branches */}
+          </div>
+        ) : (
+          /* Platform Overview: All 5 Primary StatCards */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <StatCard
+              label="Total Organizations"
+              value={fmtInt(stats.totalOrganizations)}
+              accentColor="brand"
+              secondaryStats={[
+                { label: 'Active', value: fmtInt(stats.activeOrganizations) },
+                { label: 'Suspended', value: fmtInt(stats.suspendedOrganizations) },
+              ]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              }
+            />
+            <StatCard
+              label="Active Organizations"
+              value={fmtInt(stats.activeOrganizations)}
+              accentColor="mint"
+              secondaryStats={[
+                {
+                  label: 'Health Rate',
+                  value: stats.totalOrganizations
+                    ? `${((stats.activeOrganizations / stats.totalOrganizations) * 100).toFixed(0)}%`
+                    : '100%',
+                },
+              ]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
+            <StatCard
+              label="New Signups This Month"
+              value={fmtInt(stats.newOrganizationsThisMonth)}
+              accentColor="warning"
+              secondaryStats={[{ label: 'Cadence', value: 'Current Month' }]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+              }
+            />
+            <StatCard
+              label="Total Users"
+              value={fmtInt(stats.totalUsers)}
+              accentColor="primary"
+              secondaryStats={[{ label: 'Scope', value: 'Tenant Staff' }]}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              }
+            />
             <StatCard
               label="Total Branches"
               value={fmtInt(stats.totalBranches)}
               accentColor="purple"
-              secondaryStats={[
-                { label: 'Network', value: 'Storefronts' },
-              ]}
+              secondaryStats={[{ label: 'Network', value: 'Storefronts' }]}
               icon={
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
@@ -608,264 +1137,193 @@ export default function PlatformDashboard({ initialTab = 'overview' }) {
           </div>
         )}
 
-        {/* ── Dual Telemetry Charts Row ───────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Chart 1: Signup Trend (7 Cols) */}
-          <div id="trends-section" className="lg:col-span-7 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-5 shadow-card flex flex-col justify-between">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <div>
-                <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
-                  Tenant Signup Velocity
-                </h3>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                  Daily onboarded organizations over the selected telemetry window.
-                </p>
-              </div>
+        {/* ── Dynamic Content Sections per Active View ────────────────── */}
 
-              {/* 30 / 90 Days Toggle */}
-              <div className="inline-flex rounded-md p-0.5 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs self-start sm:self-auto">
-                <button
-                  type="button"
-                  onClick={() => setTrendDays(30)}
-                  className={`px-3 py-1 font-semibold rounded transition-colors ${
-                    trendDays === 30
-                      ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm'
-                      : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
-                  }`}
-                >
-                  30 Days
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTrendDays(90)}
-                  className={`px-3 py-1 font-semibold rounded transition-colors ${
-                    trendDays === 90
-                      ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm'
-                      : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
-                  }`}
-                >
-                  90 Days
-                </button>
-              </div>
+        {/* 1. OVERVIEW VIEW */}
+        {activeView === 'overview' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+              {renderSignupTrendChart(false)}
+              {renderActiveOrgsChart(false)}
+            </div>
+            {renderOrganizationsTable(false)}
+          </div>
+        )}
+
+        {/* 2. ORGANIZATIONS VIEW */}
+        {activeView === 'organizations' && (
+          <div className="space-y-6">
+            {renderOrganizationsTable(false)}
+          </div>
+        )}
+
+        {/* 3. SIGNUP TRENDS VIEW */}
+        {activeView === 'trends' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-12 gap-5">
+              {renderSignupTrendChart(true)}
             </div>
 
-            {chartsLoading ? (
-              <div className="h-64 flex items-center justify-center animate-pulse">
-                <div className="h-44 w-full bg-neutral-100 dark:bg-neutral-800/60 rounded" />
-              </div>
-            ) : (
-              <div className="h-64 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={signupTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="signupGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" className="dark:stroke-neutral-800" />
-                    <XAxis
-                      dataKey="formattedDate"
-                      stroke="#9ca3af"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={{ stroke: '#e5e7eb' }}
-                    />
-                    <YAxis
-                      stroke="#9ca3af"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                      allowDecimals={false}
-                    />
-                    <Tooltip content={<SignupTooltip />} />
-                    <Area
-                      type="monotone"
-                      dataKey="count"
-                      stroke="#10b981"
-                      strokeWidth={2}
-                      fill="url(#signupGradient)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-
-          {/* Chart 2: Most Active Organizations (5 Cols) */}
-          <div id="activity-section" className="lg:col-span-5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-5 shadow-card flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between gap-3 mb-1">
-                <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
-                  Most Active Organizations
-                </h3>
-                <span className="text-[11px] font-mono text-neutral-400">
-                  Last 30 Days
+            {/* Daily Onboarding Breakdown Table */}
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-5 shadow-card space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
+                    Daily Onboarding Telemetry
+                  </h3>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                    Day-by-day tenant onboarding distribution across the selected {trendDays}-day window.
+                  </p>
+                </div>
+                <span className="text-xs font-mono text-neutral-500">
+                  {signupTrend.filter((d) => d.count > 0).length} active registration days
                 </span>
               </div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
-                Top tenants ranked strictly by processed transaction volume.
-              </p>
 
-              {chartsLoading ? (
-                <div className="h-56 flex items-center justify-center animate-pulse">
-                  <div className="h-40 w-full bg-neutral-100 dark:bg-neutral-800/60 rounded" />
-                </div>
-              ) : activeOrgs.length === 0 ? (
-                <div className="h-56 flex flex-col items-center justify-center text-xs text-neutral-400">
-                  <span>No recorded sales activity in this window</span>
-                </div>
-              ) : (
-                <div className="h-56 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={activeOrgs}
-                      layout="vertical"
-                      margin={{ top: 5, right: 15, left: 10, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" className="dark:stroke-neutral-800" />
-                      <XAxis
-                        type="number"
-                        stroke="#9ca3af"
-                        fontSize={10}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <YAxis
-                        type="category"
-                        dataKey="organizationName"
-                        stroke="#9ca3af"
-                        fontSize={11}
-                        tickLine={false}
-                        axisLine={false}
-                        width={90}
-                        tickFormatter={(name) => (name.length > 12 ? `${name.slice(0, 12)}…` : name)}
-                      />
-                      <Tooltip content={<ActivityTooltip />} />
-                      <Bar
-                        dataKey="saleCount"
-                        fill="#3D7A7A"
-                        radius={[0, 4, 4, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </div>
-
-            {/* Mandatory Privacy Caption */}
-            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-4 pt-2.5 border-t border-neutral-100 dark:border-neutral-800 flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5 text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              <span>Financial data is private to each organization and not shown here.</span>
-            </p>
-          </div>
-        </div>
-
-        {/* ── Organizations DataTable Section ────────────────────────── */}
-        <div id="organizations-section" className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
-                Organizations Directory
-              </h3>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                Provisioned tenants, subscription tiers, and real-time operational switches.
-              </p>
-            </div>
-
-            {/* Table Filters */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Status Filter */}
-              <select
-                aria-label="Filter by Status"
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setPage(1);
-                }}
-                className="text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md px-2.5 py-1.5 text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-brand-accent shadow-sm"
-              >
-                <option value="">All Statuses</option>
-                <option value="active">Active</option>
-                <option value="suspended">Suspended</option>
-              </select>
-
-              {/* Plan Filter */}
-              <select
-                aria-label="Filter by Plan"
-                value={planFilter}
-                onChange={(e) => {
-                  setPlanFilter(e.target.value);
-                  setPage(1);
-                }}
-                className="text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md px-2.5 py-1.5 text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-brand-accent shadow-sm"
-              >
-                <option value="">All Plans</option>
-                <option value="free">Free</option>
-                <option value="basic">Basic</option>
-                <option value="pro">Pro</option>
-              </select>
-
-              {/* Reset Filters */}
-              {(statusFilter || planFilter || searchQuery) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStatusFilter('');
-                    setPlanFilter('');
-                    setSearchQuery('');
-                    setPage(1);
-                  }}
-                  className="text-xs font-semibold text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 px-2 py-1 transition-colors"
-                >
-                  Clear Filters
-                </button>
-              )}
-            </div>
-          </div>
-
-          <DataTable
-            columns={columns}
-            data={organizations}
-            loading={tableLoading}
-            emptyMessage="No organizations found"
-            emptySubMessage={
-              searchQuery || statusFilter || planFilter
-                ? 'Try adjusting your search criteria or filter selections.'
-                : 'No organizations have onboarded yet.'
-            }
-          />
-
-          {/* Pagination Controls */}
-          {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between pt-3 text-xs text-neutral-500 dark:text-neutral-400">
-              <span>
-                Showing page <span className="font-semibold">{pagination.page}</span> of{' '}
-                <span className="font-semibold">{pagination.totalPages}</span> ({pagination.total} total orgs)
-              </span>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  disabled={page <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="px-2.5 py-1 rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 font-medium text-neutral-700 dark:text-neutral-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
-                >
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  disabled={page >= pagination.totalPages}
-                  onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-                  className="px-2.5 py-1 rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 font-medium text-neutral-700 dark:text-neutral-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
-                >
-                  Next
-                </button>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="border-b border-neutral-200 dark:border-neutral-800 text-neutral-400 font-semibold uppercase text-[10px] tracking-wider">
+                    <tr>
+                      <th className="py-2.5 px-3">Date</th>
+                      <th className="py-2.5 px-3">New Tenants</th>
+                      <th className="py-2.5 px-3 w-1/3">Velocity Bar</th>
+                      <th className="py-2.5 px-3 text-right">Cadence Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
+                    {signupTrend
+                      .slice()
+                      .reverse()
+                      .slice(0, 15)
+                      .map((item) => (
+                        <tr key={item.date} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
+                          <td className="py-2.5 px-3 font-mono font-medium text-neutral-800 dark:text-neutral-200">
+                            {fmtFullDate(item.date)}
+                          </td>
+                          <td className="py-2.5 px-3 font-semibold text-neutral-900 dark:text-white">
+                            {item.count} {item.count === 1 ? 'organization' : 'organizations'}
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-2 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full bg-emerald-500"
+                                  style={{
+                                    width: `${peakSignups > 0 ? Math.min(100, (item.count / peakSignups) * 100) : 0}%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3 text-right">
+                            <Badge
+                              variant={item.count > 0 ? 'success' : 'neutral'}
+                              label={item.count > 0 ? `+${item.count} Registered` : 'No Signups'}
+                              dot={item.count > 0}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* 4. ACTIVITY VIEW */}
+        {activeView === 'activity' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-12 gap-5">
+              {renderActiveOrgsChart(true)}
+            </div>
+
+            {/* Top Active Tenants Leaderboard Table */}
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-5 shadow-card space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
+                    Top Active Tenants Leaderboard
+                  </h3>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                    Ranked purely by recorded order / sale transactions in the last 30 days.
+                  </p>
+                </div>
+                <span className="text-xs font-mono text-neutral-500">
+                  {fmtInt(totalActivityOrders)} total orders recorded
+                </span>
+              </div>
+
+              {activeOrgs.length === 0 ? (
+                <div className="py-8 text-center text-xs text-neutral-400">
+                  No recorded activity in this window
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="border-b border-neutral-200 dark:border-neutral-800 text-neutral-400 font-semibold uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="py-2.5 px-3 w-14">Rank</th>
+                        <th className="py-2.5 px-3">Organization</th>
+                        <th className="py-2.5 px-3 text-right">Processed Orders</th>
+                        <th className="py-2.5 px-3 w-1/3">Activity Share</th>
+                        <th className="py-2.5 px-3 text-right">Engagement Tier</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
+                      {activeOrgs.map((org, idx) => {
+                        const maxSales = activeOrgs[0]?.saleCount || 1;
+                        const pct = Math.min(100, Math.round((org.saleCount / maxSales) * 100));
+                        return (
+                          <tr key={org.organizationName + idx} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
+                            <td className="py-2.5 px-3 font-mono font-bold text-neutral-500">
+                              #{idx + 1}
+                            </td>
+                            <td className="py-2.5 px-3 font-semibold text-neutral-900 dark:text-white">
+                              {org.organizationName}
+                            </td>
+                            <td className="py-2.5 px-3 font-mono font-bold text-right text-brand-900 dark:text-brand-accent">
+                              {fmtInt(org.saleCount)}
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-2 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+                                  <div
+                                    className="h-full rounded-full bg-[#3D7A7A]"
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                                <span className="font-mono text-[10px] text-neutral-400 w-8 text-right">
+                                  {pct}%
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3 text-right">
+                              <Badge
+                                variant={idx === 0 ? 'primary' : idx < 3 ? 'brand' : 'neutral'}
+                                label={idx === 0 ? 'High Volume' : idx < 3 ? 'Active' : 'Moderate'}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Explicit Privacy Guarantee Note */}
+              <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 text-[11px] text-neutral-500 dark:text-neutral-400 flex items-center gap-2">
+                <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span>
+                  <strong>Platform Privacy Guarantee:</strong> Financial data is private to each organization and not shown here. Transaction values, revenue, profits, and customer details are strictly isolated per tenant.
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Organization Details Modal ─────────────────────────────── */}
         <Modal

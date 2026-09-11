@@ -460,4 +460,72 @@ describe('SuperAdmin Platform Section', () => {
       expect(screen.getByTestId('login-view')).toBeInTheDocument();
     });
   });
+
+  describe('Distinct SuperAdmin Sidebar Views', () => {
+    it('renders Organizations view with dedicated title and table, omitting telemetry charts', async () => {
+      render(
+        <MemoryRouter initialEntries={['/superadmin/organizations']}>
+          <PlatformDashboard />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(getAdminOrganizations).toHaveBeenCalled();
+      });
+
+      // Dedicated title
+      expect(screen.getAllByText('Organizations Directory').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText('Apex Retailers')).toBeInTheDocument();
+
+      // Telemetry charts should NOT be rendered in this view
+      expect(screen.queryByText('Tenant Signup Velocity')).not.toBeInTheDocument();
+    });
+
+    it('renders Signup Trends view with dedicated title and chart, omitting organizations table', async () => {
+      render(
+        <MemoryRouter initialEntries={['/superadmin/signup-trends']}>
+          <PlatformDashboard />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(getSignupTrend).toHaveBeenCalled();
+      });
+
+      // Dedicated title and charts
+      expect(screen.getByText('Signup Trends & Onboarding Velocity')).toBeInTheDocument();
+      expect(screen.getByText('Tenant Signup Velocity')).toBeInTheDocument();
+      expect(screen.getByText('Daily Onboarding Telemetry')).toBeInTheDocument();
+
+      // Organizations directory table should NOT be rendered in this view
+      expect(screen.queryByText('Organizations Directory')).not.toBeInTheDocument();
+      expect(screen.queryByText('Beacon Superstore')).not.toBeInTheDocument();
+    });
+
+    it('renders Activity view with dedicated title, bar chart, and privacy caption, omitting organizations table', async () => {
+      render(
+        <MemoryRouter initialEntries={['/superadmin/activity']}>
+          <PlatformDashboard />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(getMostActiveOrgs).toHaveBeenCalled();
+      });
+
+      // Dedicated title, chart, and privacy note
+      expect(screen.getByText('Platform Activity & Tenant Usage')).toBeInTheDocument();
+      expect(screen.getByText('Most Active Organizations')).toBeInTheDocument();
+      expect(screen.getByText('Top Active Tenants Leaderboard')).toBeInTheDocument();
+      expect(
+        screen.getByText('Financial data is private to each organization and not shown here.')
+      ).toBeInTheDocument();
+
+      // Signup trends chart should NOT be rendered in this view
+      expect(screen.queryByText('Tenant Signup Velocity')).not.toBeInTheDocument();
+      // Organizations directory table should NOT be rendered in this view
+      expect(screen.queryByText('Organizations Directory')).not.toBeInTheDocument();
+      expect(screen.queryByText('Beacon Superstore')).not.toBeInTheDocument();
+    });
+  });
 });

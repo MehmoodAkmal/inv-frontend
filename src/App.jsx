@@ -83,11 +83,11 @@ function AppContent() {
 
             {/* SuperAdmin Platform Management Section */}
             <Route element={<RoleRoute allowedRoles={['superAdmin']} />}>
-              <Route path="/superadmin" element={<PlatformDashboard />} />
-              <Route path="/superadmin/dashboard" element={<PlatformDashboard />} />
-              <Route path="/superadmin/organizations" element={<PlatformDashboard initialTab="organizations" />} />
-              <Route path="/superadmin/signup-trends" element={<PlatformDashboard initialTab="trends" />} />
-              <Route path="/superadmin/activity" element={<PlatformDashboard initialTab="activity" />} />
+              <Route path="/superadmin" element={<PlatformDashboard view="overview" />} />
+              <Route path="/superadmin/dashboard" element={<PlatformDashboard view="overview" />} />
+              <Route path="/superadmin/organizations" element={<PlatformDashboard view="organizations" />} />
+              <Route path="/superadmin/signup-trends" element={<PlatformDashboard view="trends" />} />
+              <Route path="/superadmin/activity" element={<PlatformDashboard view="activity" />} />
               <Route element={<SuperAdminLayout />}>
                 <Route path="/superadmin/users" element={<SuperAdminUsers />} />
               </Route>
