@@ -336,6 +336,15 @@ export default function Sidebar({
       <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-2 space-y-5">
         {navGroups.map((group, groupIdx) => {
           const visibleItems = group.items.filter((item) => {
+            // Manager role: hide Branch Comparison, Branches, and App Users & Staff entirely
+            if (user?.role === 'manager') {
+              const hiddenLabels = ['Branch Comparison', 'Branches', 'App Users & Staff'];
+              const hiddenPaths = ['/branch-comparison', '/branches', '/staff', '/app-users-staff'];
+              if (hiddenLabels.includes(item.label) || hiddenPaths.includes(item.to)) {
+                return false;
+              }
+            }
+
             if (!item.roles.includes(user?.role)) return false;
             if (!item.permission || ['admin', 'superAdmin'].includes(user?.role)) return true;
             return (

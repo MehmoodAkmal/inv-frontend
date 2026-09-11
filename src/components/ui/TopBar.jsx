@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { getBranchById, getBranches } from '../../services/branchService';
 import ThemeToggle from './ThemeToggle';
 import NotificationBell from './NotificationBell';
 
@@ -11,6 +13,58 @@ export default function TopBar({
   className = '',
 }) {
   const { user } = useAuth();
+  const isManager = user?.role === 'manager';
+
+  const [assignedBranchName, setAssignedBranchName] = useState(() => {
+    if (typeof user?.branchId === 'object' && user?.branchId?.name) {
+      return user.branchId.name;
+    }
+    return user?.branchName || '';
+  });
+
+  useEffect(() => {
+    if (!isManager) return;
+    if (assignedBranchName) return;
+
+    const bid = typeof user?.branchId === 'string' ? user.branchId : user?.branchId?._id;
+    if (!bid) {
+      setAssignedBranchName('Main Branch');
+      return;
+    }
+
+    let isMounted = true;
+    getBranchById(bid)
+      .then((res) => {
+        if (!isMounted) return;
+        if (res?.data?.data?.name) {
+          setAssignedBranchName(res.data.data.name);
+        } else {
+          setAssignedBranchName(`Branch #${bid.slice(-4).toUpperCase()}`);
+        }
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        getBranches()
+          .then((bRes) => {
+            if (!isMounted) return;
+            const match = (bRes?.data?.data || []).find((b) => String(b._id) === String(bid));
+            setAssignedBranchName(match?.name || `Branch #${bid.slice(-4).toUpperCase()}`);
+          })
+          .catch(() => {
+            if (isMounted) setAssignedBranchName('Assigned Branch');
+          });
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isManager, user?.branchId, assignedBranchName]);
+
+  const displayBranchLabel =
+    assignedBranchName ||
+    (typeof user?.branchId === 'object' && user?.branchId?.name) ||
+    user?.branchName ||
+    'Assigned Branch';
 
   return (
     <header
@@ -34,7 +88,16 @@ export default function TopBar({
 
         {/* Branch Selector Slot */}
         <div className="min-w-0">
-          {branchSelector !== undefined ? (
+          {isManager ? (
+            <div
+              data-testid="manager-branch-label"
+              className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-semibold text-neutral-700 dark:text-neutral-300 select-none cursor-default"
+              title="Assigned Branch"
+            >
+              <span className="w-2 h-2 rounded-full bg-brand-accent shrink-0" />
+              <span className="truncate max-w-[200px]">{displayBranchLabel}</span>
+            </div>
+          ) : branchSelector !== undefined ? (
             branchSelector
           ) : (
             <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">

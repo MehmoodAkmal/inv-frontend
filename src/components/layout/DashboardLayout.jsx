@@ -1,9 +1,12 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from '../ui/Sidebar';
 import TopBar from '../ui/TopBar';
 
-const DashboardLayoutContext = createContext(false);
+export const DashboardLayoutContext = createContext({
+  isNested: false,
+  setBranchSelector: () => {},
+});
 
 export default function DashboardLayout({
   children,
@@ -13,7 +16,10 @@ export default function DashboardLayout({
   userProfile,
   navGroups,
 }) {
-  const isNested = useContext(DashboardLayoutContext);
+  const parentCtx = useContext(DashboardLayoutContext);
+  const isNested = Boolean(parentCtx?.isNested);
+
+  const [injectedBranchSelector, setInjectedBranchSelector] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem('sidebar-collapsed') === 'true';
@@ -25,6 +31,12 @@ export default function DashboardLayout({
     window.addEventListener('auth:logout', handler);
     return () => window.removeEventListener('auth:logout', handler);
   }, [navigate]);
+
+  useEffect(() => {
+    if (isNested && branchSelector !== undefined && parentCtx?.setBranchSelector) {
+      parentCtx.setBranchSelector(branchSelector);
+    }
+  }, [isNested, branchSelector, parentCtx]);
 
   const toggleCollapse = useCallback(() => {
     setSidebarCollapsed((prev) => {
@@ -39,8 +51,16 @@ export default function DashboardLayout({
     return <>{children || <Outlet />}</>;
   }
 
+  const contextValue = {
+    isNested: true,
+    setBranchSelector: setInjectedBranchSelector,
+  };
+
+  const effectiveBranchSelector =
+    injectedBranchSelector !== null ? injectedBranchSelector : branchSelector;
+
   return (
-    <DashboardLayoutContext.Provider value={true}>
+    <DashboardLayoutContext.Provider value={contextValue}>
       <div className="flex h-screen overflow-hidden bg-neutral-50/60 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 antialiased font-sans">
         {/* Desktop Sidebar */}
         <div className="hidden lg:flex lg:shrink-0">
@@ -65,7 +85,7 @@ export default function DashboardLayout({
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
           <TopBar
             onMenuClick={() => setSidebarOpen(true)}
-            branchSelector={branchSelector}
+            branchSelector={effectiveBranchSelector}
             searchSlot={searchSlot}
             actionSlot={actionSlot}
             userProfile={userProfile}

@@ -258,15 +258,30 @@ export default function Dashboard() {
     };
   }, [todaySales.totalAmount, yesterdaySales.totalAmount]);
 
+  // Role check: manager vs admin
+  const isManager = user?.role === 'manager';
+
+  const managerBranchId = user?.branchId?._id || user?.branchId;
+  const managerBranchName = useMemo(() => {
+    if (typeof user?.branchId === 'object' && user?.branchId?.name) {
+      return user.branchId.name;
+    }
+    if (user?.branchName) return user.branchName;
+    if (managerBranchId && branchMap[managerBranchId]) {
+      return branchMap[managerBranchId];
+    }
+    return 'Assigned Branch';
+  }, [user?.branchId, user?.branchName, managerBranchId, branchMap]);
+
   // Daily run-rate
   const dailyRunRate = useMemo(() => {
     const dayOfMonth = new Date().getDate();
     return dayOfMonth > 0 ? monthSales.totalAmount / dayOfMonth : 0;
   }, [monthSales.totalAmount]);
 
-  // Table column configuration
-  const columns = useMemo(
-    () => [
+  // Table column configuration: branch column omitted for single-branch manager view
+  const columns = useMemo(() => {
+    const allCols = [
       {
         key: 'invoiceNumber',
         label: 'Invoice #',
@@ -351,9 +366,13 @@ export default function Dashboard() {
           </span>
         ),
       },
-    ],
-    [branchMap]
-  );
+    ];
+
+    if (isManager) {
+      return allCols.filter((col) => col.key !== 'branchId');
+    }
+    return allCols;
+  }, [branchMap, isManager]);
 
   // Formatted current date for page header
   const currentDateFormatted = useMemo(() => {
@@ -366,7 +385,20 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <DashboardLayout>
+    <DashboardLayout
+      branchSelector={
+        isManager ? (
+          <div
+            data-testid="manager-branch-label"
+            className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-semibold text-neutral-700 dark:text-neutral-300 select-none cursor-default"
+            title="Assigned Branch"
+          >
+            <span className="w-2 h-2 rounded-full bg-brand-accent shrink-0" />
+            <span className="truncate max-w-[200px]">{managerBranchName}</span>
+          </div>
+        ) : undefined
+      }
+    >
       <div className="space-y-6">
         {/* ── Page Header ────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-neutral-200/80 dark:border-neutral-800">
@@ -380,7 +412,9 @@ export default function Dashboard() {
               </span>
             </div>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-              Consolidated real-time operational performance, revenue breakdowns, and inventory posture.
+              {isManager
+                ? `Operational performance and inventory posture for ${managerBranchName}.`
+                : 'Consolidated real-time operational performance, revenue breakdowns, and inventory posture.'}
             </p>
           </div>
 
@@ -490,26 +524,46 @@ export default function Dashboard() {
 
         {/* ── Secondary Row of Smaller Stat Tiles ────────────────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-          {/* Tile 1: Branches Count */}
-          <Link
-            to="/branches"
-            className="group bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-brand-300 dark:hover:border-brand-700 rounded-card p-4 shadow-card hover:shadow-card-md transition-all duration-150 flex flex-col justify-between"
-          >
-            <div className="flex items-center justify-between text-neutral-400 group-hover:text-brand-800 dark:group-hover:text-brand-accent transition-colors">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                Branches
-              </span>
-              <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
+          {/* Tile 1: Branches Count / Assigned Branch */}
+          {isManager ? (
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-4 shadow-card flex flex-col justify-between select-none">
+              <div className="flex items-center justify-between text-neutral-400">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                  Assigned Branch
+                </span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              </div>
+              <div className="mt-2 flex items-baseline justify-between">
+                <span
+                  className="font-semibold text-sm text-neutral-900 dark:text-white truncate max-w-[120px]"
+                  title={managerBranchName}
+                >
+                  {managerBranchName}
+                </span>
+                <span className="text-[11px] text-neutral-400">Assigned</span>
+              </div>
             </div>
-            <div className="mt-2 flex items-baseline justify-between">
-              <span className="font-mono text-xl font-bold text-neutral-900 dark:text-white">
-                {loading ? '—' : branches.length || 1}
-              </span>
-              <span className="text-[11px] text-neutral-400">Locations</span>
-            </div>
-          </Link>
+          ) : (
+            <Link
+              to="/branches"
+              className="group bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-brand-300 dark:hover:border-brand-700 rounded-card p-4 shadow-card hover:shadow-card-md transition-all duration-150 flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between text-neutral-400 group-hover:text-brand-800 dark:group-hover:text-brand-accent transition-colors">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                  Branches
+                </span>
+                <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <div className="mt-2 flex items-baseline justify-between">
+                <span className="font-mono text-xl font-bold text-neutral-900 dark:text-white">
+                  {loading ? '—' : branches.length || 1}
+                </span>
+                <span className="text-[11px] text-neutral-400">Locations</span>
+              </div>
+            </Link>
+          )}
 
           {/* Tile 2: Total SKUs */}
           <Link
