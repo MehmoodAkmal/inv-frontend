@@ -1,5 +1,6 @@
 import CustomSelect from '../components/ui/CustomSelect';
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -231,8 +232,8 @@ function LedgerDrawer({ customerId, customers, onClose }) {
     fetchLedger();
   }, [fetchLedger]);
 
-  return (
-    <div className="fixed inset-0 z-50 flex">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex">
       <div className="flex-1 bg-brand-900/50 backdrop-blur-sm" onClick={onClose} />
       <div className="w-full max-w-lg bg-white h-full flex flex-col shadow-card-lg">
         {/* Header */}
@@ -347,7 +348,8 @@ function LedgerDrawer({ customerId, customers, onClose }) {
         {/* Pagination */}
         <Pagination pagination={pagination} onPageChange={setPage} />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

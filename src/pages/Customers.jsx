@@ -1,5 +1,6 @@
 import CustomSelect from '../components/ui/CustomSelect';
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -116,8 +117,8 @@ function CustomerDetailDrawer({
 
   const balance = ledgerData?.customer?.currentBalance ?? customer.currentBalance;
 
-  return (
-    <div className="fixed inset-0 z-50 flex">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex">
       {/* Backdrop */}
       <div className="flex-1 bg-brand-900/50 backdrop-blur-sm" onClick={onClose} />
 
@@ -377,7 +378,8 @@ function CustomerDetailDrawer({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
