@@ -56,8 +56,12 @@ const EMPTY_ITEM_FORM = {
 };
 
 export default function ItemsCatalog() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { user, permissions } = useAuth();
+  const isAdmin = ['admin', 'superAdmin'].includes(user?.role);
+  const canCreate = isAdmin || Boolean(permissions?.items?.create);
+  const canEdit = isAdmin || Boolean(permissions?.items?.edit);
+  const canDeactivate = isAdmin || Boolean(permissions?.items?.deactivate);
+  const canCreateCategory = isAdmin || Boolean(permissions?.categories?.create);
 
   // State
   const [items, setItems] = useState([]);
@@ -491,37 +495,40 @@ export default function ItemsCatalog() {
       label: 'Actions',
       align: 'center',
       render: (_, row) => {
-        // Hide edit icon entirely for manager/cashier
-        if (!isAdmin) return null;
+        if (!canEdit && !canDeactivate) return null;
 
         return (
           <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              onClick={(e) => openEditModal(row, e)}
-              className="p-1.5 rounded-md text-neutral-500 hover:text-brand-800 dark:hover:text-brand-accent hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-              title="Edit item"
-              aria-label="Edit item"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                />
-              </svg>
-            </button>
-            <button
-              type="button"
-              onClick={(e) => openDeactivateDialog(row, e)}
-              className="p-1.5 rounded-md text-neutral-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-              title="Archive item"
-              aria-label="Archive item"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={(e) => openEditModal(row, e)}
+                className="p-1.5 rounded-md text-neutral-500 hover:text-brand-800 dark:hover:text-brand-accent hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                title="Edit item"
+                aria-label="Edit item"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                  />
+                </svg>
+              </button>
+            )}
+            {canDeactivate && (
+              <button
+                type="button"
+                onClick={(e) => openDeactivateDialog(row, e)}
+                className="p-1.5 rounded-md text-neutral-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                title="Archive item"
+                aria-label="Archive item"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
           </div>
         );
       },
@@ -547,30 +554,34 @@ export default function ItemsCatalog() {
             </p>
           </div>
 
-          {/* Action Buttons: Hidden entirely for manager/cashier */}
-          {isAdmin && (
+          {/* Action Buttons: Visible if permitted */}
+          {(canCreate || canCreateCategory) && (
             <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => setCatModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 border border-neutral-300 dark:border-neutral-700 shadow-sm transition-colors"
-              >
-                <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <span>+ Add Category</span>
-              </button>
+              {canCreateCategory && (
+                <button
+                  type="button"
+                  onClick={() => setCatModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 border border-neutral-300 dark:border-neutral-700 shadow-sm transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>+ Add Category</span>
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={openCreateModal}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold bg-brand-900 dark:bg-brand-800 text-brand-accent border border-brand-700 hover:bg-brand-950 transition-all shadow-sm"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <span>+ Add Item</span>
-              </button>
+              {canCreate && (
+                <button
+                  type="button"
+                  onClick={openCreateModal}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold bg-brand-900 dark:bg-brand-800 text-brand-accent border border-brand-700 hover:bg-brand-950 transition-all shadow-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>+ Add Item</span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -627,7 +638,7 @@ export default function ItemsCatalog() {
             secondaryStats={[
               {
                 label: 'Inventory Roles',
-                value: isAdmin ? 'Admin Full Access' : 'Read-Only Catalog',
+                value: canCreate ? (canEdit ? 'Full Management' : 'Create & View') : 'Read-Only Catalog',
               },
             ]}
           />
@@ -766,7 +777,7 @@ export default function ItemsCatalog() {
                 ? 'No items found in this category.'
                 : 'Your catalog is currently empty.'}
             </p>
-            {isAdmin && (
+            {canCreate && (
               <button
                 type="button"
                 onClick={openCreateModal}
@@ -798,31 +809,34 @@ export default function ItemsCatalog() {
                         {catName}
                       </span>
 
-                      {/* Edit icon: Admin only! Hidden completely for manager/cashier */}
-                      {isAdmin && (
+                      {(canEdit || canDeactivate) && (
                         <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={(e) => openEditModal(item, e)}
-                            className="p-1 rounded text-neutral-400 hover:text-brand-800 dark:hover:text-brand-accent hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                            title="Edit item"
-                            aria-label="Edit item"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => openDeactivateDialog(item, e)}
-                            className="p-1 rounded text-neutral-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-                            title="Archive item"
-                            aria-label="Archive item"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
+                          {canEdit && (
+                            <button
+                              type="button"
+                              onClick={(e) => openEditModal(item, e)}
+                              className="p-1 rounded text-neutral-400 hover:text-brand-800 dark:hover:text-brand-accent hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                              title="Edit item"
+                              aria-label="Edit item"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                              </svg>
+                            </button>
+                          )}
+                          {canDeactivate && (
+                            <button
+                              type="button"
+                              onClick={(e) => openDeactivateDialog(item, e)}
+                              className="p-1 rounded text-neutral-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                              title="Archive item"
+                              aria-label="Archive item"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
