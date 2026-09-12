@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { getItems } from '../services/itemService';
 import { getStock } from '../services/stockService';
 import { getCategories } from '../services/categoryService';
+import { formatCategoryName } from '../utils/formatters';
 import { getCustomers, createCustomer } from '../services/customerService';
 import { createSale } from '../services/saleService';
 import MinimalLayout from '../components/layout/MinimalLayout';
@@ -479,13 +480,13 @@ export default function CashierPOS() {
                 key={cat._id}
                 type="button"
                 onClick={() => setSelectedCategory(cat._id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-xs ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold capitalize whitespace-nowrap transition-all shadow-xs ${
                   selectedCategory === cat._id
                     ? 'bg-brand-800 text-brand-accent dark:bg-brand-accent dark:text-brand-900 shadow-sm'
                     : 'bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/70 dark:hover:bg-neutral-800 border border-neutral-200/80 dark:border-neutral-800'
                 }`}
               >
-                {cat.name}
+                {formatCategoryName(cat.name)}
               </button>
             ))}
           </div>

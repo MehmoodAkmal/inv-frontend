@@ -8,6 +8,7 @@ import {
   deactivateItem,
 } from '../services/itemService';
 import { getCategories, createCategory } from '../services/categoryService';
+import { formatCategoryName } from '../utils/formatters';
 
 import {
   StatCard,
@@ -409,9 +410,9 @@ export default function ItemsCatalog() {
       key: 'categoryId',
       label: 'Category',
       render: (val) => {
-        const catName = val?.name || categories.find((c) => c._id === val)?.name || 'General';
+        const catName = formatCategoryName(val?.name || categories.find((c) => c._id === val)?.name || 'General');
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700">
             {catName}
           </span>
         );
@@ -669,7 +670,7 @@ export default function ItemsCatalog() {
                       : 'bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 border-neutral-200 dark:border-neutral-800'
                   }`}
                 >
-                  <span>{cat.name}</span>
+                  <span className="capitalize">{formatCategoryName(cat.name)}</span>
                   {count > 0 && (
                     <span className={`px-1.5 py-0.2 text-[10px] rounded-full font-mono ${
                       isSelected
@@ -934,8 +935,8 @@ export default function ItemsCatalog() {
                 {categories
                   .filter((c) => c.isActive)
                   .map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.name}
+                    <option key={c._id} value={c._id} className="capitalize">
+                      {formatCategoryName(c.name)}
                     </option>
                   ))}
               </CustomSelect>
@@ -1114,8 +1115,8 @@ export default function ItemsCatalog() {
                 {categories
                   .filter((c) => c.isActive)
                   .map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.name}
+                    <option key={c._id} value={c._id} className="capitalize">
+                      {formatCategoryName(c.name)}
                     </option>
                   ))}
               </CustomSelect>

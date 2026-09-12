@@ -10,6 +10,7 @@ import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Spinner from '../components/ui/Spinner';
 import { useAuth } from '../context/AuthContext';
+import { formatCategoryName } from '../utils/formatters';
 
 const EMPTY_FORM = { name: '' };
 
@@ -74,11 +75,12 @@ export default function Categories() {
     e.preventDefault();
     setSaving(true);
     try {
+      const payload = { ...form, name: formatCategoryName(form.name) };
       if (editing) {
-        await updateCategory(editing._id, form);
+        await updateCategory(editing._id, payload);
         toast.success('Category updated');
       } else {
-        await createCategory(form);
+        await createCategory(payload);
         toast.success('Category created');
       }
       closeModal();
@@ -188,7 +190,9 @@ export default function Categories() {
               <tbody className="bg-white divide-y divide-gray-100">
                 {categories.map((cat) => (
                   <tr key={cat._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-4 text-sm font-medium text-gray-900">{cat.name}</td>
+                    <td className="px-5 py-4 text-sm font-medium text-gray-900 capitalize">
+                      {formatCategoryName(cat.name)}
+                    </td>
                     <td className="px-5 py-4">
                       <span className={cat.isActive ? 'badge-active' : 'badge-inactive'}>
                         {cat.isActive ? 'Active' : 'Inactive'}

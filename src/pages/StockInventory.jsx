@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { getStock } from '../services/stockService';
 import { getBranches } from '../services/branchService';
 import { getCategories } from '../services/categoryService';
+import { formatCategoryName } from '../utils/formatters';
 
 import {
   StatCard,
@@ -173,11 +174,11 @@ export default function StockInventory() {
       // Category name resolution
       let categoryName = '—';
       if (item.categoryId?.name) {
-        categoryName = item.categoryId.name;
+        categoryName = formatCategoryName(item.categoryId.name);
       } else if (item.categoryId) {
         const cid = item.categoryId?._id ?? item.categoryId;
-        const c = categories.find((x) => x._id === cid);
-        if (c) categoryName = c.name;
+        const c = categories.find((cat) => cat._id === cid);
+        if (c) categoryName = formatCategoryName(c.name);
       }
 
       return {
@@ -312,8 +313,8 @@ export default function StockInventory() {
       key: 'categoryName',
       label: 'Category',
       render: (val) => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-          {val}
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+          {formatCategoryName(val)}
         </span>
       ),
     },
@@ -573,8 +574,8 @@ export default function StockInventory() {
                   {categories
                     .filter((c) => c.isActive)
                     .map((c) => (
-                      <option key={c._id} value={c._id}>
-                        {c.name}
+                      <option key={c._id} value={c._id} className="capitalize">
+                        {formatCategoryName(c.name)}
                       </option>
                     ))}
                 </CustomSelect>

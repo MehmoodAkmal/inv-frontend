@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { getStock } from '../services/stockService';
 import MinimalLayout from '../components/layout/MinimalLayout';
 import { StatCard, DataTable } from '../components/ui';
+import { formatCategoryName } from '../utils/formatters';
 
 const fmt = (n) =>
   Number(n ?? 0).toLocaleString(undefined, {
@@ -139,9 +140,9 @@ export default function CashierStockLookup() {
       key: 'category',
       label: 'Category',
       render: (_, row) => {
-        const catName = row.itemId?.categoryId?.name || 'General';
+        const catName = formatCategoryName(row.itemId?.categoryId?.name || 'General');
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold capitalize bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">
             {catName}
           </span>
         );
@@ -346,13 +347,13 @@ export default function CashierStockLookup() {
                 key={c.id}
                 type="button"
                 onClick={() => setSelectedCategory(c.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all whitespace-nowrap ${
                   selectedCategory === c.id
                     ? 'bg-brand-800 text-brand-accent dark:bg-brand-accent dark:text-brand-900 shadow-xs'
                     : 'bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800'
                 }`}
               >
-                {c.name}
+                {formatCategoryName(c.name)}
               </button>
             ))}
           </div>
