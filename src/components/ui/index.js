@@ -17,4 +17,5 @@ export { default as NotificationBell } from './NotificationBell';
 export { default as PageHeader } from './PageHeader';
 export { default as KpiCard } from './KpiCard';
 export { default as MinimalLayout } from './MinimalLayout';
+export { default as Input } from './Input';
 

@@ -644,9 +644,9 @@ export default function Sales() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-end gap-3 mb-4">
+      <div className="flex flex-wrap items-end gap-3 mb-5">
         {isAdmin && (
-          <div>
+          <div className="w-48">
             <label className="label text-xs">Branch</label>
             <CustomSelect
               value={filterBranch}
@@ -654,7 +654,7 @@ export default function Sales() {
                 setFilterBranch(e.target.value);
                 setPage(1);
               }}
-              className="input-field w-auto text-sm py-2"
+              className="w-full text-sm"
             >
               <option value="">All branches</option>
               {branches.map((b) => (
@@ -665,7 +665,7 @@ export default function Sales() {
             </CustomSelect>
           </div>
         )}
-        <div>
+        <div className="w-36">
           <label className="label text-xs">Type</label>
           <CustomSelect
             value={filterType}
@@ -673,14 +673,14 @@ export default function Sales() {
               setFilterType(e.target.value);
               setPage(1);
             }}
-            className="input-field w-auto text-sm py-2"
+            className="w-full text-sm"
           >
             <option value="">All types</option>
             <option value="cash">Cash</option>
             <option value="credit">Credit</option>
           </CustomSelect>
         </div>
-        <div>
+        <div className="w-40">
           <label className="label text-xs">From</label>
           <input
             type="date"
@@ -689,10 +689,10 @@ export default function Sales() {
               setFilterStart(e.target.value);
               setPage(1);
             }}
-            className="input-field text-sm py-2"
+            className="input-field h-10 text-sm"
           />
         </div>
-        <div>
+        <div className="w-40">
           <label className="label text-xs">To</label>
           <input
             type="date"
@@ -701,12 +701,13 @@ export default function Sales() {
               setFilterEnd(e.target.value);
               setPage(1);
             }}
-            className="input-field text-sm py-2"
+            className="input-field h-10 text-sm"
           />
         </div>
         {(filterBranch || filterType || filterStart || filterEnd) && (
           <button
-            className="btn-secondary text-sm py-2"
+            type="button"
+            className="btn-secondary h-10 text-sm px-4"
             onClick={() => {
               setFilterBranch('');
               setFilterType('');

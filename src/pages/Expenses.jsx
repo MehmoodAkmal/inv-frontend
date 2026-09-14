@@ -30,6 +30,7 @@ import {
   ConfirmDialog,
   CustomSelect,
   Spinner,
+  Input,
 } from '../components/ui';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -711,30 +712,24 @@ export default function Expenses() {
           <div className="flex flex-wrap items-end gap-3 justify-between">
             <div className="flex flex-wrap items-end gap-3 flex-1">
               {/* Date Range: From */}
-              <div className="w-36">
-                <label className="block text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-1">
-                  From Date
-                </label>
-                <input
-                  type="date"
-                  value={filterStartDate}
-                  onChange={(e) => setFilterStartDate(e.target.value)}
-                  className="w-full text-xs py-1.5 px-2.5 rounded-md bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-brand-accent"
-                />
-              </div>
+              <Input
+                label="From Date"
+                type="date"
+                size="sm"
+                value={filterStartDate}
+                onChange={(e) => setFilterStartDate(e.target.value)}
+                wrapperClassName="w-36"
+              />
 
               {/* Date Range: To */}
-              <div className="w-36">
-                <label className="block text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-1">
-                  To Date
-                </label>
-                <input
-                  type="date"
-                  value={filterEndDate}
-                  onChange={(e) => setFilterEndDate(e.target.value)}
-                  className="w-full text-xs py-1.5 px-2.5 rounded-md bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-brand-accent"
-                />
-              </div>
+              <Input
+                label="To Date"
+                type="date"
+                size="sm"
+                value={filterEndDate}
+                onChange={(e) => setFilterEndDate(e.target.value)}
+                wrapperClassName="w-36"
+              />
 
               {/* Branch Filter (Selectable for admin, locked for manager) */}
               <div className="w-48">
@@ -1017,51 +1012,38 @@ export default function Expenses() {
             </div>
 
             {/* Amount */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Amount ($) <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="number"
-                min="0.01"
-                step="0.01"
-                required
-                value={createForm.amount}
-                onChange={(e) => setCreateForm((p) => ({ ...p, amount: e.target.value }))}
-                placeholder="0.00"
-                className="w-full px-3 py-2 text-sm font-mono rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-              />
-            </div>
+            <Input
+              label="Amount ($)"
+              required
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={createForm.amount}
+              onChange={(e) => setCreateForm((p) => ({ ...p, amount: e.target.value }))}
+              placeholder="0.00"
+              className="font-mono"
+            />
 
             {/* Date */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Date Incurred <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="date"
-                required
-                max={today()}
-                value={createForm.date}
-                onChange={(e) => setCreateForm((p) => ({ ...p, date: e.target.value }))}
-                className="w-full px-3 py-2 text-xs rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-              />
-            </div>
+            <Input
+              label="Date Incurred"
+              required
+              type="date"
+              max={today()}
+              value={createForm.date}
+              onChange={(e) => setCreateForm((p) => ({ ...p, date: e.target.value }))}
+            />
 
             {/* Description */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Description / Memo <span className="text-neutral-400 font-normal">(Optional)</span>
-              </label>
-              <input
-                type="text"
-                maxLength={500}
-                value={createForm.description}
-                onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))}
-                placeholder="e.g. Electric bill for warehouse, office stationery"
-                className="w-full px-3 py-2 text-xs rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-              />
-            </div>
+            <Input
+              label="Description / Memo"
+              type="text"
+              maxLength={500}
+              value={createForm.description}
+              onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))}
+              placeholder="e.g. Electric bill for warehouse, office stationery"
+              helperText="Optional"
+            />
 
             {/* Actions */}
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
@@ -1112,49 +1094,36 @@ export default function Expenses() {
             </div>
 
             {/* Amount */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Amount ($) <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="number"
-                min="0.01"
-                step="0.01"
-                required
-                value={editForm.amount}
-                onChange={(e) => setEditForm((p) => ({ ...p, amount: e.target.value }))}
-                className="w-full px-3 py-2 text-sm font-mono rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-              />
-            </div>
+            <Input
+              label="Amount ($)"
+              required
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={editForm.amount}
+              onChange={(e) => setEditForm((p) => ({ ...p, amount: e.target.value }))}
+              className="font-mono"
+            />
 
             {/* Date */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Date Incurred <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="date"
-                required
-                max={today()}
-                value={editForm.date}
-                onChange={(e) => setEditForm((p) => ({ ...p, date: e.target.value }))}
-                className="w-full px-3 py-2 text-xs rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-              />
-            </div>
+            <Input
+              label="Date Incurred"
+              required
+              type="date"
+              max={today()}
+              value={editForm.date}
+              onChange={(e) => setEditForm((p) => ({ ...p, date: e.target.value }))}
+            />
 
             {/* Description */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Description / Memo <span className="text-neutral-400 font-normal">(Optional)</span>
-              </label>
-              <input
-                type="text"
-                maxLength={500}
-                value={editForm.description}
-                onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
-                className="w-full px-3 py-2 text-xs rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-              />
-            </div>
+            <Input
+              label="Description / Memo"
+              type="text"
+              maxLength={500}
+              value={editForm.description}
+              onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+              helperText="Optional"
+            />
 
             {/* Actions */}
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">

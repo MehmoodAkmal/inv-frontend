@@ -30,13 +30,24 @@ export default function CustomSelect({
     [children]
   );
   const selected = options.find((option) => option.value === String(value));
-  // Existing pages pass `input-field` from their former native select. Apply
-  // sizing helpers to the wrapper, but prevent that field border/padding from
-  // creating a second visible box around the custom trigger.
-  const widthClassName = /\bw-auto\b/.test(className) ? 'w-auto' : 'w-full';
+  // Extract sizing helpers from className
+  const widthMatch = className.match(/\bw-(?:full|auto|\d+|\[[^\]]+\])\b/);
+  const widthClassName = widthMatch ? widthMatch[0] : (/\bw-auto\b/.test(className) ? 'w-auto' : 'w-full');
+
+  const heightMatch = className.match(/\bh-(?:\d+|\[[^\]]+\])\b/);
+  const heightClassName = heightMatch ? heightMatch[0] : 'h-10';
+
+  const textSizeMatch = className.match(/\btext-(?:xs|sm|base|lg)\b/);
+  const textSizeClassName = textSizeMatch ? textSizeMatch[0] : 'text-sm';
+
+  // Wrapper only receives structural/positioning classes, never control styling (padding, borders, bg, height)
   const wrapperClassName = className
     .replace(/\binput-field\b/g, '')
-    .replace(/\bw-(?:full|auto)\b/g, '')
+    .replace(/\bw-(?:full|auto|\d+|\[[^\]]+\])\b/g, '')
+    .replace(/\bh-(?:\d+|\[[^\]]+\])\b/g, '')
+    .replace(/\btext-(?:xs|sm|base|lg)\b/g, '')
+    .replace(/\bp[xytrbl]?-(?:\d+|\[[^\]]+\])\b/g, '')
+    .replace(/\b(?:bg|border|rounded|shadow)-\S+/g, '')
     .trim();
 
   useEffect(() => {
@@ -70,7 +81,7 @@ export default function CustomSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className="input-field flex min-h-[42px] items-center justify-between gap-3 text-left disabled:opacity-60"
+        className={`input-field flex ${heightClassName} ${textSizeClassName} items-center justify-between gap-3 text-left disabled:opacity-60`}
       >
         <span className={selected ? 'truncate' : 'truncate text-brand-400'}>
           {selected?.label ?? 'Select an option'}

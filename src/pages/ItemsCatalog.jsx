@@ -18,6 +18,7 @@ import {
   ConfirmDialog,
   CustomSelect,
   Spinner,
+  Input,
 } from '../components/ui';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -43,6 +44,54 @@ const calcMargin = (cost, sell) => {
     return { value: '+100.0%', raw: 100 };
   }
   return { value: '0.0%', raw: 0 };
+};
+
+const computeLocalSku = (itemName, categoryId, categoriesList = [], itemsList = []) => {
+  let prefix = '';
+  const cleanName = (itemName || '').replace(/[^a-zA-Z0-9\s]/g, ' ').trim();
+  const words = cleanName.split(/\s+/).filter(Boolean);
+
+  if (words.length >= 2) {
+    prefix = words.slice(0, 4).map((w) => w[0].toUpperCase()).join('');
+  } else if (words.length === 1 && words[0].length >= 2) {
+    prefix = words[0].slice(0, 3).toUpperCase();
+  }
+
+  if (prefix.length < 2 && categoryId) {
+    const matchedCat = categoriesList.find((c) => c._id === categoryId);
+    if (matchedCat?.name) {
+      const cleanCat = matchedCat.name.replace(/[^a-zA-Z0-9\s]/g, ' ').trim();
+      const catWords = cleanCat.split(/\s+/).filter(Boolean);
+      if (catWords.length >= 2) {
+        prefix = catWords.slice(0, 3).map((w) => w[0].toUpperCase()).join('');
+      } else if (catWords.length === 1 && catWords[0].length >= 2) {
+        prefix = catWords[0].slice(0, 3).toUpperCase();
+      }
+    }
+  }
+
+  if (prefix.length < 2) {
+    prefix = 'ITM';
+  }
+
+  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`^${escapedPrefix}-(\\d+)$`, 'i');
+
+  const used = new Set();
+  for (const it of itemsList) {
+    if (!it.sku) continue;
+    const match = it.sku.match(regex);
+    if (match && match[1]) {
+      used.add(parseInt(match[1], 10));
+    }
+  }
+
+  let num = 1;
+  while (used.has(num)) {
+    num++;
+  }
+
+  return `${prefix}-${String(num).padStart(2, '0')}`;
 };
 
 const EMPTY_ITEM_FORM = {
@@ -76,6 +125,7 @@ export default function ItemsCatalog() {
   // Add Item Modal
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [itemForm, setItemForm] = useState({ ...EMPTY_ITEM_FORM });
+  const [isSkuManual, setIsSkuManual] = useState(false);
   const [savingItem, setSavingItem] = useState(false);
 
   // Edit Item Modal
@@ -197,6 +247,7 @@ export default function ItemsCatalog() {
 
   // ── 6. Create Item Handlers ───────────────────────────────────────────────
   const openCreateModal = () => {
+    setIsSkuManual(false);
     setItemForm({
       name: '',
       categoryId: selectedCategory !== 'all' ? selectedCategory : (categories[0]?._id || ''),
@@ -235,10 +286,14 @@ export default function ItemsCatalog() {
 
     setSavingItem(true);
     try {
+      const finalSku =
+        itemForm.sku.trim() ||
+        computeLocalSku(itemForm.name, itemForm.categoryId, categories, items);
+
       const payload = {
         name: itemForm.name.trim(),
         categoryId: itemForm.categoryId,
-        sku: itemForm.sku.trim() || undefined,
+        sku: finalSku || undefined,
         unit: itemForm.unit,
         costPrice: costNum,
         sellingPrice: sellNum,
@@ -250,6 +305,7 @@ export default function ItemsCatalog() {
         toast.success(`"${itemForm.name}" created successfully`);
         setAddModalOpen(false);
         setItemForm({ ...EMPTY_ITEM_FORM });
+        setIsSkuManual(false);
         fetchItemsData();
       } else {
         toast.error(res.data?.message || 'Failed to create item');
@@ -699,18 +755,18 @@ export default function ItemsCatalog() {
         {/* ── Search & View Mode Switcher Toolbar ─────────────────────── */}
         <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-3 shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Search Input */}
-          <div className="relative flex-1 max-w-md">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutral-400">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
+          <div className="flex-1 max-w-md">
+            <Input
               type="text"
+              size="sm"
               placeholder="Search items by name, SKU, or category…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-xs pl-9 pr-3 py-2 rounded-md bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder-neutral-400"
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              }
             />
           </div>
 
@@ -918,21 +974,24 @@ export default function ItemsCatalog() {
           title="Add New Catalog Item"
         >
           <form onSubmit={handleCreateSubmit} className="space-y-4">
-            {/* Name */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Item Name <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                maxLength={150}
-                value={itemForm.name}
-                onChange={(e) => setItemForm((p) => ({ ...p, name: e.target.value }))}
-                placeholder="e.g. Organic Basmati Rice 5kg"
-                className="w-full px-3 py-2 text-xs rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-              />
-            </div>
+            {/* Item Name */}
+            <Input
+              label="Item Name"
+              required
+              maxLength={150}
+              value={itemForm.name}
+              onChange={(e) => {
+                const val = e.target.value;
+                setItemForm((p) => {
+                  const next = { ...p, name: val };
+                  if (!isSkuManual) {
+                    next.sku = computeLocalSku(val, p.categoryId, categories, items);
+                  }
+                  return next;
+                });
+              }}
+              placeholder="e.g. Organic Basmati Rice 5kg"
+            />
 
             {/* Category Dropdown */}
             <div>
@@ -942,7 +1001,16 @@ export default function ItemsCatalog() {
               <CustomSelect
                 required
                 value={itemForm.categoryId}
-                onChange={(e) => setItemForm((p) => ({ ...p, categoryId: e.target.value }))}
+                onChange={(e) => {
+                  const catId = e.target.value;
+                  setItemForm((p) => {
+                    const next = { ...p, categoryId: catId };
+                    if (!isSkuManual) {
+                      next.sku = computeLocalSku(p.name, catId, categories, items);
+                    }
+                    return next;
+                  });
+                }}
                 className="w-full text-xs py-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md"
               >
                 <option value="">Select Category</option>
@@ -959,16 +1027,43 @@ export default function ItemsCatalog() {
             {/* SKU & Unit */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  SKU Code <span className="text-neutral-400 font-normal">(Optional)</span>
-                </label>
-                <input
-                  type="text"
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 select-none">
+                    SKU Code
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSkuManual(false);
+                      const generated = computeLocalSku(itemForm.name, itemForm.categoryId, categories, items);
+                      setItemForm((p) => ({ ...p, sku: generated }));
+                    }}
+                    className="text-[11px] font-medium text-brand-600 dark:text-brand-accent hover:underline inline-flex items-center gap-1 cursor-pointer"
+                    title="Generate unique SKU automatically"
+                  >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Auto-generate</span>
+                  </button>
+                </div>
+                <Input
                   maxLength={50}
                   value={itemForm.sku}
-                  onChange={(e) => setItemForm((p) => ({ ...p, sku: e.target.value }))}
-                  placeholder="e.g. RICE-001"
-                  className="w-full px-3 py-2 text-xs font-mono uppercase rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
+                  onChange={(e) => {
+                    const val = e.target.value.toUpperCase();
+                    setIsSkuManual(Boolean(val.trim()));
+                    setItemForm((p) => ({ ...p, sku: val }));
+                  }}
+                  placeholder="e.g. DM-01"
+                  className="font-mono uppercase"
+                  helperText={
+                    isSkuManual
+                      ? 'Custom SKU'
+                      : itemForm.sku
+                        ? 'Auto-generated unique code'
+                        : 'Auto-generates as you type'
+                  }
                 />
               </div>
 
@@ -993,37 +1088,29 @@ export default function ItemsCatalog() {
 
             {/* Cost & Selling Price */}
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Cost Price ($) <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  required
-                  value={itemForm.costPrice}
-                  onChange={(e) => setItemForm((p) => ({ ...p, costPrice: e.target.value }))}
-                  placeholder="0.00"
-                  className="w-full px-3 py-2 text-sm font-mono rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-                />
-              </div>
+              <Input
+                label="Cost Price ($)"
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                value={itemForm.costPrice}
+                onChange={(e) => setItemForm((p) => ({ ...p, costPrice: e.target.value }))}
+                placeholder="0.00"
+                className="font-mono"
+              />
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Selling Price ($) <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  required
-                  value={itemForm.sellingPrice}
-                  onChange={(e) => setItemForm((p) => ({ ...p, sellingPrice: e.target.value }))}
-                  placeholder="0.00"
-                  className="w-full px-3 py-2 text-sm font-mono rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-                />
-              </div>
+              <Input
+                label="Selling Price ($)"
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                value={itemForm.sellingPrice}
+                onChange={(e) => setItemForm((p) => ({ ...p, sellingPrice: e.target.value }))}
+                placeholder="0.00"
+                className="font-mono"
+              />
             </div>
 
             {/* Live Margin Calculation Preview */}
@@ -1052,23 +1139,17 @@ export default function ItemsCatalog() {
             )}
 
             {/* Reorder Level */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Reorder Alert Level <span className="text-neutral-400 font-normal">(Units)</span>
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={itemForm.reorderLevel}
-                onChange={(e) => setItemForm((p) => ({ ...p, reorderLevel: e.target.value }))}
-                placeholder="10"
-                className="w-full px-3 py-2 text-xs font-mono rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-              />
-              <p className="text-[11px] text-neutral-400 mt-1">
-                When branch inventory falls to or below this quantity, low stock alerts will be triggered.
-              </p>
-            </div>
+            <Input
+              label="Reorder Alert Level"
+              type="number"
+              min="0"
+              step="1"
+              value={itemForm.reorderLevel}
+              onChange={(e) => setItemForm((p) => ({ ...p, reorderLevel: e.target.value }))}
+              placeholder="10"
+              hint="When branch inventory falls to or below this quantity, low stock alerts will be triggered."
+              className="font-mono"
+            />
 
             {/* Modal Actions */}
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
@@ -1100,19 +1181,13 @@ export default function ItemsCatalog() {
         >
           <form onSubmit={handleEditSubmit} className="space-y-4">
             {/* Name */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Item Name <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                maxLength={150}
-                value={editForm.name}
-                onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
-                className="w-full px-3 py-2 text-xs rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-              />
-            </div>
+            <Input
+              label="Item Name"
+              required
+              maxLength={150}
+              value={editForm.name}
+              onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
+            />
 
             {/* Category Dropdown */}
             <div>
@@ -1139,15 +1214,33 @@ export default function ItemsCatalog() {
             {/* SKU & Unit */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  SKU Code
-                </label>
-                <input
-                  type="text"
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 select-none">
+                    SKU Code
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const otherItems = items.filter((i) => i._id !== editTarget?._id);
+                      const generated = computeLocalSku(editForm.name, editForm.categoryId, categories, otherItems);
+                      setEditForm((p) => ({ ...p, sku: generated }));
+                    }}
+                    className="text-[11px] font-medium text-brand-600 dark:text-brand-accent hover:underline inline-flex items-center gap-1 cursor-pointer"
+                    title="Generate unique SKU automatically"
+                  >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Auto-generate</span>
+                  </button>
+                </div>
+                <Input
                   maxLength={50}
                   value={editForm.sku}
-                  onChange={(e) => setEditForm((p) => ({ ...p, sku: e.target.value }))}
-                  className="w-full px-3 py-2 text-xs font-mono uppercase rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
+                  onChange={(e) => setEditForm((p) => ({ ...p, sku: e.target.value.toUpperCase() }))}
+                  placeholder="e.g. DM-01"
+                  className="font-mono uppercase"
+                  helperText="Unique SKU identifier"
                 />
               </div>
 
@@ -1172,35 +1265,27 @@ export default function ItemsCatalog() {
 
             {/* Cost & Selling Price */}
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Cost Price ($) <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  required
-                  value={editForm.costPrice}
-                  onChange={(e) => setEditForm((p) => ({ ...p, costPrice: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm font-mono rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-                />
-              </div>
+              <Input
+                label="Cost Price ($)"
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                value={editForm.costPrice}
+                onChange={(e) => setEditForm((p) => ({ ...p, costPrice: e.target.value }))}
+                className="font-mono"
+              />
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Selling Price ($) <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  required
-                  value={editForm.sellingPrice}
-                  onChange={(e) => setEditForm((p) => ({ ...p, sellingPrice: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm font-mono rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-                />
-              </div>
+              <Input
+                label="Selling Price ($)"
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                value={editForm.sellingPrice}
+                onChange={(e) => setEditForm((p) => ({ ...p, sellingPrice: e.target.value }))}
+                className="font-mono"
+              />
             </div>
 
             {/* Live Margin Calculation Preview */}
@@ -1227,19 +1312,15 @@ export default function ItemsCatalog() {
             </div>
 
             {/* Reorder Level */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Reorder Alert Level (Units)
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={editForm.reorderLevel}
-                onChange={(e) => setEditForm((p) => ({ ...p, reorderLevel: e.target.value }))}
-                className="w-full px-3 py-2 text-xs font-mono rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-              />
-            </div>
+            <Input
+              label="Reorder Alert Level (Units)"
+              type="number"
+              min="0"
+              step="1"
+              value={editForm.reorderLevel}
+              onChange={(e) => setEditForm((p) => ({ ...p, reorderLevel: e.target.value }))}
+              className="font-mono"
+            />
 
             {/* Modal Actions */}
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
@@ -1270,20 +1351,14 @@ export default function ItemsCatalog() {
           title="Create New Category"
         >
           <form onSubmit={handleCreateCategorySubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Category Name <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                maxLength={50}
-                value={catName}
-                onChange={(e) => setCatName(e.target.value)}
-                placeholder="e.g. Pesticides, Irrigation Equipment, Tools"
-                className="w-full px-3 py-2 text-xs rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-              />
-            </div>
+            <Input
+              label="Category Name"
+              required
+              maxLength={50}
+              value={catName}
+              onChange={(e) => setCatName(e.target.value)}
+              placeholder="e.g. Pesticides, Irrigation Equipment, Tools"
+            />
 
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
               <button

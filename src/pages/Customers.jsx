@@ -1,4 +1,5 @@
 import CustomSelect from '../components/ui/CustomSelect';
+import Input from '../components/ui/Input';
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
@@ -194,32 +195,24 @@ function CustomerDetailDrawer({
               Quick Payment
             </p>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="label">Amount *</label>
-                <input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  required
-                  value={payAmount}
-                  onChange={(e) => setPayAmount(e.target.value)}
-                  className="input-field"
-                  placeholder="0.00"
-                />
-                {Number(payAmount) > balance && (
-                  <p className="text-xs text-rose-600 mt-0.5">Exceeds balance ({fmt(balance)})</p>
-                )}
-              </div>
-              <div>
-                <label className="label">Note</label>
-                <input
-                  type="text"
-                  value={payNote}
-                  onChange={(e) => setPayNote(e.target.value)}
-                  className="input-field"
-                  placeholder="Optional"
-                />
-              </div>
+              <Input
+                label="Amount"
+                required
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={payAmount}
+                onChange={(e) => setPayAmount(e.target.value)}
+                placeholder="0.00"
+                error={Number(payAmount) > balance ? `Exceeds balance (${fmt(balance)})` : undefined}
+              />
+              <Input
+                label="Note"
+                type="text"
+                value={payNote}
+                onChange={(e) => setPayNote(e.target.value)}
+                placeholder="Optional"
+              />
             </div>
             <div className="flex justify-end gap-2">
               <button
@@ -422,66 +415,49 @@ function CustomerCreateForm({
           </CustomSelect>
         </div>
       ) : (
-        <div>
-          <label className="label">Branch</label>
-          <input
-            value={branches.find((b) => b._id === allowedBranchId)?.name ?? '—'}
-            disabled
-            className="input-field"
-          />
-        </div>
+        <Input
+          label="Branch"
+          value={branches.find((b) => b._id === allowedBranchId)?.name ?? '—'}
+          disabled
+        />
       )}
-      <div>
-        <label className="label">
-          Name <span className="text-rose-500">*</span>
-        </label>
-        <input
-          name="name"
-          type="text"
-          required
-          value={form.name}
-          onChange={onChange}
-          className="input-field"
-          placeholder="Customer full name"
-        />
-      </div>
+      <Input
+        name="name"
+        label="Name"
+        type="text"
+        required
+        value={form.name}
+        onChange={onChange}
+        placeholder="Customer full name"
+      />
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="label">Phone</label>
-          <input
-            name="phone"
-            type="text"
-            value={form.phone}
-            onChange={onChange}
-            className="input-field"
-            placeholder="03001234567"
-          />
-        </div>
-        <div>
-          <label className="label">Opening balance</label>
-          <input
-            name="openingBalance"
-            type="number"
-            min="0"
-            step="0.01"
-            value={form.openingBalance}
-            onChange={onChange}
-            className="input-field"
-            placeholder="0.00"
-          />
-        </div>
-      </div>
-      <div>
-        <label className="label">Address</label>
-        <input
-          name="address"
+        <Input
+          name="phone"
+          label="Phone"
           type="text"
-          value={form.address}
+          value={form.phone}
           onChange={onChange}
-          className="input-field"
-          placeholder="Optional"
+          placeholder="03001234567"
+        />
+        <Input
+          name="openingBalance"
+          label="Opening balance"
+          type="number"
+          min="0"
+          step="0.01"
+          value={form.openingBalance}
+          onChange={onChange}
+          placeholder="0.00"
         />
       </div>
+      <Input
+        name="address"
+        label="Address"
+        type="text"
+        value={form.address}
+        onChange={onChange}
+        placeholder="Optional"
+      />
       <p className="text-xs text-brand-400">
         Opening balance: set if migrating an existing customer with prior dues.
       </p>
@@ -500,39 +476,28 @@ function CustomerCreateForm({
 function CustomerEditForm({ form, onChange, onSubmit, onCancel, saving }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <div>
-        <label className="label">
-          Name <span className="text-rose-500">*</span>
-        </label>
-        <input
-          name="name"
-          type="text"
-          required
-          value={form.name}
-          onChange={onChange}
-          className="input-field"
-        />
-      </div>
-      <div>
-        <label className="label">Phone</label>
-        <input
-          name="phone"
-          type="text"
-          value={form.phone}
-          onChange={onChange}
-          className="input-field"
-        />
-      </div>
-      <div>
-        <label className="label">Address</label>
-        <input
-          name="address"
-          type="text"
-          value={form.address}
-          onChange={onChange}
-          className="input-field"
-        />
-      </div>
+      <Input
+        name="name"
+        label="Name"
+        type="text"
+        required
+        value={form.name}
+        onChange={onChange}
+      />
+      <Input
+        name="phone"
+        label="Phone"
+        type="text"
+        value={form.phone}
+        onChange={onChange}
+      />
+      <Input
+        name="address"
+        label="Address"
+        type="text"
+        value={form.address}
+        onChange={onChange}
+      />
       <div className="flex justify-end gap-3 pt-1">
         <button type="button" className="btn-secondary" onClick={onCancel} disabled={saving}>
           Cancel
@@ -735,16 +700,15 @@ export default function Customers() {
 
       {/* ── Filters ───────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-end gap-3">
-        <div>
-          <label className="label">Search</label>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="input-field text-sm py-2 w-52"
-            placeholder="Name…"
-          />
-        </div>
+        <Input
+          label="Search"
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          wrapperClassName="w-52"
+          placeholder="Name…"
+          size="sm"
+        />
         {isAdmin && (
           <div>
             <label className="label">Branch</label>

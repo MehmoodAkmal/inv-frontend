@@ -43,8 +43,9 @@
   .dark .table-row {
     @apply border-gray-700 hover:bg-gray-700/50;
   }
-  .dark .input-field {
-    @apply bg-gray-800 border-gray-600 text-white placeholder-gray-400;
+  .dark .input-field,
+  .dark .input {
+    @apply bg-neutral-800 border-neutral-700 text-neutral-100 placeholder-neutral-500;
   }
   .dark .btn-secondary {
     @apply bg-gray-800 text-white border-gray-600 hover:bg-gray-700;
@@ -213,12 +214,13 @@
   }
 
   /* ── Form elements ───────────────────────────────────────────── */
-  .input-field {
-    @apply block w-full px-3 py-2 text-sm text-brand-900 bg-white
-           border border-brand-200 rounded-lg
-           placeholder-brand-300
-           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-400
-           disabled:bg-brand-50 disabled:text-brand-400 disabled:cursor-not-allowed
+  .input-field,
+  .input {
+    @apply block w-full px-3.5 py-2 text-sm text-neutral-900 bg-white
+           border border-neutral-200 rounded-lg
+           placeholder-neutral-400
+           focus:outline-none focus:ring-2 focus:ring-brand-accent/25 focus:border-brand-accent
+           disabled:bg-neutral-100 disabled:text-neutral-400 disabled:cursor-not-allowed
            transition-colors duration-150;
   }
 

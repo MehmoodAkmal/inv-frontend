@@ -9,6 +9,7 @@ import {
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Spinner from '../components/ui/Spinner';
+import Input from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
 import { formatCategoryName } from '../utils/formatters';
 
@@ -241,21 +242,15 @@ export default function Categories() {
         title={editing ? 'Edit category' : 'Add category'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="cat-name" className="label">
-              Category name <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="cat-name"
-              name="name"
-              type="text"
-              required
-              value={form.name}
-              onChange={(e) => setForm({ name: e.target.value })}
-              className="input-field"
-              placeholder="e.g. Seeds, Fertilizer"
-            />
-          </div>
+          <Input
+            id="cat-name"
+            name="name"
+            label="Category name"
+            required
+            value={form.name}
+            onChange={(e) => setForm({ name: e.target.value })}
+            placeholder="e.g. Seeds, Fertilizer"
+          />
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" className="btn-secondary" onClick={closeModal} disabled={saving}>
               Cancel

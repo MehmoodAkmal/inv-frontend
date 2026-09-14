@@ -18,6 +18,7 @@ import {
   Modal,
   ConfirmDialog,
   Spinner,
+  Input,
 } from '../components/ui';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -614,20 +615,14 @@ export default function Branches() {
           title={editTarget ? 'Edit Branch Location' : 'Add New Branch Location'}
         >
           <form onSubmit={handleSaveSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Branch Name <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                maxLength={100}
-                value={form.name}
-                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                placeholder="e.g. Downtown Flagship, North Warehouse"
-                className="w-full px-3 py-2 text-xs rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
-              />
-            </div>
+            <Input
+              label="Branch Name"
+              required
+              maxLength={100}
+              value={form.name}
+              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+              placeholder="e.g. Downtown Flagship, North Warehouse"
+            />
 
             <div>
               <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">

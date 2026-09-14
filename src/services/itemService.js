@@ -24,3 +24,9 @@ export const updateItem = (id, data) => api.put(`/items/${id}`, data);
  * @param {string} id
  */
 export const deactivateItem = (id) => api.delete(`/items/${id}`);
+
+/**
+ * GET /api/v1/items/generate-sku
+ * @param {{ name?: string, categoryId?: string }} params
+ */
+export const generateSku = (params = {}) => api.get('/items/generate-sku', { params });

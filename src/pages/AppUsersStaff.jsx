@@ -25,6 +25,7 @@ import {
   Modal,
   ConfirmDialog,
   Spinner,
+  Input,
 } from '../components/ui';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -1048,12 +1049,10 @@ export default function AppUsersStaff() {
         {/* ── Filters Bar ─────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row items-center gap-3 bg-white dark:bg-neutral-900 p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-xs">
           {/* Search */}
-          <div className="relative flex-1 w-full">
-            <svg className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
+          <div className="flex-1 w-full">
+            <Input
               type="text"
+              size="sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={
@@ -1061,7 +1060,11 @@ export default function AppUsersStaff() {
                   ? 'Search staff by name, email, or branch...'
                   : 'Search employees by name, designation, or phone...'
               }
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-neutral-50 dark:bg-neutral-800/70 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              }
             />
           </div>
 
@@ -1172,75 +1175,44 @@ export default function AppUsersStaff() {
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  First Name <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. John"
-                  value={staffForm.firstName}
-                  onChange={(e) => setStaffForm({ ...staffForm, firstName: e.target.value })}
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Last Name <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Doe"
-                  value={staffForm.lastName}
-                  onChange={(e) => setStaffForm({ ...staffForm, lastName: e.target.value })}
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Email Address <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="email"
+              <Input
+                label="First Name"
                 required
-                placeholder="staff@example.com"
-                value={staffForm.email}
-                onChange={(e) => setStaffForm({ ...staffForm, email: e.target.value })}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                type="text"
+                placeholder="e.g. John"
+                value={staffForm.firstName}
+                onChange={(e) => setStaffForm({ ...staffForm, firstName: e.target.value })}
+              />
+
+              <Input
+                label="Last Name"
+                required
+                type="text"
+                placeholder="e.g. Doe"
+                value={staffForm.lastName}
+                onChange={(e) => setStaffForm({ ...staffForm, lastName: e.target.value })}
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Initial Password <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  minLength={6}
-                  placeholder="At least 6 characters"
-                  value={staffForm.password}
-                  onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })}
-                  className="w-full px-3 py-2 pr-10 text-sm bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 text-xs"
-                >
-                  {showPassword ? 'Hide' : 'Show'}
-                </button>
-              </div>
-              <p className="text-[11px] text-neutral-400 mt-1">
-                Password must be at least 6 characters.
-              </p>
-            </div>
+            <Input
+              label="Email Address"
+              required
+              type="email"
+              placeholder="staff@example.com"
+              value={staffForm.email}
+              onChange={(e) => setStaffForm({ ...staffForm, email: e.target.value })}
+            />
+
+            <Input
+              label="Initial Password"
+              required
+              type="password"
+              minLength={6}
+              placeholder="At least 6 characters"
+              value={staffForm.password}
+              onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })}
+              helperText="Password must be at least 6 characters."
+            />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
@@ -1308,31 +1280,21 @@ export default function AppUsersStaff() {
         >
           <form onSubmit={handleUpdateStaff} className="space-y-4 mt-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  First Name <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editStaffForm.firstName}
-                  onChange={(e) => setEditStaffForm({ ...editStaffForm, firstName: e.target.value })}
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                />
-              </div>
+              <Input
+                label="First Name"
+                required
+                type="text"
+                value={editStaffForm.firstName}
+                onChange={(e) => setEditStaffForm({ ...editStaffForm, firstName: e.target.value })}
+              />
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Last Name <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editStaffForm.lastName}
-                  onChange={(e) => setEditStaffForm({ ...editStaffForm, lastName: e.target.value })}
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                />
-              </div>
+              <Input
+                label="Last Name"
+                required
+                type="text"
+                value={editStaffForm.lastName}
+                onChange={(e) => setEditStaffForm({ ...editStaffForm, lastName: e.target.value })}
+              />
             </div>
 
             <div>
@@ -1400,46 +1362,31 @@ export default function AppUsersStaff() {
               Register an on-roll team member (monthly salaried payroll recipient, without system login).
             </p>
 
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Full Name <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Alex Morgan"
-                value={employeeForm.name}
-                onChange={(e) => setEmployeeForm({ ...employeeForm, name: e.target.value })}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-accent"
-              />
-            </div>
+            <Input
+              label="Full Name"
+              required
+              type="text"
+              placeholder="e.g. Alex Morgan"
+              value={employeeForm.name}
+              onChange={(e) => setEmployeeForm({ ...employeeForm, name: e.target.value })}
+            />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Designation / Role
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Sales Staff, Driver, Helper"
-                  value={employeeForm.designation}
-                  onChange={(e) => setEmployeeForm({ ...employeeForm, designation: e.target.value })}
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                />
-              </div>
+              <Input
+                label="Designation / Role"
+                type="text"
+                placeholder="e.g. Sales Staff, Driver, Helper"
+                value={employeeForm.designation}
+                onChange={(e) => setEmployeeForm({ ...employeeForm, designation: e.target.value })}
+              />
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Contact Phone
-                </label>
-                <input
-                  type="tel"
-                  placeholder="e.g. +1 555-0199"
-                  value={employeeForm.phone}
-                  onChange={(e) => setEmployeeForm({ ...employeeForm, phone: e.target.value })}
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                />
-              </div>
+              <Input
+                label="Contact Phone"
+                type="tel"
+                placeholder="e.g. +1 555-0199"
+                value={employeeForm.phone}
+                onChange={(e) => setEmployeeForm({ ...employeeForm, phone: e.target.value })}
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1462,24 +1409,18 @@ export default function AppUsersStaff() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Monthly Salary ($) <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-neutral-400 font-mono">$</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    placeholder="0.00"
-                    value={employeeForm.monthlySalary}
-                    onChange={(e) => setEmployeeForm({ ...employeeForm, monthlySalary: e.target.value })}
-                    className="w-full pl-7 pr-3 py-2 text-sm font-mono bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                  />
-                </div>
-              </div>
+              <Input
+                label="Monthly Salary ($)"
+                required
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={employeeForm.monthlySalary}
+                onChange={(e) => setEmployeeForm({ ...employeeForm, monthlySalary: e.target.value })}
+                className="font-mono"
+                icon={<span className="text-sm text-neutral-400 font-mono">$</span>}
+              />
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">
@@ -1511,43 +1452,28 @@ export default function AppUsersStaff() {
           maxWidth="max-w-lg"
         >
           <form onSubmit={handleUpdateEmployee} className="space-y-4 mt-2">
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Full Name <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={editEmployeeForm.name}
-                onChange={(e) => setEditEmployeeForm({ ...editEmployeeForm, name: e.target.value })}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-accent"
-              />
-            </div>
+            <Input
+              label="Full Name"
+              required
+              type="text"
+              value={editEmployeeForm.name}
+              onChange={(e) => setEditEmployeeForm({ ...editEmployeeForm, name: e.target.value })}
+            />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Designation / Role
-                </label>
-                <input
-                  type="text"
-                  value={editEmployeeForm.designation}
-                  onChange={(e) => setEditEmployeeForm({ ...editEmployeeForm, designation: e.target.value })}
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                />
-              </div>
+              <Input
+                label="Designation / Role"
+                type="text"
+                value={editEmployeeForm.designation}
+                onChange={(e) => setEditEmployeeForm({ ...editEmployeeForm, designation: e.target.value })}
+              />
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Contact Phone
-                </label>
-                <input
-                  type="tel"
-                  value={editEmployeeForm.phone}
-                  onChange={(e) => setEditEmployeeForm({ ...editEmployeeForm, phone: e.target.value })}
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                />
-              </div>
+              <Input
+                label="Contact Phone"
+                type="tel"
+                value={editEmployeeForm.phone}
+                onChange={(e) => setEditEmployeeForm({ ...editEmployeeForm, phone: e.target.value })}
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1569,23 +1495,17 @@ export default function AppUsersStaff() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Monthly Salary ($) <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-neutral-400 font-mono">$</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    value={editEmployeeForm.monthlySalary}
-                    onChange={(e) => setEditEmployeeForm({ ...editEmployeeForm, monthlySalary: e.target.value })}
-                    className="w-full pl-7 pr-3 py-2 text-sm font-mono bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                  />
-                </div>
-              </div>
+              <Input
+                label="Monthly Salary ($)"
+                required
+                type="number"
+                min="0"
+                step="0.01"
+                value={editEmployeeForm.monthlySalary}
+                onChange={(e) => setEditEmployeeForm({ ...editEmployeeForm, monthlySalary: e.target.value })}
+                className="font-mono"
+                icon={<span className="text-sm text-neutral-400 font-mono">$</span>}
+              />
             </div>
 
             <div className="flex items-center gap-2 pt-1">

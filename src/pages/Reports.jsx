@@ -66,12 +66,12 @@ function ProfitLossTab({ isAdmin, branches }) {
       {/* Filters */}
       <div className="card p-4 flex flex-wrap items-end gap-3">
         {isAdmin && (
-          <div>
+          <div className="w-48">
             <label className="label text-xs">Branch</label>
             <CustomSelect
               value={filterBranch}
               onChange={(e) => setFilterBranch(e.target.value)}
-              className="input-field w-auto text-sm py-2"
+              className="w-full text-sm"
             >
               <option value="">All branches</option>
               {branches.map((b) => (
@@ -82,17 +82,17 @@ function ProfitLossTab({ isAdmin, branches }) {
             </CustomSelect>
           </div>
         )}
-        <div>
+        <div className="w-40">
           <label className="label text-xs">From</label>
           <input
             type="date"
             value={startDate}
             max={endDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="input-field text-sm py-2"
+            className="input-field h-10 text-sm"
           />
         </div>
-        <div>
+        <div className="w-40">
           <label className="label text-xs">To</label>
           <input
             type="date"
@@ -100,10 +100,10 @@ function ProfitLossTab({ isAdmin, branches }) {
             min={startDate}
             max={today()}
             onChange={(e) => setEndDate(e.target.value)}
-            className="input-field text-sm py-2"
+            className="input-field h-10 text-sm"
           />
         </div>
-        <button className="btn-primary" onClick={run} disabled={loading}>
+        <button className="btn-primary h-10 px-4" onClick={run} disabled={loading}>
           {loading && <Spinner size="sm" className="mr-2" />}
           Generate
         </button>
