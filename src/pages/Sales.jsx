@@ -57,8 +57,6 @@ function Pagination({ pagination, onPageChange }) {
 
 // ── Line item row (defined outside Sales for stable identity) ─────────────
 function LineItemRow({ line, index, items, onUpdate, onRemove }) {
-  const selectedItem = items.find((i) => i._id === line.itemId);
-
   const handleField = (field, val) => onUpdate(index, { ...line, [field]: val });
 
   return (
@@ -107,7 +105,7 @@ function LineItemRow({ line, index, items, onUpdate, onRemove }) {
       </div>
 
       {/* Price */}
-      <div className="col-span-3">
+      <div className="col-span-2">
         {index === 0 && <label className="label">Unit Price *</label>}
         <input
           type="number"
@@ -122,20 +120,20 @@ function LineItemRow({ line, index, items, onUpdate, onRemove }) {
       </div>
 
       {/* Line total */}
-      <div className="col-span-1">
-        {index === 0 && <label className="label">Total</label>}
-        <p className="text-sm font-medium text-gray-700 py-2 text-right">
+      <div className="col-span-2">
+        {index === 0 && <label className="label text-right">Total</label>}
+        <p className="text-sm font-semibold text-gray-800 dark:text-neutral-100 py-2 text-right">
           {fmt(round2(Number(line.quantity || 0) * Number(line.sellingPrice || 0)))}
         </p>
       </div>
 
       {/* Remove */}
-      <div className="col-span-1 flex items-end pb-0.5">
-        {index === 0 && <div className="label invisible">X</div>}
+      <div className="col-span-1 flex items-end pb-0.5 justify-center">
+        {index === 0 && <div className="label invisible select-none">X</div>}
         <button
           type="button"
           onClick={() => onRemove(index)}
-          className="p-1.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+          className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
           aria-label="Remove line"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -829,7 +827,12 @@ export default function Sales() {
       </div>
 
       {/* New sale modal — wider to fit line items */}
-      <Modal isOpen={newOpen} onClose={() => setNewOpen(false)} title="Record new sale">
+      <Modal
+        isOpen={newOpen}
+        onClose={() => setNewOpen(false)}
+        title="Record new sale"
+        maxWidth="max-w-3xl"
+      >
         <div className="max-h-[75vh] overflow-y-auto pr-1">
           <NewSaleForm
             branches={branches}
@@ -845,7 +848,12 @@ export default function Sales() {
       </Modal>
 
       {/* Detail modal */}
-      <Modal isOpen={detailOpen} onClose={() => setDetailOpen(false)} title="Sale details">
+      <Modal
+        isOpen={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        title="Sale details"
+        maxWidth="max-w-2xl"
+      >
         {detailLoading ? (
           <div className="flex justify-center py-8">
             <Spinner size="lg" className="text-primary-600" />

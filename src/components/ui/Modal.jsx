@@ -25,7 +25,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
       aria-labelledby="modal-title"
     >
       <div
-        className={`bg-white dark:bg-neutral-900 rounded-2xl w-full ${maxWidth} shadow-card-lg border border-slate-200/60 dark:border-neutral-800 p-6 max-h-[90vh] overflow-y-auto`}
+        className={`bg-white dark:bg-neutral-900 rounded-2xl w-full ${maxWidth} shadow-card-lg border border-slate-200/60 dark:border-neutral-800 p-6 max-h-[90vh] overflow-y-auto overflow-x-hidden`}
       >
         <div className="flex items-center justify-between mb-5">
           <h2 id="modal-title" className="text-base font-bold text-slate-900 dark:text-white">
