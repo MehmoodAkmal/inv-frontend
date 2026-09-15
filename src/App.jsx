@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -63,6 +63,41 @@ function HomeRedirect() {
 }
 
 function AppContent() {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Quietly prefetch main page chunks during browser idle time
+    // so subsequent sidebar navigation transitions are instantaneous
+    const preloadAppRoutes = () => {
+      import('./pages/Dashboard');
+      import('./pages/BranchComparison');
+      import('./pages/ProfitLoss');
+      import('./pages/Sales');
+      import('./pages/CustomerLedgers');
+      import('./pages/Customers');
+      import('./pages/StockInventory');
+      import('./pages/PurchaseEntry');
+      import('./pages/ItemsCatalog');
+      import('./pages/Categories');
+      import('./pages/Expenses');
+      import('./pages/SalaryPayroll');
+      import('./pages/Branches');
+      import('./pages/Payments');
+      import('./pages/AppUsersStaff');
+      import('./pages/Permissions');
+    };
+
+    if ('requestIdleCallback' in window) {
+      const handle = window.requestIdleCallback(preloadAppRoutes, { timeout: 1500 });
+      return () => window.cancelIdleCallback(handle);
+    } else {
+      const timer = setTimeout(preloadAppRoutes, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-brand-50 dark:bg-dark-900 transition-colors duration-200">

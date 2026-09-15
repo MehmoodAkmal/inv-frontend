@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect } from 'react';
+import { createContext, useContext, useEffect, Suspense } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ThemeToggle from '../ui/ThemeToggle';
@@ -185,7 +185,18 @@ export default function MinimalLayout({ children }) {
 
         {/* ── Main View Area ───────────────────────────────────────────── */}
         <main className="flex-1 flex flex-col w-full max-w-[1700px] mx-auto overflow-hidden">
-          {children || <Outlet />}
+          <Suspense
+            fallback={
+              <div className="flex flex-col items-center justify-center flex-1 py-28 gap-3">
+                <div className="w-8 h-8 rounded-full border-2 border-brand-800 dark:border-brand-500 border-t-transparent animate-spin" />
+                <span className="text-xs font-medium text-neutral-400 dark:text-neutral-500 animate-pulse">
+                  Loading view...
+                </span>
+              </div>
+            }
+          >
+            {children || <Outlet />}
+          </Suspense>
         </main>
       </div>
     </MinimalLayoutContext.Provider>
