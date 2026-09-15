@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../utils/currency';
 
 import {
   getStaff,
@@ -30,11 +31,6 @@ import {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 const fmtNumber = (n) => Number(n ?? 0).toLocaleString();
-const fmtCurrency = (n) =>
-  Number(n ?? 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 
 const formatDateTime = (dateStr) => {
   if (!dateStr) return 'Never';
@@ -112,6 +108,7 @@ const EMPTY_EMPLOYEE_EDIT_FORM = {
 
 export default function AppUsersStaff() {
   const { user } = useAuth();
+  const { currencySymbol, fmtCurr } = useCurrency();
   const isAdmin = user?.role === 'admin' || user?.role === 'superAdmin';
 
   // Active Tab
@@ -807,13 +804,13 @@ export default function AppUsersStaff() {
     },
     {
       key: 'monthlySalary',
-      label: 'Monthly Salary',
+      label: `Monthly Salary (${currencySymbol})`,
       type: 'currency',
       sortable: true,
       render: (val) => (
         <div className="text-right">
           <span className="font-mono font-semibold text-neutral-900 dark:text-neutral-100">
-            ${fmtCurrency(val)}
+            {fmtCurr(val)}
           </span>
           <span className="block text-[11px] text-neutral-400 font-normal">per month</span>
         </div>
@@ -991,7 +988,7 @@ export default function AppUsersStaff() {
 
           <StatCard
             title="Monthly Payroll Liability"
-            value={`$${fmtCurrency(metrics.totalMonthlyPayroll)}`}
+            value={fmtCurr(metrics.totalMonthlyPayroll)}
             subtitle="Active salaried workforce"
             icon={
               <svg className="w-5 h-5 text-sky-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -1410,7 +1407,7 @@ export default function AppUsersStaff() {
               </div>
 
               <Input
-                label="Monthly Salary ($)"
+                label={`Monthly Salary (${currencySymbol})`}
                 required
                 type="number"
                 min="0"
@@ -1419,7 +1416,7 @@ export default function AppUsersStaff() {
                 value={employeeForm.monthlySalary}
                 onChange={(e) => setEmployeeForm({ ...employeeForm, monthlySalary: e.target.value })}
                 className="font-mono"
-                icon={<span className="text-sm text-neutral-400 font-mono">$</span>}
+                icon={<span className="text-sm text-neutral-400 font-mono">{currencySymbol}</span>}
               />
             </div>
 
@@ -1496,7 +1493,7 @@ export default function AppUsersStaff() {
               </div>
 
               <Input
-                label="Monthly Salary ($)"
+                label={`Monthly Salary (${currencySymbol})`}
                 required
                 type="number"
                 min="0"
@@ -1504,7 +1501,7 @@ export default function AppUsersStaff() {
                 value={editEmployeeForm.monthlySalary}
                 onChange={(e) => setEditEmployeeForm({ ...editEmployeeForm, monthlySalary: e.target.value })}
                 className="font-mono"
-                icon={<span className="text-sm text-neutral-400 font-mono">$</span>}
+                icon={<span className="text-sm text-neutral-400 font-mono">{currencySymbol}</span>}
               />
             </div>
 

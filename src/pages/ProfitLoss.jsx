@@ -14,6 +14,7 @@ import {
 
 import { StatCard, Badge, DataTable, DashboardLayout } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency, getCurrencySymbol, formatCurrency } from '../utils/currency';
 import { getProfitLoss } from '../services/reportService';
 import { getBranches } from '../services/branchService';
 import { getExpenses } from '../services/expenseService';
@@ -106,8 +107,9 @@ function SkeletonCard() {
 }
 
 // ── Waterfall custom tooltip ──────────────────────────────────────────────────
-function WaterfallTooltip({ active, payload, label }) {
+function WaterfallTooltip({ active, payload, label, currencySymbol }) {
   if (!active || !payload?.length) return null;
+  const sym = currencySymbol || getCurrencySymbol();
   const entry = payload[0];
   const isDeduction = label === 'COGS' || label === 'Expenses' || label === 'Salaries';
   return (
@@ -116,7 +118,7 @@ function WaterfallTooltip({ active, payload, label }) {
       <div className="flex items-center justify-between gap-3">
         <span className="text-neutral-500">{isDeduction ? 'Cost' : 'Value'}:</span>
         <span className="font-mono font-semibold text-neutral-900 dark:text-neutral-100">
-          {isDeduction ? '–' : ''}${fmt(Math.abs(entry.value))}
+          {isDeduction ? '–' : ''}{formatCurrency(Math.abs(entry.value), sym)}
         </span>
       </div>
     </div>
@@ -141,6 +143,7 @@ function StatTile({ label, value, subLabel, colorClass = 'text-neutral-900 dark:
 // ── Main component ────────────────────────────────────────────────────────────
 export default function ProfitLoss() {
   const { user } = useAuth();
+  const { currencySymbol, fmtCurr } = useCurrency();
 
   const isAdmin   = user?.role === 'admin';
   const isManager = user?.role === 'manager';
@@ -281,7 +284,7 @@ export default function ProfitLoss() {
       label: 'Amount',
       align: 'right',
       sortable: true,
-      render: (val) => <span className="font-mono text-sm">${fmt(val)}</span>,
+      render: (val) => <span className="font-mono text-sm">{fmtCurr(val)}</span>,
     },
     {
       key:   'pctRevenue',
@@ -422,19 +425,19 @@ export default function ProfitLoss() {
             {/* Total Revenue */}
             <StatCard
               label="Total Revenue"
-              value={`$${fmt(d.totalRevenue)}`}
+              value={fmtCurr(d.totalRevenue)}
               icon={<IconRevenue />}
               accentColor="brand"
               secondaryStats={[
-                { label: 'Cash',   value: `$${fmt(d.totalCashSales)}` },
-                { label: 'Credit', value: `$${fmt(d.totalCreditSales)}` },
+                { label: 'Cash',   value: fmtCurr(d.totalCashSales) },
+                { label: 'Credit', value: fmtCurr(d.totalCreditSales) },
               ]}
             />
 
             {/* Total COGS */}
             <StatCard
               label="Cost of Goods Sold"
-              value={`$${fmt(d.totalCOGS)}`}
+              value={fmtCurr(d.totalCOGS)}
               icon={<IconCOGS />}
               accentColor="danger"
               secondaryStats={[
@@ -446,7 +449,7 @@ export default function ProfitLoss() {
             {/* Gross Profit */}
             <StatCard
               label="Gross Profit"
-              value={`$${fmt(d.grossProfit)}`}
+              value={fmtCurr(d.grossProfit)}
               icon={<IconGrossProfit />}
               accentColor={d.grossProfit >= 0 ? 'success' : 'danger'}
               secondaryStats={[
@@ -477,7 +480,7 @@ export default function ProfitLoss() {
               <p className={`font-bold text-2xl font-mono truncate mt-1 ${
                 d.netProfit >= 0 ? 'text-white' : 'text-danger-300'
               }`}>
-                ${fmt(d.netProfit)}
+                {fmtCurr(d.netProfit)}
               </p>
               <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
                 <span className={`text-xs ${d.netProfit >= 0 ? 'text-white/60' : 'text-danger-400/70'}`}>
@@ -507,31 +510,31 @@ export default function ProfitLoss() {
           <>
             <StatTile
               label="Total Expenses"
-              value={`$${fmt(d.totalExpenses)}`}
+              value={fmtCurr(d.totalExpenses)}
               subLabel={`${pct(d.totalExpenses, d.totalRevenue).toFixed(1)}% of revenue`}
               colorClass="text-warning-600 dark:text-warning-400"
             />
             <StatTile
               label="Total Salaries"
-              value={`$${fmt(d.totalSalaries)}`}
+              value={fmtCurr(d.totalSalaries)}
               subLabel={`${pct(d.totalSalaries, d.totalRevenue).toFixed(1)}% of revenue`}
               colorClass="text-orange-600 dark:text-orange-400"
             />
             <StatTile
               label="Cash Sales"
-              value={`$${fmt(d.totalCashSales)}`}
+              value={fmtCurr(d.totalCashSales)}
               subLabel={`${pct(d.totalCashSales, d.totalRevenue).toFixed(1)}% of revenue`}
               colorClass="text-success-600 dark:text-success-400"
             />
             <StatTile
               label="Credit Sales"
-              value={`$${fmt(d.totalCreditSales)}`}
+              value={fmtCurr(d.totalCreditSales)}
               subLabel={`${pct(d.totalCreditSales, d.totalRevenue).toFixed(1)}% of revenue`}
               colorClass="text-warning-600 dark:text-warning-400"
             />
             <StatTile
               label="Outstanding Credit"
-              value={`$${fmt(d.totalOutstandingCredit)}`}
+              value={fmtCurr(d.totalOutstandingCredit)}
               subLabel="Snapshot (all-time)"
               colorClass={d.totalOutstandingCredit > 0 ? 'text-danger-600 dark:text-danger-400' : 'text-neutral-700 dark:text-neutral-300'}
             />
@@ -568,18 +571,20 @@ export default function ProfitLoss() {
                   axisLine={false}
                   tickLine={false}
                 />
-                <YAxis
-                  tick={{ fontSize: 10, fill: '#6b7280' }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => {
-                    const abs = Math.abs(v);
-                    return `${v < 0 ? '–' : ''}$${abs >= 1000 ? `${(abs / 1000).toFixed(0)}k` : abs}`;
-                  }}
-                  width={56}
-                />
-                <ReferenceLine y={0} stroke="#e5e7eb" strokeWidth={1.5} />
-                <Tooltip content={<WaterfallTooltip />} />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: '#6b7280' }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v) => {
+                      const abs = Math.abs(v);
+                      const s = currencySymbol || '$';
+                      const sp = s.length > 1 ? ' ' : '';
+                      return `${v < 0 ? '–' : ''}${s}${sp}${abs >= 1000 ? `${(abs / 1000).toFixed(0)}k` : abs}`;
+                    }}
+                    width={56}
+                  />
+                  <ReferenceLine y={0} stroke="#e5e7eb" strokeWidth={1.5} />
+                  <Tooltip content={<WaterfallTooltip currencySymbol={currencySymbol} />} />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={52}>
                   {waterfallData.map((entry) => (
                     <Cell
@@ -636,18 +641,18 @@ export default function ProfitLoss() {
           ) : (
             <div className="flex-1 space-y-0 text-sm">
               {/* Revenue */}
-              <SummaryRow label="Total Revenue"  value={`$${fmt(d.totalRevenue)}`}  bold />
-              <SummaryRow label="– Cost of Goods" value={`($${fmt(d.totalCOGS)})`}   indent colorClass="text-danger-600 dark:text-danger-400" />
-              <SummaryRow label="Gross Profit"   value={`$${fmt(d.grossProfit)}`}    bold borderTop colorClass={d.grossProfit >= 0 ? 'text-success-700 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'} />
+              <SummaryRow label="Total Revenue"  value={fmtCurr(d.totalRevenue)}  bold />
+              <SummaryRow label="– Cost of Goods" value={`(${fmtCurr(d.totalCOGS)})`}   indent colorClass="text-danger-600 dark:text-danger-400" />
+              <SummaryRow label="Gross Profit"   value={fmtCurr(d.grossProfit)}    bold borderTop colorClass={d.grossProfit >= 0 ? 'text-success-700 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'} />
 
               <div className="pt-2 mt-2" />
 
-              <SummaryRow label="– Expenses"      value={`($${fmt(d.totalExpenses)})`} indent colorClass="text-warning-600 dark:text-warning-400" />
-              <SummaryRow label="– Salaries"      value={`($${fmt(d.totalSalaries)})`} indent colorClass="text-orange-600 dark:text-orange-400" />
+              <SummaryRow label="– Expenses"      value={`(${fmtCurr(d.totalExpenses)})`} indent colorClass="text-warning-600 dark:text-warning-400" />
+              <SummaryRow label="– Salaries"      value={`(${fmtCurr(d.totalSalaries)})`} indent colorClass="text-orange-600 dark:text-orange-400" />
 
               <SummaryRow
                 label="Net Profit"
-                value={`$${fmt(d.netProfit)}`}
+                value={fmtCurr(d.netProfit)}
                 bold
                 borderTop
                 colorClass={d.netProfit >= 0 ? 'text-success-700 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'}

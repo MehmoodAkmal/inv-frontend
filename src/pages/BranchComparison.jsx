@@ -13,6 +13,7 @@ import {
 
 import { StatCard, Badge, DataTable, DashboardLayout } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency, getCurrencySymbol, formatCurrency } from '../utils/currency';
 import { getBranchComparison } from '../services/reportService';
 
 // ── Formatters ───────────────────────────────────────────────────────────────
@@ -54,8 +55,9 @@ const getLastMonth = () => {
 };
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-function GroupedBarTooltip({ active, payload, label }) {
+function GroupedBarTooltip({ active, payload, label, currencySymbol }) {
   if (!active || !payload?.length) return null;
+  const sym = currencySymbol || getCurrencySymbol();
   return (
     <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-3 shadow-lg text-xs min-w-[180px]">
       <p className="font-semibold text-neutral-800 dark:text-neutral-200 mb-2">{label}</p>
@@ -67,7 +69,7 @@ function GroupedBarTooltip({ active, payload, label }) {
               {entry.name}:
             </span>
             <span className="font-mono font-semibold text-neutral-900 dark:text-neutral-100">
-              ${fmt(entry.value)}
+              {formatCurrency(entry.value, sym)}
             </span>
           </div>
         ))}
@@ -130,6 +132,7 @@ const IconBranch = () => (
 // ── Main component ────────────────────────────────────────────────────────────
 export default function BranchComparison() {
   const { user } = useAuth();
+  const { currencySymbol, fmtCurr } = useCurrency();
 
   // ── All hooks BEFORE any conditional return ───────────────────────────────
   const [preset, setPreset]           = useState('thisMonth');
@@ -250,39 +253,39 @@ export default function BranchComparison() {
       label: 'Revenue',
       align: 'right',
       sortable: true,
-      render: (val) => <span className="font-mono text-sm">${fmt(val)}</span>,
+      render: (val) => <span className="font-mono text-sm">{fmtCurr(val)}</span>,
     },
     {
       key:   'totalCashSales',
       label: 'Cash',
       align: 'right',
-      render: (val) => <span className="font-mono text-sm">${fmt(val)}</span>,
+      render: (val) => <span className="font-mono text-sm">{fmtCurr(val)}</span>,
     },
     {
       key:   'totalCreditSales',
       label: 'Credit',
       align: 'right',
       render: (val) => (
-        <span className="font-mono text-sm text-warning-600 dark:text-warning-400">${fmt(val)}</span>
+        <span className="font-mono text-sm text-warning-600 dark:text-warning-400">{fmtCurr(val)}</span>
       ),
     },
     {
       key:   'totalCOGS',
       label: 'COGS',
       align: 'right',
-      render: (val) => <span className="font-mono text-sm">${fmt(val)}</span>,
+      render: (val) => <span className="font-mono text-sm">{fmtCurr(val)}</span>,
     },
     {
       key:   'totalExpenses',
       label: 'Expenses',
       align: 'right',
-      render: (val) => <span className="font-mono text-sm">${fmt(val)}</span>,
+      render: (val) => <span className="font-mono text-sm">{fmtCurr(val)}</span>,
     },
     {
       key:   'totalSalaries',
       label: 'Payroll',
       align: 'right',
-      render: (val) => <span className="font-mono text-sm">${fmt(val)}</span>,
+      render: (val) => <span className="font-mono text-sm">{fmtCurr(val)}</span>,
     },
     {
       key:      'netProfit',
@@ -297,7 +300,7 @@ export default function BranchComparison() {
             <div className={`font-mono text-sm font-semibold ${isPos
               ? 'text-success-600 dark:text-success-400'
               : 'text-danger-600 dark:text-danger-400'}`}>
-              ${fmt(val)}
+              {fmtCurr(val)}
             </div>
             {!row._isTotalsRow && (
               <div className={`text-xs font-mono ${isPos ? 'text-success-500' : 'text-danger-500'}`}>
@@ -398,27 +401,27 @@ export default function BranchComparison() {
           <>
             <StatCard
               label="Consolidated Revenue"
-              value={`$${fmt(totals.totalRevenue)}`}
+              value={fmtCurr(totals.totalRevenue)}
               icon={<IconRevenue />}
               accentColor="brand"
               secondaryStats={[
-                { label: 'Cash',   value: `$${fmt(totals.totalCashSales)}` },
-                { label: 'Credit', value: `$${fmt(totals.totalCreditSales)}` },
+                { label: 'Cash',   value: fmtCurr(totals.totalCashSales) },
+                { label: 'Credit', value: fmtCurr(totals.totalCreditSales) },
               ]}
             />
             <StatCard
               label="Consolidated OPEX"
-              value={`$${fmt(consolidatedOPEX)}`}
+              value={fmtCurr(consolidatedOPEX)}
               icon={<IconOPEX />}
               accentColor="warning"
               secondaryStats={[
-                { label: 'Expenses', value: `$${fmt(totals.totalExpenses)}` },
-                { label: 'Salaries', value: `$${fmt(totals.totalSalaries)}` },
+                { label: 'Expenses', value: fmtCurr(totals.totalExpenses) },
+                { label: 'Salaries', value: fmtCurr(totals.totalSalaries) },
               ]}
             />
             <StatCard
               label="Net Retained Profit"
-              value={`$${fmt(totals.netProfit)}`}
+              value={fmtCurr(totals.netProfit)}
               icon={<IconProfit />}
               accentColor={totals.netProfit >= 0 ? 'success' : 'danger'}
               secondaryStats={[
@@ -443,7 +446,7 @@ export default function BranchComparison() {
               {topBranch ? (
                 <>
                   <p className="font-mono text-sm text-brand-accent mt-0.5">
-                    ${fmt(topBranch.netProfit)} net profit
+                    {fmtCurr(topBranch.netProfit)} net profit
                   </p>
                   <div className="mt-3 pt-3 border-t border-white/10">
                     <p className="text-xs text-white/60">
@@ -486,10 +489,14 @@ export default function BranchComparison() {
                   tick={{ fontSize: 11, fill: '#6b7280' }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v) => `$${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
+                  tickFormatter={(v) => {
+                    const s = currencySymbol || '$';
+                    const sp = s.length > 1 ? ' ' : '';
+                    return `${s}${sp}${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`;
+                  }}
                   width={52}
                 />
-                <Tooltip content={<GroupedBarTooltip />} />
+                <Tooltip content={<GroupedBarTooltip currencySymbol={currencySymbol} />} />
                 <Legend iconType="square" iconSize={10} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
                 <Bar dataKey="Revenue" fill={CHART_COLORS.Revenue} radius={[3, 3, 0, 0]} maxBarSize={24} />
                 <Bar dataKey="COGS"    fill={CHART_COLORS.COGS}    radius={[3, 3, 0, 0]} maxBarSize={24} />

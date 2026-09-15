@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../utils/currency';
 import {
   getCustomers,
   createCustomer,
@@ -60,6 +61,7 @@ function CustomerDetailDrawer({
   onClose,
   onCustomerUpdated,
 }) {
+  const { fmtCurr } = useCurrency();
   const [ledgerLoading, setLedgerLoading] = useState(true);
   const [ledgerData, setLedgerData] = useState(null);
   const [ledgerPag, setLedgerPag] = useState(null);
@@ -164,9 +166,9 @@ function CustomerDetailDrawer({
             <p
               className={`text-3xl font-extrabold tracking-tight mt-0.5 ${balance > 0 ? 'text-amber-700' : 'text-emerald-700'}`}
             >
-              {fmt(balance)}
+              {fmtCurr(balance)}
             </p>
-            <p className="text-xs text-brand-400 mt-0.5">Opening: {fmt(customer.openingBalance)}</p>
+            <p className="text-xs text-brand-400 mt-0.5">Opening: {fmtCurr(customer.openingBalance)}</p>
           </div>
           <div className="flex flex-col gap-2 items-end">
             {balance > 0 && (
@@ -204,7 +206,7 @@ function CustomerDetailDrawer({
                 value={payAmount}
                 onChange={(e) => setPayAmount(e.target.value)}
                 placeholder="0.00"
-                error={Number(payAmount) > balance ? `Exceeds balance (${fmt(balance)})` : undefined}
+                error={Number(payAmount) > balance ? `Exceeds balance (${fmtCurr(balance)})` : undefined}
               />
               <Input
                 label="Note"
@@ -321,13 +323,13 @@ function CustomerDetailDrawer({
                       <span
                         className={`text-sm font-bold ${entry.type === 'payment' ? 'text-emerald-700' : 'text-brand-700'}`}
                       >
-                        {entry.type === 'payment' ? '−' : '+'}
-                        {fmt(entry.amount)}
+                        {entry.type === 'payment' ? '− ' : '+ '}
+                        {fmtCurr(entry.amount)}
                       </span>
                       <span className="text-xs text-brand-400">
                         Balance:{' '}
                         <span className="font-semibold text-brand-700">
-                          {fmt(entry.balanceAfter)}
+                          {fmtCurr(entry.balanceAfter)}
                         </span>
                       </span>
                     </div>
@@ -515,6 +517,7 @@ function CustomerEditForm({ form, onChange, onSubmit, onCancel, saving }) {
 // ══════════════════════════════════════════════════════════════════════════
 export default function Customers() {
   const { user } = useAuth();
+  const { fmtCurr } = useCurrency();
   const isAdmin = user?.role === 'admin';
   const canWrite = user?.role === 'admin' || user?.role === 'manager';
 
@@ -793,12 +796,12 @@ export default function Customers() {
                     <td className="table-td max-w-[140px] truncate text-brand-500">
                       {c.address || '—'}
                     </td>
-                    <td className="table-td text-brand-500">{fmt(c.openingBalance)}</td>
+                    <td className="table-td text-brand-500">{fmtCurr(c.openingBalance)}</td>
                     <td className="table-td">
                       <span
                         className={`font-bold text-sm ${c.currentBalance > 0 ? 'text-amber-700' : 'text-emerald-600'}`}
                       >
-                        {fmt(c.currentBalance)}
+                        {fmtCurr(c.currentBalance)}
                       </span>
                     </td>
                     <td className="table-td">

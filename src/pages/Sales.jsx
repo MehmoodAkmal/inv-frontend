@@ -2,6 +2,7 @@ import CustomSelect from '../components/ui/CustomSelect';
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../utils/currency';
 import { createSale, getSales, getSaleById } from '../services/saleService';
 import { getBranches } from '../services/branchService';
 import { getItems } from '../services/itemService';
@@ -57,6 +58,7 @@ function Pagination({ pagination, onPageChange }) {
 
 // ── Line item row (defined outside Sales for stable identity) ─────────────
 function LineItemRow({ line, index, items, onUpdate, onRemove }) {
+  const { fmtCurr } = useCurrency();
   const handleField = (field, val) => onUpdate(index, { ...line, [field]: val });
 
   return (
@@ -123,7 +125,7 @@ function LineItemRow({ line, index, items, onUpdate, onRemove }) {
       <div className="col-span-2">
         {index === 0 && <label className="label text-right">Total</label>}
         <p className="text-sm font-semibold text-gray-800 dark:text-neutral-100 py-2 text-right">
-          {fmt(round2(Number(line.quantity || 0) * Number(line.sellingPrice || 0)))}
+          {fmtCurr(round2(Number(line.quantity || 0) * Number(line.sellingPrice || 0)))}
         </p>
       </div>
 
@@ -163,6 +165,7 @@ function NewSaleForm({
   onCancel,
   saving,
 }) {
+  const { fmtCurr } = useCurrency();
   const isAdmin = userRole === 'admin';
 
   const [form, setForm] = useState({
@@ -341,7 +344,7 @@ function NewSaleForm({
       <div className="bg-gray-50 rounded-lg p-3 space-y-1.5 text-sm">
         <div className="flex justify-between text-gray-600">
           <span>Subtotal</span>
-          <span className="font-medium">{fmt(subtotal)}</span>
+          <span className="font-medium">{fmtCurr(subtotal)}</span>
         </div>
         <div className="flex justify-between items-center text-gray-600">
           <span>Discount</span>
@@ -357,7 +360,7 @@ function NewSaleForm({
         </div>
         <div className="flex justify-between font-semibold text-gray-900 border-t border-gray-200 pt-1.5">
           <span>Total</span>
-          <span>{fmt(totalAmount)}</span>
+          <span>{fmtCurr(totalAmount)}</span>
         </div>
       </div>
 
@@ -382,7 +385,7 @@ function NewSaleForm({
         />
         {form.paymentType === 'credit' && amountPaid >= 0 && (
           <p className={`text-xs mt-1 ${balanceDue > 0 ? 'text-amber-600' : 'text-green-600'}`}>
-            Balance due after sale: {fmt(balanceDue)}
+            Balance due after sale: {fmtCurr(balanceDue)}
           </p>
         )}
       </div>
@@ -414,6 +417,7 @@ function NewSaleForm({
 
 // ── Sale detail modal ─────────────────────────────────────────────────────
 function SaleDetail({ sale, onClose }) {
+  const { fmtCurr, currencySymbol } = useCurrency();
   if (!sale) return null;
   return (
     <div className="space-y-4">
@@ -476,23 +480,23 @@ function SaleDetail({ sale, onClose }) {
                           <span
                             key={bi}
                             className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800"
-                            title={`Batch ${b.batchNumber}: ${b.quantity} units @ Rs. ${b.costPrice}`}
+                            title={`Batch ${b.batchNumber}: ${b.quantity} units @ ${currencySymbol} ${b.costPrice}`}
                           >
-                            {b.batchNumber || 'Batch'}: {b.quantity} × Rs.{b.costPrice}
+                            {b.batchNumber || 'Batch'}: {b.quantity} × {currencySymbol} {b.costPrice}
                           </span>
                         ))}
                       </div>
                     )}
                   </td>
                   <td className="px-3 py-2 text-gray-600">{line.quantity}</td>
-                  <td className="px-3 py-2 text-gray-600">{fmt(line.sellingPrice)}</td>
+                  <td className="px-3 py-2 text-gray-600">{fmtCurr(line.sellingPrice)}</td>
                   <td className="px-3 py-2 text-gray-500 font-mono text-xs">
-                    Rs. {fmt(line.costPriceAtSale)}
+                    {fmtCurr(line.costPriceAtSale)}
                     {line.batchAllocations && line.batchAllocations.length > 1 && (
                       <span className="block text-[10px] text-gray-400 font-sans">(FIFO avg)</span>
                     )}
                   </td>
-                  <td className="px-3 py-2 font-medium text-gray-900">{fmt(line.lineTotal)}</td>
+                  <td className="px-3 py-2 font-medium text-gray-900">{fmtCurr(line.lineTotal)}</td>
                 </tr>
               ))}
             </tbody>
@@ -504,26 +508,26 @@ function SaleDetail({ sale, onClose }) {
       <div className="bg-gray-50 rounded-lg p-3 space-y-1 text-sm">
         <div className="flex justify-between text-gray-600">
           <span>Subtotal</span>
-          <span>{fmt(sale.subtotal)}</span>
+          <span>{fmtCurr(sale.subtotal)}</span>
         </div>
         {sale.discount > 0 && (
           <div className="flex justify-between text-gray-600">
             <span>Discount</span>
-            <span>− {fmt(sale.discount)}</span>
+            <span>− {fmtCurr(sale.discount)}</span>
           </div>
         )}
         <div className="flex justify-between font-semibold text-gray-900 border-t border-gray-200 pt-1">
           <span>Total</span>
-          <span>{fmt(sale.totalAmount)}</span>
+          <span>{fmtCurr(sale.totalAmount)}</span>
         </div>
         <div className="flex justify-between text-gray-600">
           <span>Amount paid</span>
-          <span>{fmt(sale.amountPaid)}</span>
+          <span>{fmtCurr(sale.amountPaid)}</span>
         </div>
         {sale.balanceDue > 0 && (
           <div className="flex justify-between font-semibold text-amber-700">
             <span>Balance due</span>
-            <span>{fmt(sale.balanceDue)}</span>
+            <span>{fmtCurr(sale.balanceDue)}</span>
           </div>
         )}
       </div>
@@ -540,6 +544,7 @@ function SaleDetail({ sale, onClose }) {
 // ── Main Sales page ───────────────────────────────────────────────────────
 export default function Sales() {
   const { user } = useAuth();
+  const { fmtCurr } = useCurrency();
   const isAdmin = user?.role === 'admin';
 
   // Reference data
@@ -793,14 +798,14 @@ export default function Sales() {
                         <PaymentBadge type={sale.paymentType} />
                       </td>
                       <td className="px-4 py-3 text-sm font-semibold text-gray-900">
-                        {fmt(sale.totalAmount)}
+                        {fmtCurr(sale.totalAmount)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{fmt(sale.amountPaid)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{fmtCurr(sale.amountPaid)}</td>
                       <td className="px-4 py-3 text-sm">
                         {sale.balanceDue > 0 ? (
-                          <span className="font-medium text-amber-700">{fmt(sale.balanceDue)}</span>
+                          <span className="font-medium text-amber-700">{fmtCurr(sale.balanceDue)}</span>
                         ) : (
-                          <span className="text-green-600">0.00</span>
+                          <span className="text-green-600">{fmtCurr(0)}</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">

@@ -9,6 +9,7 @@ import { createSale } from '../services/saleService';
 import MinimalLayout from '../components/layout/MinimalLayout';
 import Modal from '../components/ui/Modal';
 import Spinner from '../components/ui/Spinner';
+import { useCurrency, formatCurrency } from '../utils/currency';
 
 // ── Currency / Number formatting ─────────────────────────────────────────────
 const fmt = (n) =>
@@ -20,6 +21,7 @@ const fmt = (n) =>
 const round2 = (n) => Math.round(Number(n || 0) * 100) / 100;
 
 export default function CashierPOS() {
+  const { currencySymbol, fmtCurr } = useCurrency();
 
   // ── Data States ────────────────────────────────────────────────────────────
   const [items, setItems] = useState([]);
@@ -558,7 +560,7 @@ export default function CashierPOS() {
                       <div className="mt-3 flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800/80">
                         <div>
                           <span className="font-mono text-lg font-extrabold text-neutral-900 dark:text-neutral-50">
-                            ${fmt(item.sellingPrice)}
+                            {fmtCurr(item.sellingPrice)}
                           </span>
                           <span className="text-[11px] text-neutral-400 ml-1">/{item.unit || 'ea'}</span>
                         </div>
@@ -597,7 +599,7 @@ export default function CashierPOS() {
                 Cart ({cart.reduce((s, i) => s + i.quantity, 0)} items)
               </div>
               <div className="font-mono text-xl font-extrabold text-neutral-900 dark:text-white">
-                ${fmt(totalAmount)}
+                {fmtCurr(totalAmount)}
               </div>
             </div>
             <button
@@ -683,10 +685,10 @@ export default function CashierPOS() {
                     </div>
                     <div className="flex items-center gap-2 mt-0.5 text-xs text-neutral-400">
                       <span className="font-mono text-neutral-600 dark:text-neutral-300 font-medium">
-                        ${fmt(line.sellingPrice)}
+                        {fmtCurr(line.sellingPrice)}
                       </span>
                       <span>·</span>
-                      <span className="font-mono text-[11px]">Sub: ${fmt(line.lineTotal)}</span>
+                      <span className="font-mono text-[11px]">Sub: {fmtCurr(line.lineTotal)}</span>
                     </div>
                   </div>
 
@@ -738,7 +740,7 @@ export default function CashierPOS() {
               <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400">
                 <span>Subtotal</span>
                 <span className="font-mono font-semibold text-neutral-800 dark:text-neutral-200">
-                  ${fmt(subtotal)}
+                  {fmtCurr(subtotal)}
                 </span>
               </div>
 
@@ -768,7 +770,7 @@ export default function CashierPOS() {
                     min="0"
                     step="0.5"
                     value={discount || ''}
-                    placeholder="$0"
+                    placeholder={`${currencySymbol}0`}
                     onChange={(e) => {
                       setDiscount(e.target.value);
                       setDiscountPercent(0);
@@ -781,7 +783,7 @@ export default function CashierPOS() {
               {calculatedDiscount > 0 && (
                 <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
                   <span>Discount Applied</span>
-                  <span className="font-mono">-${fmt(calculatedDiscount)}</span>
+                  <span className="font-mono">−{fmtCurr(calculatedDiscount)}</span>
                 </div>
               )}
             </div>
@@ -792,7 +794,7 @@ export default function CashierPOS() {
                 Total Due
               </span>
               <div className="font-mono text-3xl sm:text-4xl font-black text-neutral-900 dark:text-white tracking-tight">
-                ${fmt(totalAmount)}
+                {fmtCurr(totalAmount)}
               </div>
             </div>
 
@@ -846,7 +848,7 @@ export default function CashierPOS() {
                           onClick={() => setTenderedCash(String(amt))}
                           className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-white dark:bg-neutral-800 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100"
                         >
-                          {idx === 0 ? 'Exact' : `$${amt}`}
+                          {idx === 0 ? 'Exact' : `${currencySymbol}${currencySymbol.length > 1 ? ' ' : ''}${amt}`}
                         </button>
                       );
                     })}
@@ -855,8 +857,8 @@ export default function CashierPOS() {
 
                 <div className="flex items-center gap-2">
                   <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-neutral-400">
-                      $
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs text-neutral-400">
+                      {currencySymbol}
                     </span>
                     <input
                       type="number"
@@ -865,7 +867,8 @@ export default function CashierPOS() {
                       value={tenderedCash}
                       onChange={(e) => setTenderedCash(e.target.value)}
                       placeholder={fmt(totalAmount)}
-                      className="w-full pl-7 pr-3 py-1.5 text-base font-mono font-bold bg-white dark:bg-neutral-900 border border-emerald-300 dark:border-emerald-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      style={{ paddingLeft: `${Math.max(28, currencySymbol.length * 8 + 16)}px` }}
+                      className="w-full pr-3 py-1.5 text-base font-mono font-bold bg-white dark:bg-neutral-900 border border-emerald-300 dark:border-emerald-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
                   {/* Change Return display */}
@@ -874,7 +877,7 @@ export default function CashierPOS() {
                       Change Due
                     </div>
                     <div className="font-mono text-lg font-black text-emerald-700 dark:text-emerald-400">
-                      ${fmt(changeDue)}
+                      {fmtCurr(changeDue)}
                     </div>
                   </div>
                 </div>
@@ -960,7 +963,7 @@ export default function CashierPOS() {
                               )}
                             </div>
                             <div className="font-mono text-[11px] text-neutral-500">
-                              Bal: ${fmt(c.currentBalance)}
+                              Bal: {fmtCurr(c.currentBalance)}
                             </div>
                           </div>
                         ))
@@ -980,7 +983,7 @@ export default function CashierPOS() {
                           : 'text-neutral-700 dark:text-neutral-300'
                       }`}
                     >
-                      ${fmt(selectedCustomer.currentBalance)}
+                      {fmtCurr(selectedCustomer.currentBalance)}
                     </span>
                   </div>
                 )}
@@ -1021,7 +1024,7 @@ export default function CashierPOS() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                   <span>
-                    Complete Sale • ${fmt(totalAmount)}
+                    Complete Sale • {fmtCurr(totalAmount)}
                   </span>
                 </>
               )}
@@ -1122,7 +1125,7 @@ export default function CashierPOS() {
               Sale Receipt
             </div>
             <div className="font-mono text-3xl font-black text-neutral-900 dark:text-white mt-0.5">
-              ${fmt(lastSale?.totalAmount)}
+              {fmtCurr(lastSale?.totalAmount)}
             </div>
             <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase mt-1 bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
               {lastSale?.paymentType === 'cash' ? 'Paid in Cash' : 'Charged to Account'}
@@ -1136,7 +1139,7 @@ export default function CashierPOS() {
                 Return Change to Customer:
               </div>
               <div className="font-mono text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                ${fmt(lastSale.changeDue)}
+                {fmtCurr(lastSale.changeDue)}
               </div>
             </div>
           )}
@@ -1148,7 +1151,7 @@ export default function CashierPOS() {
                 <span className="truncate max-w-[200px]">
                   {it.quantity}x {it.itemName}
                 </span>
-                <span className="font-mono font-medium">${fmt(it.lineTotal)}</span>
+                <span className="font-mono font-medium">{fmtCurr(it.lineTotal)}</span>
               </div>
             ))}
           </div>

@@ -11,14 +11,9 @@ import {
   DataTable,
   CustomSelect,
 } from '../components/ui';
+import { useCurrency } from '../utils/currency';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
-const fmt = (n) =>
-  Number(n ?? 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-
 const fmtd = (d) => {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('en-US', {
@@ -36,6 +31,7 @@ const getDaysSince = (d) => {
 
 export default function CustomerLedgers() {
   const { user } = useAuth();
+  const { formatCurrency: fmtCurr } = useCurrency();
   const navigate = useNavigate();
 
   const isAdmin = user?.role === 'admin';
@@ -273,7 +269,7 @@ export default function CustomerLedgers() {
                     : 'text-emerald-600 dark:text-emerald-400'
               }`}
             >
-              ${fmt(balance)}
+              {fmtCurr(balance)}
             </span>
             {isOverdue && (
               <span className="inline-flex items-center px-1.5 py-0.2 text-[10px] font-semibold bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 rounded mt-0.5">
@@ -381,7 +377,7 @@ export default function CustomerLedgers() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
             label="Total Outstanding Across Customers"
-            value={`$${fmt(totalOutstandingCalc)}`}
+            value={fmtCurr(totalOutstandingCalc)}
             accentColor="warning"
             icon={
               <svg
@@ -443,7 +439,7 @@ export default function CustomerLedgers() {
 
           <StatCard
             label="Total Collected This Month"
-            value={`$${fmt(summaryData.totalCollectedThisMonth)}`}
+            value={fmtCurr(summaryData.totalCollectedThisMonth)}
             accentColor="success"
             icon={
               <svg

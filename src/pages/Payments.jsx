@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../utils/currency';
 import {
   recordPayment,
   getCustomerLedger,
@@ -72,6 +73,7 @@ function RecordPaymentForm({
   onCancel,
   saving,
 }) {
+  const { fmtCurr } = useCurrency();
   const isAdmin = userRole === 'admin';
   const [form, setForm] = useState({
     branchId: isAdmin ? '' : (allowedBranchId ?? ''),
@@ -152,13 +154,13 @@ function RecordPaymentForm({
             .map((c) => (
               <option key={c._id} value={c._id}>
                 {c.name}
-                {c.phone ? ` — ${c.phone}` : ''} · owes {fmt(c.currentBalance)}
+                {c.phone ? ` — ${c.phone}` : ''} · owes {fmtCurr(c.currentBalance)}
               </option>
             ))}
         </CustomSelect>
         {selected && (
           <p className="text-xs text-amber-700 mt-1 font-medium">
-            Outstanding: <strong>{fmt(selected.currentBalance)}</strong>
+            Outstanding: <strong>{fmtCurr(selected.currentBalance)}</strong>
           </p>
         )}
       </div>
@@ -209,6 +211,7 @@ function RecordPaymentForm({
 
 // ── Ledger drawer ─────────────────────────────────────────────────────────
 function LedgerDrawer({ customerId, customers, onClose }) {
+  const { fmtCurr } = useCurrency();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [pagination, setPagination] = useState(null);
@@ -248,7 +251,7 @@ function LedgerDrawer({ customerId, customers, onClose }) {
               <span
                 className={`font-bold ${(data?.customer?.currentBalance ?? 0) > 0 ? 'text-amber-700' : 'text-emerald-600'}`}
               >
-                {fmt(data?.customer?.currentBalance ?? 0)}
+                {fmtCurr(data?.customer?.currentBalance ?? 0)}
               </span>
             </p>
           </div>
@@ -326,13 +329,13 @@ function LedgerDrawer({ customerId, customers, onClose }) {
                       <span
                         className={`text-sm font-bold ${entry.type === 'payment' ? 'text-emerald-700' : 'text-brand-700'}`}
                       >
-                        {entry.type === 'payment' ? '−' : '+'}
-                        {fmt(entry.amount)}
+                        {entry.type === 'payment' ? '− ' : '+ '}
+                        {fmtCurr(entry.amount)}
                       </span>
                       <span className="text-xs text-brand-400">
                         Bal:{' '}
                         <span className="font-semibold text-brand-700">
-                          {fmt(entry.balanceAfter)}
+                          {fmtCurr(entry.balanceAfter)}
                         </span>
                       </span>
                     </div>
@@ -359,6 +362,7 @@ function LedgerDrawer({ customerId, customers, onClose }) {
 // ══════════════════════════════════════════════════════════════════════════
 export default function Payments() {
   const { user } = useAuth();
+  const { fmtCurr } = useCurrency();
   const isAdmin = user?.role === 'admin';
   const canRecord = ['admin', 'manager', 'cashier'].includes(user?.role);
 
@@ -484,7 +488,7 @@ export default function Payments() {
                 Total Outstanding
               </p>
               <p className="text-2xl font-extrabold text-amber-700 tracking-tight">
-                {fmt(totalOutstanding)}
+                {fmtCurr(totalOutstanding)}
               </p>
             </div>
           </div>
@@ -585,7 +589,7 @@ export default function Payments() {
                       <td className="table-td">{c.phone || '—'}</td>
                       <td className="table-td">
                         <span className="text-amber-700 font-bold text-sm">
-                          {fmt(c.currentBalance)}
+                          {fmtCurr(c.currentBalance)}
                         </span>
                       </td>
                       <td className="table-td">

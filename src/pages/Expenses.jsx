@@ -14,6 +14,7 @@ import {
 } from 'recharts';
 
 import { useAuth } from '../context/AuthContext';
+import { useCurrency, getCurrencySymbol, formatCurrency } from '../utils/currency';
 import {
   getExpenses,
   createExpense,
@@ -107,8 +108,9 @@ function CategoryBadge({ category }) {
 }
 
 // ── Chart Custom Tooltip ────────────────────────────────────────────────────
-function ChartTooltip({ active, payload }) {
+function ChartTooltip({ active, payload, currencySymbol }) {
   if (!active || !payload || !payload.length) return null;
+  const sym = currencySymbol || getCurrencySymbol();
   const item = payload[0];
   const data = item.payload;
 
@@ -124,7 +126,7 @@ function ChartTooltip({ active, payload }) {
       <div className="text-neutral-600 dark:text-neutral-400 flex items-center justify-between gap-4">
         <span>Total:</span>
         <span className="font-mono font-bold text-neutral-900 dark:text-neutral-100">
-          ${fmt(data.amount || data.value)}
+          {formatCurrency(data.amount || data.value, sym)}
         </span>
       </div>
       {data.percentage !== undefined && (
@@ -147,6 +149,7 @@ const EMPTY_FORM = {
 
 export default function Expenses() {
   const { user } = useAuth();
+  const { currencySymbol, fmtCurr } = useCurrency();
   const isAdmin = user?.role === 'admin';
   const isManager = user?.role === 'manager';
 
@@ -533,7 +536,7 @@ export default function Expenses() {
       sortable: true,
       render: (val) => (
         <span className="font-mono text-sm font-bold text-neutral-900 dark:text-neutral-100">
-          ${fmt(val)}
+          {fmtCurr(val)}
         </span>
       ),
     },
@@ -635,7 +638,7 @@ export default function Expenses() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
             label="Total Expenses This Month"
-            value={`$${fmt(thisMonthTotal)}`}
+            value={fmtCurr(thisMonthTotal)}
             accentColor="warning"
             icon={
               <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -668,7 +671,7 @@ export default function Expenses() {
             secondaryStats={[
               {
                 label: 'Top Category Amount',
-                value: topCategory ? `$${fmt(topCategory.amount)}` : '$0.00',
+                value: topCategory ? fmtCurr(topCategory.amount) : fmtCurr(0),
               },
               {
                 label: 'Share of Total',
@@ -697,11 +700,11 @@ export default function Expenses() {
             secondaryStats={[
               {
                 label: 'Last Month',
-                value: `$${fmt(lastMonthTotal)}`,
+                value: fmtCurr(lastMonthTotal),
               },
               {
                 label: 'Current Month',
-                value: `$${fmt(thisMonthTotal)}`,
+                value: fmtCurr(thisMonthTotal),
               },
             ]}
           />
@@ -870,7 +873,11 @@ export default function Expenses() {
                     tickLine={false}
                     axisLine={false}
                     tick={{ fontSize: 11, fill: '#888888' }}
-                    tickFormatter={(v) => `$${v}`}
+                    tickFormatter={(v) => {
+                      const s = currencySymbol || '$';
+                      const sp = s.length > 1 ? ' ' : '';
+                      return `${s}${sp}${v}`;
+                    }}
                   />
                   <YAxis
                     dataKey="name"
@@ -880,7 +887,7 @@ export default function Expenses() {
                     tick={{ fontSize: 11, fill: '#888888' }}
                     width={90}
                   />
-                  <Tooltip content={<ChartTooltip />} />
+                  <Tooltip content={<ChartTooltip currencySymbol={currencySymbol} />} />
                   <Bar dataKey="amount" radius={[0, 4, 4, 0]}>
                     {categoryBreakdown.items.map((entry, idx) => (
                       <Cell key={`cell-${idx}`} fill={entry.color} />
@@ -908,14 +915,14 @@ export default function Expenses() {
                         <Cell key={`pie-cell-${idx}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip content={<ChartTooltip />} />
+                    <Tooltip content={<ChartTooltip currencySymbol={currencySymbol} />} />
                   </PieChart>
                 </ResponsiveContainer>
                 {/* Center Total in Donut */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <span className="text-[10px] uppercase font-bold text-neutral-400">Total</span>
                   <span className="font-mono text-sm font-bold text-neutral-900 dark:text-white">
-                    ${fmt(categoryBreakdown.total)}
+                    {fmtCurr(categoryBreakdown.total)}
                   </span>
                 </div>
               </div>
@@ -931,7 +938,7 @@ export default function Expenses() {
                       </span>
                     </div>
                     <span className="font-mono font-semibold text-neutral-900 dark:text-neutral-100 ml-2">
-                      ${fmt(item.amount)}
+                      {fmtCurr(item.amount)}
                     </span>
                   </div>
                 ))}
@@ -1013,7 +1020,7 @@ export default function Expenses() {
 
             {/* Amount */}
             <Input
-              label="Amount ($)"
+              label={`Amount (${currencySymbol})`}
               required
               type="number"
               min="0.01"
@@ -1095,7 +1102,7 @@ export default function Expenses() {
 
             {/* Amount */}
             <Input
-              label="Amount ($)"
+              label={`Amount (${currencySymbol})`}
               required
               type="number"
               min="0.01"
@@ -1154,7 +1161,7 @@ export default function Expenses() {
           onConfirm={handleDeleteSubmit}
           loading={deleting}
           title="Delete Expense"
-          message={`Are you sure you want to permanently delete this ${deleteTarget?.category || ''} expense of $${fmt(deleteTarget?.amount)}? This action cannot be undone.`}
+          message={`Are you sure you want to permanently delete this ${deleteTarget?.category || ''} expense of ${fmtCurr(deleteTarget?.amount)}? This action cannot be undone.`}
         />
       </div>
     </DashboardLayout>

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../utils/currency';
 import { getStock, getStockBatches } from '../services/stockService';
 import { getBranches } from '../services/branchService';
 import { getCategories } from '../services/categoryService';
@@ -74,6 +75,7 @@ function StockStatusBadge({ status, quantity, reorderLevel }) {
 
 export default function StockInventory() {
   const { user } = useAuth();
+  const { fmtCurr } = useCurrency();
   const isAdmin = user?.role === 'admin';
   const isManager = user?.role === 'manager';
   const isCashier = user?.role === 'cashier';
@@ -509,7 +511,7 @@ export default function StockInventory() {
 
           <StatCard
             label="Total Stock Value"
-            value={`$${fmtCurrency(statMetrics.totalStockValue)}`}
+            value={fmtCurr(statMetrics.totalStockValue)}
             accentColor="brand"
             icon={
               <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -747,7 +749,7 @@ export default function StockInventory() {
                           {fmtd(b.createdAt)}
                         </td>
                         <td className="px-3 py-2 font-mono text-right text-neutral-900 dark:text-neutral-100">
-                          Rs. {fmt(b.costPrice)}
+                          {fmtCurr(b.costPrice)}
                         </td>
                         <td className="px-3 py-2 font-mono text-right text-neutral-500">
                           {fmt(b.initialQuantity)}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../utils/currency';
 import { recordSalaryPayment, getSalaryPayments } from '../services/salaryService';
 import {
   getEmployees,
@@ -98,6 +99,7 @@ const EMPTY_EMPLOYEE_FORM = {
 
 export default function SalaryPayroll() {
   const { user } = useAuth();
+  const { currencySymbol, fmtCurr } = useCurrency();
   const isAdmin = user?.role === 'admin';
   const isManager = user?.role === 'manager';
 
@@ -565,7 +567,7 @@ export default function SalaryPayroll() {
       align: 'right',
       render: (val) => (
         <span className="font-mono text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-          ${fmt(val)}
+          {fmtCurr(val)}
         </span>
       ),
     },
@@ -588,11 +590,11 @@ export default function SalaryPayroll() {
                   : 'text-neutral-400 dark:text-neutral-500'
               }`}
             >
-              ${fmt(val)}
+              {fmtCurr(val)}
             </span>
             {isPartial && (
               <span className="text-[10px] block text-neutral-400 font-mono">
-                Due: ${fmt(row.balanceRemaining)}
+                Due: {fmtCurr(row.balanceRemaining)}
               </span>
             )}
           </div>
@@ -679,7 +681,7 @@ export default function SalaryPayroll() {
       align: 'right',
       render: (val) => (
         <span className="font-mono text-xs font-bold text-neutral-900 dark:text-neutral-100">
-          ${fmt(val)}
+          {fmtCurr(val)}
         </span>
       ),
     },
@@ -826,7 +828,7 @@ export default function SalaryPayroll() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <StatCard
                 label="Total Payroll This Month"
-                value={`$${fmt(statMetrics.totalPayrollPaid)}`}
+                value={fmtCurr(statMetrics.totalPayrollPaid)}
                 accentColor="brand"
                 icon={
                   <svg className="w-5 h-5 text-brand-700 dark:text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -836,7 +838,7 @@ export default function SalaryPayroll() {
                 secondaryStats={[
                   {
                     label: 'Agreed Base Total',
-                    value: `$${fmt(statMetrics.totalAgreedBudget)}`,
+                    value: fmtCurr(statMetrics.totalAgreedBudget),
                   },
                   {
                     label: 'Fulfillment',
@@ -882,7 +884,7 @@ export default function SalaryPayroll() {
                   },
                   {
                     label: 'Pending Payout',
-                    value: `$${fmt(Math.max(0, statMetrics.totalAgreedBudget - statMetrics.totalPayrollPaid))}`,
+                    value: fmtCurr(Math.max(0, statMetrics.totalAgreedBudget - statMetrics.totalPayrollPaid)),
                   },
                 ]}
               />
@@ -1070,7 +1072,7 @@ export default function SalaryPayroll() {
                   })
                   .map((e) => (
                     <option key={e._id} value={e._id}>
-                      {e.name} {e.designation ? `— ${e.designation}` : ''} (${fmt(e.monthlySalary)})
+                      {e.name} {e.designation ? `— ${e.designation}` : ''} ({fmtCurr(e.monthlySalary)})
                     </option>
                   ))}
               </CustomSelect>
@@ -1096,7 +1098,7 @@ export default function SalaryPayroll() {
             {/* Amount */}
             <div>
               <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Amount Paid ($) <span className="text-rose-500">*</span>
+                Amount Paid ({currencySymbol}) <span className="text-rose-500">*</span>
               </label>
               <input
                 type="number"
@@ -1229,7 +1231,7 @@ export default function SalaryPayroll() {
             {/* Monthly Salary */}
             <div>
               <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Agreed Monthly Salary ($) <span className="text-rose-500">*</span>
+                Agreed Monthly Salary ({currencySymbol}) <span className="text-rose-500">*</span>
               </label>
               <input
                 type="number"

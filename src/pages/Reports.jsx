@@ -2,14 +2,13 @@ import CustomSelect from '../components/ui/CustomSelect';
 import { useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../utils/currency';
 import { getProfitLoss, getBranchComparison, getLowStock } from '../services/reportService';
 import { getBranches } from '../services/branchService';
 import Spinner from '../components/ui/Spinner';
 import { useEffect } from 'react';
 
 // ── Helpers ───────────────────────────────────────────────────────────────
-const fmt = (n) =>
-  Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const today = () => new Date().toISOString().slice(0, 10);
 const monthStart = () => {
   const d = new Date();
@@ -36,7 +35,7 @@ function MetricCard({ label, value, sub, color = 'gray' }) {
 
 // ── P&L Tab ───────────────────────────────────────────────────────────────
 function ProfitLossTab({ isAdmin, branches }) {
-  const { user } = useAuth();
+  const { fmtCurr } = useCurrency();
   const [filterBranch, setFilterBranch] = useState('');
   const [startDate, setStartDate] = useState(monthStart());
   const [endDate, setEndDate] = useState(today());
@@ -123,14 +122,14 @@ function ProfitLossTab({ isAdmin, branches }) {
               Revenue
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              <MetricCard label="Total Revenue" value={fmt(data.totalRevenue)} color="blue" />
+              <MetricCard label="Total Revenue" value={fmtCurr(data.totalRevenue)} color="blue" />
               <MetricCard
                 label="Cash Sales"
-                value={fmt(data.totalCashSales)}
+                value={fmtCurr(data.totalCashSales)}
                 sub={`${data.saleCount} sale${data.saleCount !== 1 ? 's' : ''}`}
               />
-              <MetricCard label="Credit Sales" value={fmt(data.totalCreditSales)} />
-              <MetricCard label="COGS" value={fmt(data.totalCOGS)} color="amber" />
+              <MetricCard label="Credit Sales" value={fmtCurr(data.totalCreditSales)} />
+              <MetricCard label="COGS" value={fmtCurr(data.totalCOGS)} color="amber" />
             </div>
           </div>
 
@@ -142,14 +141,14 @@ function ProfitLossTab({ isAdmin, branches }) {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               <MetricCard
                 label="Gross Profit"
-                value={fmt(data.grossProfit)}
+                value={fmtCurr(data.grossProfit)}
                 color={data.grossProfit >= 0 ? 'green' : 'red'}
               />
-              <MetricCard label="Expenses" value={fmt(data.totalExpenses)} color="amber" />
-              <MetricCard label="Salaries" value={fmt(data.totalSalaries)} color="amber" />
+              <MetricCard label="Expenses" value={fmtCurr(data.totalExpenses)} color="amber" />
+              <MetricCard label="Salaries" value={fmtCurr(data.totalSalaries)} color="amber" />
               <MetricCard
                 label="Net Profit"
-                value={fmt(data.netProfit)}
+                value={fmtCurr(data.netProfit)}
                 color={data.netProfit >= 0 ? 'green' : 'red'}
               />
             </div>
@@ -163,7 +162,7 @@ function ProfitLossTab({ isAdmin, branches }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <MetricCard
                 label="Outstanding Credit (now)"
-                value={fmt(data.totalOutstandingCredit)}
+                value={fmtCurr(data.totalOutstandingCredit)}
                 sub="Not period-filtered — current balance snapshot"
                 color={data.totalOutstandingCredit > 0 ? 'amber' : 'gray'}
               />
@@ -196,6 +195,7 @@ function ProfitLossTab({ isAdmin, branches }) {
 
 // ── Branch Comparison Tab ─────────────────────────────────────────────────
 function BranchComparisonTab() {
+  const { fmtCurr } = useCurrency();
   const [startDate, setStartDate] = useState(monthStart());
   const [endDate, setEndDate] = useState(today());
   const [data, setData] = useState(null);
@@ -284,14 +284,14 @@ function BranchComparisonTab() {
                     <td className="px-4 py-3 text-sm font-semibold text-gray-900">
                       {b.branchName}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{fmt(b.totalRevenue)}</td>
-                    <td className="px-4 py-3 text-sm text-amber-700">{fmt(b.totalCOGS)}</td>
-                    <td className="px-4 py-3 text-sm font-medium">{fmt(b.grossProfit)}</td>
-                    <td className="px-4 py-3 text-sm text-amber-700">{fmt(b.totalExpenses)}</td>
-                    <td className="px-4 py-3 text-sm text-amber-700">{fmt(b.totalSalaries)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{fmtCurr(b.totalRevenue)}</td>
+                    <td className="px-4 py-3 text-sm text-amber-700">{fmtCurr(b.totalCOGS)}</td>
+                    <td className="px-4 py-3 text-sm font-medium">{fmtCurr(b.grossProfit)}</td>
+                    <td className="px-4 py-3 text-sm text-amber-700">{fmtCurr(b.totalExpenses)}</td>
+                    <td className="px-4 py-3 text-sm text-amber-700">{fmtCurr(b.totalSalaries)}</td>
                     <td className="px-4 py-3 text-sm font-bold">
                       <span className={b.netProfit >= 0 ? 'text-green-700' : 'text-red-600'}>
-                        {fmt(b.netProfit)}
+                        {fmtCurr(b.netProfit)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500">{b.saleCount}</td>

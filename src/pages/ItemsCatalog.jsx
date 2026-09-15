@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../utils/currency';
 import {
   getItems,
   createItem,
@@ -106,6 +107,7 @@ const EMPTY_ITEM_FORM = {
 
 export default function ItemsCatalog() {
   const { user, permissions } = useAuth();
+  const { currencySymbol, fmtCurr } = useCurrency();
   const isAdmin = ['admin', 'superAdmin'].includes(user?.role);
   const canCreate = isAdmin || Boolean(permissions?.items?.create);
   const canEdit = isAdmin || Boolean(permissions?.items?.edit);
@@ -496,7 +498,7 @@ export default function ItemsCatalog() {
       sortable: true,
       render: (val) => (
         <span className="font-mono text-xs text-neutral-600 dark:text-neutral-400">
-          ${fmt(val)}
+          {fmtCurr(val)}
         </span>
       ),
     },
@@ -508,7 +510,7 @@ export default function ItemsCatalog() {
       sortable: true,
       render: (val) => (
         <span className="font-mono text-xs font-bold text-neutral-900 dark:text-neutral-100">
-          ${fmt(val)}
+          {fmtCurr(val)}
         </span>
       ),
     },
@@ -917,13 +919,13 @@ export default function ItemsCatalog() {
                       <div>
                         <span className="text-[10px] text-neutral-400 uppercase tracking-wider block">Cost Price</span>
                         <span className="font-mono font-semibold text-neutral-700 dark:text-neutral-300">
-                          ${fmt(item.costPrice)}
+                          {fmtCurr(item.costPrice)}
                         </span>
                       </div>
                       <div>
                         <span className="text-[10px] text-neutral-400 uppercase tracking-wider block">Selling Price</span>
                         <span className="font-mono font-bold text-neutral-900 dark:text-white">
-                          ${fmt(item.sellingPrice)}
+                          {fmtCurr(item.sellingPrice)}
                         </span>
                       </div>
                     </div>
@@ -1089,7 +1091,7 @@ export default function ItemsCatalog() {
             {/* Cost & Selling Price */}
             <div className="grid grid-cols-2 gap-3">
               <Input
-                label="Cost Price ($)"
+                label={`Cost Price (${currencySymbol})`}
                 type="number"
                 min="0"
                 step="0.01"
@@ -1101,7 +1103,7 @@ export default function ItemsCatalog() {
               />
 
               <Input
-                label="Selling Price ($)"
+                label={`Selling Price (${currencySymbol})`}
                 type="number"
                 min="0"
                 step="0.01"
@@ -1266,7 +1268,7 @@ export default function ItemsCatalog() {
             {/* Cost & Selling Price */}
             <div className="grid grid-cols-2 gap-3">
               <Input
-                label="Cost Price ($)"
+                label={`Cost Price (${currencySymbol})`}
                 type="number"
                 min="0"
                 step="0.01"
@@ -1277,7 +1279,7 @@ export default function ItemsCatalog() {
               />
 
               <Input
-                label="Selling Price ($)"
+                label={`Selling Price (${currencySymbol})`}
                 type="number"
                 min="0"
                 step="0.01"

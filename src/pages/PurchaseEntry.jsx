@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../utils/currency';
 import { addStock, getStock, getMovements, getStockBatches } from '../services/stockService';
 import { getItems } from '../services/itemService';
 import { getBranches } from '../services/branchService';
@@ -82,6 +83,7 @@ const generateLotCode = (itemName) => {
 
 // ── Top KPI Summary Bar Component ───────────────────────────────────────────
 function PurchaseKpiBar({ branchId, refreshTrigger }) {
+  const { currencySymbol } = useCurrency();
   const [stats, setStats] = useState({
     todayInflowQty: 0,
     todayInflowOutlay: 0,
@@ -172,7 +174,7 @@ function PurchaseKpiBar({ branchId, refreshTrigger }) {
               Today's Purchase Outlay
             </p>
             <div className="mt-1.5 flex items-baseline gap-1">
-              <span className="text-xs font-bold text-neutral-400">Rs.</span>
+              <span className="text-xs font-bold text-neutral-400">{currencySymbol}</span>
               <span className="font-mono text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
                 {stats.loading ? '…' : fmt(stats.todayInflowOutlay)}
               </span>
@@ -261,6 +263,7 @@ function DigitalGrnVoucher({
   loadingStock,
   onPrint,
 }) {
+  const { currencySymbol } = useCurrency();
   const addedQty = Number(quantity) || 0;
   const unitCost = Number(costPrice) || 0;
   const unitSale = Number(sellingPrice) || 0;
@@ -426,14 +429,14 @@ function DigitalGrnVoucher({
               <div className="flex items-center justify-between p-2.5 bg-white dark:bg-neutral-900">
                 <span className="text-neutral-500 dark:text-neutral-400">Unit Purchase Cost</span>
                 <span className="font-mono font-semibold text-neutral-800 dark:text-neutral-200">
-                  {unitCost > 0 ? `Rs. ${fmt(unitCost)}` : '—'}
+                  {unitCost > 0 ? `${currencySymbol} ${fmt(unitCost)}` : '—'}
                 </span>
               </div>
 
               <div className="flex items-center justify-between p-2.5 bg-brand-50/50 dark:bg-brand-950/20 font-bold">
                 <span className="text-brand-900 dark:text-brand-300">Total Lot Outlay</span>
                 <span className="font-mono text-sm text-brand-900 dark:text-brand-accent">
-                  Rs. {fmt(totalOutlay)}
+                  {currencySymbol} {fmt(totalOutlay)}
                 </span>
               </div>
 
@@ -442,21 +445,21 @@ function DigitalGrnVoucher({
                   <div className="flex items-center justify-between p-2.5 bg-white dark:bg-neutral-900">
                     <span className="text-neutral-500 dark:text-neutral-400">Catalog Retail Price</span>
                     <span className="font-mono font-semibold text-neutral-800 dark:text-neutral-200">
-                      Rs. {fmt(unitSale)}
+                      {currencySymbol} {fmt(unitSale)}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between p-2.5 bg-white dark:bg-neutral-900">
                     <span className="text-neutral-500 dark:text-neutral-400">Projected Retail Revenue</span>
                     <span className="font-mono font-semibold text-neutral-800 dark:text-neutral-200">
-                      Rs. {fmt(totalRevenue)}
+                      {currencySymbol} {fmt(totalRevenue)}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between p-2.5 bg-emerald-50/40 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
                     <span className="font-medium">Projected Batch Profit</span>
                     <span className="font-mono font-bold">
-                      Rs. {fmt(totalEstProfit)}{' '}
+                      {currencySymbol} {fmt(totalEstProfit)}{' '}
                       <span className="text-[10px] font-normal text-emerald-700 dark:text-emerald-400">
                         (+{marginPct}%)
                       </span>
@@ -505,7 +508,7 @@ function DigitalGrnVoucher({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span className="leading-tight">
-                This lot will be queued under <strong>First-In, First-Out (FIFO)</strong>. Future sales deduct cost at Rs. {fmt(unitCost)} until depleted.
+                This lot will be queued under <strong>First-In, First-Out (FIFO)</strong>. Future sales deduct cost at {currencySymbol} {fmt(unitCost)} until depleted.
               </span>
             </div>
           </>
@@ -546,6 +549,7 @@ export function PurchaseEntryForm({
   isModal = false,
 }) {
   const { user } = useAuth();
+  const { currencySymbol } = useCurrency();
   const isAdmin = user?.role === 'admin';
   const managerBranchId = user?.branchId;
 
@@ -947,12 +951,12 @@ export function PurchaseEntryForm({
           <div>
             <div className="h-5 flex items-center mb-1.5">
               <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-                Purchase Cost Price (Rs.) <span className="text-rose-500">*</span>
+                Purchase Cost Price ({currencySymbol}) <span className="text-rose-500">*</span>
               </label>
             </div>
             <div className="relative rounded-lg shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-xs font-bold text-neutral-400">
-                Rs.
+                {currencySymbol}
               </div>
               <input
                 type="number"
@@ -974,7 +978,7 @@ export function PurchaseEntryForm({
           <div>
             <div className="flex items-center justify-between h-5 mb-1.5">
               <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-                Catalog Selling Price (Rs.)
+                Catalog Selling Price ({currencySymbol})
               </label>
               {unitMargin > 0 && (
                 <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
@@ -985,7 +989,7 @@ export function PurchaseEntryForm({
 
             <div className="relative rounded-lg shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-xs font-bold text-neutral-400">
-                Rs.
+                {currencySymbol}
               </div>
               <input
                 type="number"
@@ -1007,7 +1011,7 @@ export function PurchaseEntryForm({
         {isModal && addedQuantity > 0 && unitCost >= 0 && (
           <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between text-xs">
             <span className="text-emerald-900 dark:text-emerald-300">
-              Total Inflow Outlay: <strong className="font-mono text-neutral-900 dark:text-white font-bold">Rs. {fmt(totalInflowCost)}</strong>
+              Total Inflow Outlay: <strong className="font-mono text-neutral-900 dark:text-white font-bold">{currencySymbol} {fmt(totalInflowCost)}</strong>
             </span>
             {unitSale > 0 && (
               <span className="text-emerald-700 dark:text-emerald-400 font-bold">

@@ -22,6 +22,7 @@ import {
   CustomSelect,
   Spinner,
 } from '../components/ui';
+import { useCurrency, getCurrencySymbol } from '../utils/currency';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 const fmt = (n) =>
@@ -75,14 +76,14 @@ function StatementChartTooltip({ active, payload }) {
         <div className="flex items-center justify-between gap-4 text-neutral-600 dark:text-neutral-400">
           <span>Amount:</span>
           <span className="font-mono font-medium text-neutral-900 dark:text-neutral-100">
-            ${fmt(data.amount)}
+            {getCurrencySymbol()} {fmt(data.amount)}
           </span>
         </div>
       )}
       <div className="flex items-center justify-between gap-4 text-neutral-600 dark:text-neutral-400">
         <span>Running Balance:</span>
         <span className="font-mono font-bold text-brand-800 dark:text-brand-accent">
-          ${fmt(data.balanceAfter)}
+          {getCurrencySymbol()} {fmt(data.balanceAfter)}
         </span>
       </div>
     </div>
@@ -93,6 +94,7 @@ export default function CustomerStatement() {
   const { id: customerId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { symbol: currencySymbol, formatCurrency: fmtCurr } = useCurrency();
 
   const isAdmin = user?.role === 'admin';
   const canRecordPayment = ['admin', 'manager', 'cashier'].includes(user?.role);
@@ -174,7 +176,7 @@ export default function CustomerStatement() {
 
     const currentBal = customer?.currentBalance || 0;
     if (amountNum > currentBal) {
-      toast.error(`Payment amount ($${fmt(amountNum)}) cannot exceed outstanding balance ($${fmt(currentBal)})`);
+      toast.error(`Payment amount (${fmtCurr(amountNum)}) cannot exceed outstanding balance (${fmtCurr(currentBal)})`);
       return;
     }
 
@@ -348,7 +350,7 @@ export default function CustomerStatement() {
                 : 'text-neutral-900 dark:text-neutral-100'
             }`}
           >
-            {isPayment ? '−' : '+'}${fmt(val)}
+            {isPayment ? '− ' : '+ '}{fmtCurr(val)}
           </span>
         );
       },
@@ -368,7 +370,7 @@ export default function CustomerStatement() {
                 : 'text-emerald-600 dark:text-emerald-400'
             }`}
           >
-            ${fmt(bal)}
+            {fmtCurr(bal)}
           </span>
         );
       },
@@ -509,7 +511,7 @@ export default function CustomerStatement() {
                       </span>
                     )}
                     <span className="text-neutral-400">
-                      Opening: <span className="font-mono font-medium">${fmt(customer?.openingBalance || 0)}</span>
+                      Opening: <span className="font-mono font-medium">{fmtCurr(customer?.openingBalance || 0)}</span>
                     </span>
                   </div>
                 </div>
@@ -529,7 +531,7 @@ export default function CustomerStatement() {
                           : 'text-emerald-600 dark:text-emerald-400'
                       }`}
                     >
-                      ${fmt(currentBal)}
+                      {fmtCurr(currentBal)}
                     </span>
                   </div>
                   <span className="text-[11px] text-neutral-400 dark:text-neutral-500 block mt-0.5">
@@ -610,7 +612,7 @@ export default function CustomerStatement() {
                     tickLine={false}
                     axisLine={false}
                     tick={{ fontSize: 11, fill: '#888888' }}
-                    tickFormatter={(v) => `$${v}`}
+                    tickFormatter={(v) => `${currencySymbol} ${v}`}
                     domain={['auto', 'auto']}
                   />
                   <Tooltip content={<StatementChartTooltip />} />
@@ -676,7 +678,7 @@ export default function CustomerStatement() {
                   Current Outstanding
                 </span>
                 <p className="font-mono text-lg font-bold text-rose-600 dark:text-rose-400">
-                  ${fmt(currentBal)}
+                  {fmtCurr(currentBal)}
                 </p>
               </div>
               <div className="text-right">
@@ -692,7 +694,7 @@ export default function CustomerStatement() {
             {/* Payment Amount */}
             <div>
               <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Payment Amount ($) <span className="text-rose-500">*</span>
+                Payment Amount ({currencySymbol}) <span className="text-rose-500">*</span>
               </label>
               <input
                 type="number"
@@ -707,7 +709,7 @@ export default function CustomerStatement() {
               />
               {Number(payAmount) > currentBal && (
                 <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
-                  Payment cannot exceed current balance (${fmt(currentBal)}).
+                  Payment cannot exceed current balance ({fmtCurr(currentBal)}).
                 </p>
               )}
             </div>
@@ -731,7 +733,7 @@ export default function CustomerStatement() {
                   <option value="">No specific invoice (General Credit Payment)</option>
                   {customerSales.map((sale) => (
                     <option key={sale._id} value={sale._id}>
-                      #INV-{sale._id.slice(-6).toUpperCase()} — ${fmt(sale.totalAmount)} (
+                      #INV-{sale._id.slice(-6).toUpperCase()} — {fmtCurr(sale.totalAmount)} (
                       {fmtdShort(sale.createdAt)})
                     </option>
                   ))}

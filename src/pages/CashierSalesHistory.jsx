@@ -3,12 +3,7 @@ import toast from 'react-hot-toast';
 import { getSales, getSaleById } from '../services/saleService';
 import MinimalLayout from '../components/layout/MinimalLayout';
 import { StatCard, DataTable, Modal } from '../components/ui';
-
-const fmt = (n) =>
-  Number(n ?? 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+import { useCurrency } from '../utils/currency';
 
 const formatTime = (isoStr) => {
   if (!isoStr) return '—';
@@ -25,6 +20,7 @@ const formatDate = (isoStr) => {
 };
 
 export default function CashierSalesHistory() {
+  const { fmtCurr } = useCurrency();
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -211,7 +207,7 @@ export default function CashierSalesHistory() {
       render: (val) => (
         <div className="text-right">
           <span className="font-mono text-sm font-bold text-neutral-900 dark:text-neutral-50">
-            ${fmt(val)}
+            {fmtCurr(val)}
           </span>
         </div>
       ),
@@ -271,7 +267,7 @@ export default function CashierSalesHistory() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             title="Total Shift Sales"
-            value={`$${fmt(metrics.totalRevenue)}`}
+            value={fmtCurr(metrics.totalRevenue)}
             subtitle={`${metrics.count} completed transactions`}
             icon={
               <svg className="w-5 h-5 text-brand-800 dark:text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -281,7 +277,7 @@ export default function CashierSalesHistory() {
           />
           <StatCard
             title="Cash Collected"
-            value={`$${fmt(metrics.cashRevenue)}`}
+            value={fmtCurr(metrics.cashRevenue)}
             subtitle="Immediate cash tender"
             icon={
               <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -291,7 +287,7 @@ export default function CashierSalesHistory() {
           />
           <StatCard
             title="Credit Charged"
-            value={`$${fmt(metrics.creditRevenue)}`}
+            value={fmtCurr(metrics.creditRevenue)}
             subtitle="Added to customer balances"
             icon={
               <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -428,11 +424,11 @@ export default function CashierSalesHistory() {
                           {it.itemName}
                         </span>
                         <div className="text-[11px] text-neutral-400 font-mono">
-                          {it.quantity} x ${fmt(it.sellingPrice)}
+                          {it.quantity} x {fmtCurr(it.sellingPrice)}
                         </div>
                       </div>
                       <span className="font-mono font-bold text-neutral-900 dark:text-neutral-100">
-                        ${fmt(it.lineTotal || it.quantity * it.sellingPrice)}
+                        {fmtCurr(it.lineTotal || it.quantity * it.sellingPrice)}
                       </span>
                     </div>
                   ))}
@@ -443,17 +439,17 @@ export default function CashierSalesHistory() {
               <div className="pt-2 border-t border-neutral-200 dark:border-neutral-700 space-y-1 text-xs">
                 <div className="flex justify-between text-neutral-500">
                   <span>Subtotal</span>
-                  <span className="font-mono">${fmt(selectedSale.subtotal)}</span>
+                  <span className="font-mono">{fmtCurr(selectedSale.subtotal)}</span>
                 </div>
                 {selectedSale.discount > 0 && (
                   <div className="flex justify-between text-emerald-600 font-semibold">
                     <span>Discount</span>
-                    <span className="font-mono">-${fmt(selectedSale.discount)}</span>
+                    <span className="font-mono">−{fmtCurr(selectedSale.discount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-black text-sm text-neutral-900 dark:text-white pt-1 border-t border-neutral-200 dark:border-neutral-700">
                   <span>Total Paid</span>
-                  <span className="font-mono">${fmt(selectedSale.totalAmount)}</span>
+                  <span className="font-mono">{fmtCurr(selectedSale.totalAmount)}</span>
                 </div>
                 <div className="flex justify-between text-neutral-500 text-[11px] pt-1">
                   <span>Payment Type</span>

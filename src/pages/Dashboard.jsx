@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency, getCurrencySymbol, formatCurrency } from '../utils/currency';
 import {
   BarChart,
   Bar,
@@ -26,17 +27,12 @@ import { getExpenses } from '../services/expenseService';
 import { getSalaryPayments } from '../services/salaryService';
 
 // Currency and numeric formatters
-const fmt = (n) =>
-  Number(n ?? 0).toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-
 const fmtInt = (n) => Number(n ?? 0).toLocaleString('en-US');
 
 // Custom chart tooltip
-function ChartTooltip({ active, payload, label }) {
+function ChartTooltip({ active, payload, label, currencySymbol }) {
   if (active && payload && payload.length) {
+    const sym = currencySymbol || getCurrencySymbol();
     const cash = payload.find((p) => p.dataKey === 'cash')?.value || 0;
     const credit = payload.find((p) => p.dataKey === 'credit')?.value || 0;
     const total = cash + credit;
@@ -51,7 +47,7 @@ function ChartTooltip({ active, payload, label }) {
               Cash Sales:
             </span>
             <span className="font-mono font-semibold text-neutral-900 dark:text-neutral-100">
-              ${fmt(cash)}
+              {formatCurrency(cash, sym)}
             </span>
           </div>
           <div className="flex items-center justify-between gap-6">
@@ -60,13 +56,13 @@ function ChartTooltip({ active, payload, label }) {
               Credit Sales:
             </span>
             <span className="font-mono font-semibold text-neutral-900 dark:text-neutral-100">
-              ${fmt(credit)}
+              {formatCurrency(credit, sym)}
             </span>
           </div>
           <div className="pt-2 mt-1 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between gap-6">
             <span className="font-medium text-neutral-500 dark:text-neutral-400">Total:</span>
             <span className="font-mono font-bold text-neutral-900 dark:text-neutral-50">
-              ${fmt(total)}
+              {formatCurrency(total, sym)}
             </span>
           </div>
         </div>
@@ -78,6 +74,7 @@ function ChartTooltip({ active, payload, label }) {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { currencySymbol, fmtCurr } = useCurrency();
   const isCashier = user?.role === 'cashier';
 
   const [loading, setLoading] = useState(true);
@@ -360,7 +357,7 @@ export default function Dashboard() {
         align: 'right',
         render: (val) => (
           <span className="font-mono font-bold text-sm text-neutral-900 dark:text-white">
-            ${fmt(val)}
+            {fmtCurr(val)}
           </span>
         ),
       },
@@ -370,7 +367,7 @@ export default function Dashboard() {
       return allCols.filter((col) => col.key !== 'branchId');
     }
     return allCols;
-  }, [branchMap, isManager]);
+  }, [branchMap, isManager, fmtCurr]);
 
   // Formatted current date for page header
   const currentDateFormatted = useMemo(() => {
@@ -460,12 +457,12 @@ export default function Dashboard() {
             {/* Card 1: Today's Sales */}
             <StatCard
               label="Today's Sales"
-              value={`$${fmt(todaySales.totalAmount)}`}
+              value={fmtCurr(todaySales.totalAmount)}
               accentColor="mint"
               trend={todayTrend}
               secondaryStats={[
-                { label: 'Cash', value: `$${fmt(todaySales.cashSales)}` },
-                { label: 'Credit', value: `$${fmt(todaySales.creditSales)}` },
+                { label: 'Cash', value: fmtCurr(todaySales.cashSales) },
+                { label: 'Credit', value: fmtCurr(todaySales.creditSales) },
               ]}
               icon={
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -477,11 +474,11 @@ export default function Dashboard() {
             {/* Card 2: Month Revenue */}
             <StatCard
               label="Month Revenue"
-              value={`$${fmt(monthSales.totalAmount)}`}
+              value={fmtCurr(monthSales.totalAmount)}
               accentColor="brand"
               secondaryStats={[
                 { label: 'Orders', value: fmtInt(monthSales.saleCount) },
-                { label: 'Run Rate', value: `$${fmt(dailyRunRate)}/d` },
+                { label: 'Run Rate', value: `${fmtCurr(dailyRunRate)}/d` },
               ]}
               icon={
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -493,7 +490,7 @@ export default function Dashboard() {
             {/* Card 3: Outstanding Credit */}
             <StatCard
               label="Outstanding Credit"
-              value={`$${fmt(outstandingCredit)}`}
+              value={fmtCurr(outstandingCredit)}
               accentColor="warning"
               secondaryStats={[
                 { label: 'Receivables', value: 'Active' },
@@ -624,7 +621,7 @@ export default function Dashboard() {
             </div>
             <div className="mt-2 flex items-baseline justify-between">
               <span className="font-mono text-xl font-bold text-neutral-900 dark:text-white">
-                {loading ? '—' : `$${fmt(expensesMtd)}`}
+                {loading ? '—' : fmtCurr(expensesMtd)}
               </span>
               <span className="text-[11px] text-neutral-400">MTD</span>
             </div>
@@ -701,9 +698,13 @@ export default function Dashboard() {
                     fontSize={11}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(val) => (val >= 1000 ? `$${(val / 1000).toFixed(0)}k` : `$${val}`)}
+                    tickFormatter={(val) => {
+                      const s = currencySymbol || '$';
+                      const sp = s.length > 1 ? ' ' : '';
+                      return val >= 1000 ? `${s}${sp}${(val / 1000).toFixed(0)}k` : `${s}${sp}${val}`;
+                    }}
                   />
-                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(13, 59, 46, 0.04)' }} />
+                  <Tooltip content={<ChartTooltip currencySymbol={currencySymbol} />} cursor={{ fill: 'rgba(13, 59, 46, 0.04)' }} />
                   <Bar
                     dataKey="cash"
                     name="Cash"

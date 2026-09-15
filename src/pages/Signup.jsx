@@ -3,8 +3,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Spinner from '../components/ui/Spinner';
 import toast from 'react-hot-toast';
+import { SUPPORTED_CURRENCIES } from '../utils/currency';
 
-const INITIAL = { firstName: '', lastName: '', email: '', password: '', organizationName: '' };
+const INITIAL = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  password: '',
+  organizationName: '',
+  currencyCode: 'PKR',
+};
 
 export default function Signup() {
   const { signup } = useAuth();
@@ -67,7 +75,20 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      const data = await signup(form);
+      const selectedCurrency =
+        SUPPORTED_CURRENCIES.find((c) => c.code === form.currencyCode) || SUPPORTED_CURRENCIES[0];
+      const payload = {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        organizationName: form.organizationName.trim(),
+        currency: {
+          code: selectedCurrency.code,
+          symbol: selectedCurrency.symbol,
+        },
+      };
+      const data = await signup(payload);
       toast.success(`Welcome, ${data.user.firstName}! Your organization is ready.`);
       navigate('/dashboard');
     } catch (err) {
@@ -365,6 +386,40 @@ export default function Signup() {
                   {errors.organizationName}
                 </p>
               )}
+            </div>
+
+            {/* Currency Selector */}
+            <div>
+              <label
+                htmlFor="currencyCode"
+                className="block text-[11px] font-bold uppercase tracking-wider text-neutral-300 mb-1.5"
+              >
+                Base Currency
+              </label>
+              <div className="relative">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-brand-accent font-mono text-xs font-bold">
+                  {SUPPORTED_CURRENCIES.find((c) => c.code === form.currencyCode)?.symbol || '$'}
+                </div>
+                <select
+                  id="currencyCode"
+                  name="currencyCode"
+                  value={form.currencyCode}
+                  onChange={handleChange}
+                  className="w-full pl-11 pr-4 py-2.5 text-sm text-white bg-neutral-800/80 border border-neutral-700/80 rounded-xl outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/25 focus:bg-neutral-800 transition-all duration-150 cursor-pointer"
+                >
+                  {SUPPORTED_CURRENCIES.map((curr) => (
+                    <option key={curr.code} value={curr.code} className="bg-neutral-900 text-white">
+                      {curr.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="mt-1 text-[11px] text-neutral-400 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 text-brand-accent/80 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                All sales, financial ledgers, and receipts will format in this currency.
+              </p>
             </div>
 
             {/* Email Address */}
