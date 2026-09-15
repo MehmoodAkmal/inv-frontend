@@ -1,12 +1,15 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from '../ui/Sidebar';
 import TopBar from '../ui/TopBar';
 
-export const DashboardLayoutContext = createContext({
-  isNested: false,
-  setBranchSelector: () => {},
-});
+const DASHBOARD_CONTEXT_KEY = Symbol.for('__DASHBOARD_LAYOUT_CONTEXT__');
+export const DashboardLayoutContext =
+  (typeof globalThis !== 'undefined' ? globalThis : window)[DASHBOARD_CONTEXT_KEY] ||
+  ((typeof globalThis !== 'undefined' ? globalThis : window)[DASHBOARD_CONTEXT_KEY] = createContext({
+    isNested: false,
+    setBranchSelector: () => {},
+  }));
 
 export default function DashboardLayout({
   children,

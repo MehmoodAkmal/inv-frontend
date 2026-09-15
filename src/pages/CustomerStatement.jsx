@@ -18,7 +18,6 @@ import { getSales } from '../services/saleService';
 import {
   Badge,
   DataTable,
-  DashboardLayout,
   Modal,
   CustomSelect,
   Spinner,
@@ -399,8 +398,7 @@ export default function CustomerStatement() {
   const currentBal = customer?.currentBalance ?? 0;
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* ── Breadcrumb & Nav Header ───────────────────────────────── */}
         <div className="flex items-center justify-between pb-2 border-b border-neutral-200/80 dark:border-neutral-800">
           <div className="flex items-center gap-3">
@@ -786,6 +784,5 @@ export default function CustomerStatement() {
           </form>
         </Modal>
       </div>
-    </DashboardLayout>
   );
 }

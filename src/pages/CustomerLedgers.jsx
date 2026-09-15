@@ -9,7 +9,6 @@ import { getBranches } from '../services/branchService';
 import {
   StatCard,
   DataTable,
-  DashboardLayout,
   CustomSelect,
 } from '../components/ui';
 
@@ -336,8 +335,7 @@ export default function CustomerLedgers() {
   ];
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* ── Page Header ────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-neutral-200/80 dark:border-neutral-800">
           <div>
@@ -649,6 +647,5 @@ export default function CustomerLedgers() {
           onRowClick={(row) => navigate(`/customers/${row._id}/ledger`)}
         />
       </div>
-    </DashboardLayout>
   );
 }
