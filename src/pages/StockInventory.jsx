@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { getStock } from '../services/stockService';
+import { getStock, getStockBatches } from '../services/stockService';
 import { getBranches } from '../services/branchService';
 import { getCategories } from '../services/categoryService';
 import { formatCategoryName } from '../utils/formatters';
@@ -13,6 +13,7 @@ import {
   DashboardLayout,
   Modal,
   CustomSelect,
+  Spinner,
 } from '../components/ui';
 
 import { PurchaseEntryForm } from './PurchaseEntry';
@@ -94,6 +95,33 @@ export default function StockInventory() {
   // Purchase Entry Modal State
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
   const [purchaseTarget, setPurchaseTarget] = useState(null); // { itemId, branchId }
+
+  // Batches Modal State
+  const [batchesModalOpen, setBatchesModalOpen] = useState(false);
+  const [selectedBatchItem, setSelectedBatchItem] = useState(null);
+  const [itemBatches, setItemBatches] = useState([]);
+  const [loadingBatches, setLoadingBatches] = useState(false);
+
+  const handleViewBatches = async (row) => {
+    setSelectedBatchItem(row);
+    setBatchesModalOpen(true);
+    setLoadingBatches(true);
+    try {
+      const res = await getStockBatches({
+        itemId: row.itemId,
+        branchId: row.branchId,
+        status: 'active',
+      });
+      if (res.data?.success) {
+        setItemBatches(res.data.data || []);
+      }
+    } catch (err) {
+      console.error('getStockBatches error:', err);
+      toast.error('Failed to load item batches');
+    } finally {
+      setLoadingBatches(false);
+    }
+  };
 
   // ── 1. Fetch Branches & Categories ────────────────────────────────────────
   useEffect(() => {
@@ -389,7 +417,18 @@ export default function StockInventory() {
       label: 'Action',
       align: 'right',
       render: (_, row) => (
-        <div className="flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => handleViewBatches(row)}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700 transition-colors"
+            title="View active FIFO batches for this item"
+          >
+            <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <span>Batches</span>
+          </button>
           <button
             type="button"
             onClick={() => handleOpenAddStock(row)}
@@ -655,6 +694,7 @@ export default function StockInventory() {
           isOpen={purchaseModalOpen}
           onClose={() => setPurchaseModalOpen(false)}
           title="Purchase Entry — Inflow Ingestion"
+          maxWidth="max-w-3xl"
         >
           <PurchaseEntryForm
             isModal={true}
@@ -666,6 +706,80 @@ export default function StockInventory() {
               fetchStockData();
             }}
           />
+        </Modal>
+
+        {/* ── Active FIFO Batches Modal ───────────────────────────────── */}
+        <Modal
+          isOpen={batchesModalOpen}
+          onClose={() => setBatchesModalOpen(false)}
+          title={`Active FIFO Batches — ${selectedBatchItem?.itemName || 'Item'}`}
+          maxWidth="max-w-3xl"
+        >
+          {loadingBatches ? (
+            <div className="flex justify-center py-8">
+              <Spinner size="md" />
+            </div>
+          ) : itemBatches.length === 0 ? (
+            <div className="text-center py-8 text-neutral-400 text-xs">
+              No active batches found for this item in this branch.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="overflow-x-auto border border-neutral-200 dark:border-neutral-700 rounded-lg">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-neutral-50 dark:bg-neutral-800/80 border-b border-neutral-200 dark:border-neutral-700 text-neutral-500 font-semibold">
+                    <tr>
+                      <th className="px-3 py-2">Batch #</th>
+                      <th className="px-3 py-2">Date Received</th>
+                      <th className="px-3 py-2 text-right">Cost Price</th>
+                      <th className="px-3 py-2 text-right">Initial Qty</th>
+                      <th className="px-3 py-2 text-right">Remaining</th>
+                      <th className="px-3 py-2 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                    {itemBatches.map((b) => (
+                      <tr key={b._id}>
+                        <td className="px-3 py-2 font-mono font-medium text-neutral-900 dark:text-white">
+                          {b.batchNumber}
+                        </td>
+                        <td className="px-3 py-2 text-neutral-500 font-mono">
+                          {fmtd(b.createdAt)}
+                        </td>
+                        <td className="px-3 py-2 font-mono text-right text-neutral-900 dark:text-neutral-100">
+                          Rs. {fmt(b.costPrice)}
+                        </td>
+                        <td className="px-3 py-2 font-mono text-right text-neutral-500">
+                          {fmt(b.initialQuantity)}
+                        </td>
+                        <td className="px-3 py-2 font-mono text-right font-bold text-emerald-600 dark:text-emerald-400">
+                          {fmt(b.remainingQuantity)}
+                        </td>
+                        <td className="px-3 py-2 text-center">
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                            b.status === 'active'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                              : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'
+                          }`}>
+                            {b.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setBatchesModalOpen(false)}
+                  className="px-4 py-1.5 rounded-md text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
         </Modal>
       </div>
     </DashboardLayout>

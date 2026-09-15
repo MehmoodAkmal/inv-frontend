@@ -469,11 +469,31 @@ function SaleDetail({ sale, onClose }) {
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
               {(sale.items ?? []).map((line, i) => (
-                <tr key={i}>
-                  <td className="px-3 py-2 font-medium text-gray-900">{line.itemName}</td>
+                <tr key={i} className="border-b border-gray-50 last:border-0">
+                  <td className="px-3 py-2 text-gray-900">
+                    <div className="font-medium">{line.itemName}</div>
+                    {line.batchAllocations && line.batchAllocations.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {line.batchAllocations.map((b, bi) => (
+                          <span
+                            key={bi}
+                            className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800"
+                            title={`Batch ${b.batchNumber}: ${b.quantity} units @ Rs. ${b.costPrice}`}
+                          >
+                            {b.batchNumber || 'Batch'}: {b.quantity} × Rs.{b.costPrice}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-3 py-2 text-gray-600">{line.quantity}</td>
                   <td className="px-3 py-2 text-gray-600">{fmt(line.sellingPrice)}</td>
-                  <td className="px-3 py-2 text-gray-400 text-xs">{fmt(line.costPriceAtSale)}</td>
+                  <td className="px-3 py-2 text-gray-500 font-mono text-xs">
+                    Rs. {fmt(line.costPriceAtSale)}
+                    {line.batchAllocations && line.batchAllocations.length > 1 && (
+                      <span className="block text-[10px] text-gray-400 font-sans">(FIFO avg)</span>
+                    )}
+                  </td>
                   <td className="px-3 py-2 font-medium text-gray-900">{fmt(line.lineTotal)}</td>
                 </tr>
               ))}

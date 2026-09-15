@@ -17,3 +17,10 @@ export const getStock = (params = {}) => api.get('/stock', { params });
  * @param {{ branchId?: string, itemId?: string, page?: number, limit?: number }} params
  */
 export const getMovements = (params = {}) => api.get('/stock/movements', { params });
+
+/**
+ * GET /api/v1/stock/batches
+ * @param {{ branchId?: string, itemId?: string, status?: string }} params
+ */
+export const getStockBatches = (params = {}) => api.get('/stock/batches', { params });
+
