@@ -40,6 +40,11 @@ export default class ErrorBoundary extends Component {
             <p className="text-sm text-brand-500 mb-4">
               An unexpected error occurred. Please try refreshing the page.
             </p>
+            {this.state.error?.message && (
+              <pre className="text-left text-xs bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 p-3 rounded-lg mb-4 max-h-32 overflow-auto font-mono whitespace-pre-wrap">
+                {this.state.error.message}
+              </pre>
+            )}
             <button
               className="btn-primary"
               onClick={() => {

@@ -73,8 +73,9 @@ export function getCurrencyCode(user = null) {
 export function formatCurrency(amount, customSymbol = null, decimals = 2) {
   const symbol = customSymbol !== null ? customSymbol : getCurrencySymbol();
   const num = Number(amount ?? 0);
+  const safeNum = Number.isFinite(num) ? num : 0;
 
-  const formatted = num.toLocaleString(undefined, {
+  const formatted = safeNum.toLocaleString(undefined, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
@@ -85,6 +86,8 @@ export function formatCurrency(amount, customSymbol = null, decimals = 2) {
   const isMulti = symbol.length > 1;
   return isMulti ? `${symbol} ${formatted}` : `${symbol}${formatted}`;
 }
+
+export const fmtCurr = formatCurrency;
 
 /**
  * React hook to access current currency information and formatters.
@@ -99,7 +102,10 @@ export function useCurrency() {
   return {
     symbol,
     code,
+    currencySymbol: symbol,
+    currencyCode: code,
     currency: user?.currency || { code, symbol },
+    fmtCurr: fmt,
     formatCurrency: fmt,
   };
 }
