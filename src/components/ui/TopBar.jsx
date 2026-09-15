@@ -29,7 +29,7 @@ export default function TopBar({
 
     const bid = typeof user?.branchId === 'string' ? user.branchId : user?.branchId?._id;
     if (!bid) {
-      setAssignedBranchName('Main Branch');
+      setAssignedBranchName('Assigned Branch');
       return;
     }
 
@@ -119,7 +119,11 @@ export default function TopBar({
             <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
               <span className="w-2 h-2 rounded-full bg-brand-accent animate-pulse" />
               <span className="font-medium text-neutral-800 dark:text-neutral-200 truncate">
-                {user?.branchId ? `Branch: ${user.branchId}` : 'Main Branch'}
+                {user?.branchId
+                  ? typeof user.branchId === 'object'
+                    ? user.branchId.name
+                    : `Branch: ${user.branchId}`
+                  : 'All Branches'}
               </span>
             </div>
           )}

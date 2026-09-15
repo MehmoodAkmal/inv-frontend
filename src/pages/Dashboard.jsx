@@ -78,9 +78,7 @@ function ChartTooltip({ active, payload, label }) {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  if (user?.role === 'cashier') {
-    return <Navigate to="/pos" replace />;
-  }
+  const isCashier = user?.role === 'cashier';
 
   const [loading, setLoading] = useState(true);
   const [summaryData, setSummaryData] = useState(null);
@@ -384,6 +382,10 @@ export default function Dashboard() {
     });
   }, []);
 
+  if (isCashier) {
+    return <Navigate to="/pos" replace />;
+  }
+
   return (
     <DashboardLayout
       branchSelector={
@@ -558,7 +560,7 @@ export default function Dashboard() {
               </div>
               <div className="mt-2 flex items-baseline justify-between">
                 <span className="font-mono text-xl font-bold text-neutral-900 dark:text-white">
-                  {loading ? '—' : branches.length || 1}
+                  {loading ? '—' : branches.length}
                 </span>
                 <span className="text-[11px] text-neutral-400">Locations</span>
               </div>
