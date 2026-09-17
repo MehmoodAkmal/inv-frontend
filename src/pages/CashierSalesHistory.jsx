@@ -196,15 +196,20 @@ export default function CashierSalesHistory() {
         const list = Array.isArray(itemsList) && itemsList.length > 0
           ? itemsList
           : (Array.isArray(row?.items) ? row.items : (Array.isArray(row?.lineItems) ? row.lineItems : []));
-        const totalItems = list.reduce((sum, it) => sum + (Number(it.quantity) || 1), 0);
+        const totalQty = list.reduce((sum, it) => sum + (Number(it.quantity) || 1), 0);
+        if (list.length === 0) {
+          return <span className="text-xs text-neutral-400">—</span>;
+        }
         return (
-          <div className="text-xs">
-            <span className="font-semibold text-neutral-800 dark:text-neutral-200">
-              {totalItems} item{totalItems === 1 ? '' : 's'}
+          <div className="text-xs" title={list.map((it) => `${it.quantity}x ${it.itemName}`).join(', ')}>
+            <span className="font-bold text-neutral-900 dark:text-neutral-100 block truncate max-w-[180px]">
+              {list.length === 1 ? `${list[0].quantity} × ${list[0].itemName}` : `${totalQty} items`}
             </span>
-            <span className="text-[11px] text-neutral-400 ml-1">
-              ({list.length} SKU{list.length === 1 ? '' : 's'})
-            </span>
+            <div className="flex items-center gap-1 text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+              <span>{totalQty} item{totalQty === 1 ? '' : 's'}</span>
+              <span>•</span>
+              <span>({list.length} SKU{list.length === 1 ? '' : 's'})</span>
+            </div>
           </div>
         );
       },
