@@ -560,7 +560,7 @@ export default function Dashboard() {
 
             {/* Card 3: Amount Owed to You */}
             <StatCard
-              label="Amount Owed to You"
+              label="Credit Due"
               value={fmtCurr(outstandingCredit)}
               accentColor="warning"
               secondaryStats={[
