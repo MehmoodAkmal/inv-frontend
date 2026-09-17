@@ -10,6 +10,7 @@ import MinimalLayout from '../components/layout/MinimalLayout';
 import Modal from '../components/ui/Modal';
 import Spinner from '../components/ui/Spinner';
 import { useCurrency, formatCurrency } from '../utils/currency';
+import { useAuth } from '../context/AuthContext';
 
 // ── Currency / Number formatting ─────────────────────────────────────────────
 const fmt = (n) =>
@@ -22,6 +23,8 @@ const round2 = (n) => Math.round(Number(n || 0) * 100) / 100;
 
 export default function CashierPOS() {
   const { currencySymbol, fmtCurr } = useCurrency();
+  const { user } = useAuth();
+  const businessName = user?.organizationName || user?.businessName || 'Inventory Manager';
 
   // ── Data States ────────────────────────────────────────────────────────────
   const [items, setItems] = useState([]);
@@ -1110,72 +1113,112 @@ export default function CashierPOS() {
       <Modal
         isOpen={successModalOpen}
         onClose={handleNextSale}
-        title="Transaction Completed"
-        maxWidth="max-w-md"
+        title=""
+        maxWidth="max-w-sm"
       >
-        <div className="space-y-4 text-center mt-1">
-          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-sm">
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
+        <div className="-mt-4">
+          {/* Header Strip */}
+          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl mx-1 p-5 text-center text-white mb-4 shadow-md">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-2">
+              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-white/80 mb-0.5">Sale Complete</p>
+            <p className="font-mono text-3xl font-black tracking-tight">{fmtCurr(lastSale?.totalAmount)}</p>
+            <span className="inline-flex items-center mt-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/20 text-white uppercase tracking-wide">
+              {lastSale?.paymentType === 'cash' ? '💵 Cash' : '📋 Credit'}
+            </span>
           </div>
 
-          <div>
-            <div className="text-xs uppercase font-extrabold tracking-wider text-neutral-400">
-              Sale Receipt
-            </div>
-            <div className="font-mono text-3xl font-black text-neutral-900 dark:text-white mt-0.5">
-              {fmtCurr(lastSale?.totalAmount)}
-            </div>
-            <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase mt-1 bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-              {lastSale?.paymentType === 'cash' ? 'Paid in Cash' : 'Charged to Account'}
-            </div>
-          </div>
-
-          {/* Change return banner if Cash */}
+          {/* Change Due Banner */}
           {lastSale?.paymentType === 'cash' && lastSale?.changeDue > 0 && (
-            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-xl">
-              <div className="text-xs font-bold text-emerald-800 dark:text-emerald-200">
-                Return Change to Customer:
+            <div className="mx-1 mb-3 px-4 py-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Return Change</p>
+                <p className="font-mono text-xl font-black text-amber-600 dark:text-amber-300">{fmtCurr(lastSale.changeDue)}</p>
               </div>
-              <div className="font-mono text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                {fmtCurr(lastSale.changeDue)}
+              <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
+                <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
               </div>
             </div>
           )}
 
-          {/* Line items mini summary */}
-          <div className="bg-neutral-50 dark:bg-neutral-800/60 rounded-xl p-3 text-left space-y-1.5 max-h-36 overflow-y-auto">
-            {lastSale?.lineItems?.map((it, idx) => (
-              <div key={idx} className="flex justify-between text-xs text-neutral-600 dark:text-neutral-300">
-                <span className="truncate max-w-[200px]">
-                  {it.quantity}x {it.itemName}
-                </span>
-                <span className="font-mono font-medium">{fmtCurr(it.lineTotal)}</span>
-              </div>
-            ))}
+          {/* Items Breakdown */}
+          <div className="mx-1 mb-3 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+            <div className="px-3 py-2 bg-neutral-50 dark:bg-neutral-800/80 border-b border-neutral-200 dark:border-neutral-800">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Items Sold</p>
+            </div>
+            <div className="divide-y divide-neutral-100 dark:divide-neutral-800 max-h-40 overflow-y-auto">
+              {lastSale?.lineItems?.map((it, idx) => (
+                <div key={idx} className="flex justify-between items-center px-3 py-2 text-xs bg-white dark:bg-neutral-900">
+                  <div className="min-w-0 flex-1">
+                    <span className="font-semibold text-neutral-800 dark:text-neutral-200 block truncate">{it.itemName}</span>
+                    <span className="text-neutral-400">{it.quantity} × {fmtCurr(it.sellingPrice ?? it.unitPrice)}</span>
+                  </div>
+                  <span className="font-mono font-bold text-neutral-900 dark:text-white ml-3 shrink-0">{fmtCurr(it.lineTotal)}</span>
+                </div>
+              ))}
+            </div>
+            {/* Total row */}
+            <div className="flex justify-between items-center px-3 py-2.5 bg-neutral-50 dark:bg-neutral-800/80 border-t border-neutral-200 dark:border-neutral-800">
+              <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300">Total</span>
+              <span className="font-mono text-sm font-black text-neutral-900 dark:text-white">{fmtCurr(lastSale?.totalAmount)}</span>
+            </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">
+          {/* Action Buttons */}
+          <div className="mx-1 flex gap-2">
             <button
               type="button"
-              onClick={() => window.print()}
-              className="w-full sm:w-auto flex-1 btn-secondary py-3 text-xs font-bold flex items-center justify-center gap-2"
+              onClick={() => {
+                const receiptEl = document.getElementById('pos-receipt-print');
+                if (!receiptEl) return;
+                const printWin = window.open('', '_blank', 'width=400,height=600');
+                printWin.document.write(`<!DOCTYPE html><html><head><title>Receipt</title><style>
+                  * { margin: 0; padding: 0; box-sizing: border-box; }
+                  body { font-family: 'Courier New', monospace; font-size: 12px; color: #000; background: #fff; width: 80mm; margin: 0 auto; padding: 10px; }
+                  .receipt-header { text-align: center; margin-bottom: 12px; }
+                  .receipt-header h1 { font-size: 16px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
+                  .receipt-header p { font-size: 11px; color: #555; margin-top: 2px; }
+                  .divider { border: none; border-top: 1px dashed #999; margin: 10px 0; }
+                  .divider-solid { border: none; border-top: 1px solid #000; margin: 10px 0; }
+                  .badge { display: inline-block; border: 1px solid #000; padding: 2px 8px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border-radius: 3px; }
+                  .items-table { width: 100%; }
+                  .items-table .item-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+                  .items-table .item-name { flex: 1; }
+                  .items-table .item-qty { width: 30px; text-align: center; }
+                  .items-table .item-price { width: 60px; text-align: right; }
+                  .totals { margin-top: 5px; }
+                  .totals .row { display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 12px; }
+                  .totals .total-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: 900; margin-top: 6px; border-top: 1px solid #000; padding-top: 6px; }
+                  .change-box { border: 1px solid #000; text-align: center; padding: 8px; margin-top: 10px; }
+                  .change-box .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+                  .change-box .amount { font-size: 20px; font-weight: 900; }
+                  .footer { text-align: center; margin-top: 14px; font-size: 10px; color: #555; }
+                  @media print { body { width: 80mm; } }
+                </style></head><body>${receiptEl.innerHTML}</body></html>`);
+                printWin.document.close();
+                printWin.focus();
+                setTimeout(() => { printWin.print(); printWin.close(); }, 300);
+              }}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-xs font-bold transition-all active:scale-95"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
               </svg>
-              <span>Print Receipt</span>
+              Print
             </button>
 
             <button
               type="button"
               autoFocus
               onClick={handleNextSale}
-              className="w-full sm:w-auto flex-1 btn-primary py-3 text-xs font-extrabold flex items-center justify-center gap-2"
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow-sm transition-all active:scale-95"
             >
-              <span>Next Sale (Enter)</span>
+              <span>Next Sale</span>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
@@ -1183,6 +1226,91 @@ export default function CashierPOS() {
           </div>
         </div>
       </Modal>
+      {/* ── Hidden Print-Only Receipt ────────────────────────────────────────── */}
+      {lastSale && (
+        <div id="pos-receipt-print" style={{ display: 'none' }}>
+          {/* Header */}
+          <div className="receipt-header">
+            <h1>{businessName}</h1>
+            <p>{new Date(lastSale.createdAt || Date.now()).toLocaleString()}</p>
+          </div>
+          <hr className="divider" />
+
+          {/* Sale Type Badge */}
+          <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+            <span className="badge">
+              {lastSale.paymentType === 'cash' ? 'CASH SALE' : 'CREDIT SALE'}
+            </span>
+          </div>
+
+          {/* Customer */}
+          {lastSale.customerName && (
+            <p style={{ fontSize: '11px', marginBottom: '8px' }}>
+              Customer: <strong>{lastSale.customerName}</strong>
+            </p>
+          )}
+
+          <hr className="divider" />
+
+          {/* Items */}
+          <div className="items-table">
+            <div className="item-row" style={{ fontWeight: 'bold', borderBottom: '1px solid #000', paddingBottom: '4px', marginBottom: '6px', fontSize: '11px' }}>
+              <span className="item-name">Item</span>
+              <span className="item-qty">Qty</span>
+              <span className="item-price">Total</span>
+            </div>
+            {lastSale.lineItems?.map((it, idx) => (
+              <div key={idx} className="item-row">
+                <span className="item-name" style={{ wordBreak: 'break-word', paddingRight: '4px' }}>{it.itemName}</span>
+                <span className="item-qty">{it.quantity}</span>
+                <span className="item-price">{currencySymbol} {Number(it.lineTotal).toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+
+          <hr className="divider-solid" />
+
+          {/* Totals */}
+          <div className="totals">
+            {lastSale.discount > 0 && (
+              <div className="row">
+                <span>Discount</span>
+                <span>- {currencySymbol} {Number(lastSale.discount).toFixed(2)}</span>
+              </div>
+            )}
+            <div className="total-row">
+              <span>TOTAL</span>
+              <span>{currencySymbol} {Number(lastSale.totalAmount).toFixed(2)}</span>
+            </div>
+            {lastSale.paymentType === 'cash' && (
+              <>
+                <div className="row" style={{ marginTop: '4px' }}>
+                  <span>Cash Given</span>
+                  <span>{currencySymbol} {Number(lastSale.tenderedCash).toFixed(2)}</span>
+                </div>
+                {lastSale.changeDue > 0 && (
+                  <div className="change-box">
+                    <div className="label">Change Due</div>
+                    <div className="amount">{currencySymbol} {Number(lastSale.changeDue).toFixed(2)}</div>
+                  </div>
+                )}
+              </>
+            )}
+            {lastSale.paymentType === 'credit' && (
+              <div className="row" style={{ marginTop: '4px', color: '#c00' }}>
+                <span>Balance Due</span>
+                <span>{currencySymbol} {Number(lastSale.balance ?? lastSale.totalAmount).toFixed(2)}</span>
+              </div>
+            )}
+          </div>
+
+          <hr className="divider" />
+          <div className="footer">
+            <p>Thank you for your business!</p>
+            <p style={{ marginTop: '4px' }}>Receipt #{lastSale._id?.slice(-8)?.toUpperCase()}</p>
+          </div>
+        </div>
+      )}
     </MinimalLayout>
   );
 }
