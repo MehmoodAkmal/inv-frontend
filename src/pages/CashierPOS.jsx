@@ -221,9 +221,9 @@ export default function CashierPOS() {
   const handleSearchKeyDown = (e) => {
     if (e.key === 'Enter' && searchQuery.trim()) {
       e.preventDefault();
-      const q = searchQuery.trim().toLowerCase();
-      // Look for exact SKU match first, then exact name match
+      // Look for exact Barcode match first, then exact SKU match, then exact name match
       const exactMatch =
+        items.find((i) => i.barcode && i.barcode.toLowerCase() === q) ||
         items.find((i) => i.sku && i.sku.toLowerCase() === q) ||
         items.find((i) => i.name && i.name.toLowerCase() === q);
 
@@ -256,11 +256,12 @@ export default function CashierPOS() {
           typeof item.categoryId === 'object' ? item.categoryId?._id : item.categoryId;
         if (itemCatId !== selectedCategory) return false;
       }
-      // Search query (name or sku)
+      // Search query (name, sku, or barcode)
       if (q) {
         const nameMatch = item.name?.toLowerCase().includes(q);
         const skuMatch = item.sku?.toLowerCase().includes(q);
-        if (!nameMatch && !skuMatch) return false;
+        const barcodeMatch = item.barcode?.toLowerCase().includes(q);
+        if (!nameMatch && !skuMatch && !barcodeMatch) return false;
       }
       return true;
     });
@@ -552,11 +553,18 @@ export default function CashierPOS() {
                           </span>
                         </div>
 
-                        {item.sku && (
-                          <div className="text-[11px] font-mono text-neutral-400 mt-1 truncate">
-                            SKU: {item.sku}
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2 mt-1 truncate">
+                          {item.sku && (
+                            <span className="text-[11px] font-mono text-neutral-400">
+                              SKU: {item.sku}
+                            </span>
+                          )}
+                          {item.barcode && (
+                            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
+                              🏷️ {item.barcode}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Bottom: Large Price & Touch "+" Button (min height 56px touch target area) */}

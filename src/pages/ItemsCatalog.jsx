@@ -99,6 +99,7 @@ const EMPTY_ITEM_FORM = {
   name: '',
   categoryId: '',
   sku: '',
+  barcode: '',
   unit: 'piece',
   costPrice: '',
   sellingPrice: '',
@@ -217,6 +218,7 @@ export default function ItemsCatalog() {
         (i) =>
           i.name?.toLowerCase().includes(q) ||
           i.sku?.toLowerCase().includes(q) ||
+          i.barcode?.toLowerCase().includes(q) ||
           i.categoryId?.name?.toLowerCase().includes(q)
       );
     }
@@ -296,6 +298,7 @@ export default function ItemsCatalog() {
         name: itemForm.name.trim(),
         categoryId: itemForm.categoryId,
         sku: finalSku || undefined,
+        barcode: itemForm.barcode?.trim() || undefined,
         unit: itemForm.unit,
         costPrice: costNum,
         sellingPrice: sellNum,
@@ -328,6 +331,7 @@ export default function ItemsCatalog() {
       name: item.name || '',
       categoryId: item.categoryId?._id ?? item.categoryId ?? '',
       sku: item.sku || '',
+      barcode: item.barcode || '',
       unit: item.unit || 'piece',
       costPrice: String(item.costPrice ?? ''),
       sellingPrice: String(item.sellingPrice ?? ''),
@@ -364,6 +368,7 @@ export default function ItemsCatalog() {
         name: editForm.name.trim(),
         categoryId: editForm.categoryId,
         sku: editForm.sku.trim() || undefined,
+        barcode: editForm.barcode?.trim() || undefined,
         unit: editForm.unit,
         costPrice: costNum,
         sellingPrice: sellNum,
@@ -461,9 +466,16 @@ export default function ItemsCatalog() {
             <span className="text-xs font-bold text-neutral-900 dark:text-white block">
               {val}
             </span>
-            <span className="font-mono text-[10px] text-neutral-400 dark:text-neutral-500 block">
-              {row.sku ? row.sku : 'NO SKU'}
-            </span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="font-mono text-[10px] text-neutral-400 dark:text-neutral-500">
+                {row.sku ? row.sku : 'NO SKU'}
+              </span>
+              {row.barcode && (
+                <span className="font-mono text-[9px] px-1 py-0.2 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500">
+                  🏷️ {row.barcode}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       ),
@@ -903,10 +915,15 @@ export default function ItemsCatalog() {
                     <h3 className="text-sm font-bold text-neutral-900 dark:text-white tracking-tight mb-1">
                       {item.name}
                     </h3>
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex flex-wrap items-center gap-1.5 mb-3">
                       {item.sku && (
                         <span className="font-mono text-[10px] text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
                           {item.sku}
+                        </span>
+                      )}
+                      {item.barcode && (
+                        <span className="font-mono text-[9px] text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
+                          🏷️ {item.barcode}
                         </span>
                       )}
                       <span className="text-[11px] text-neutral-400 font-sans">
@@ -1026,27 +1043,24 @@ export default function ItemsCatalog() {
               </CustomSelect>
             </div>
 
-            {/* SKU & Unit */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* SKU, Barcode & Unit */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 select-none">
+                  <label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
                     SKU Code
                   </label>
                   <button
                     type="button"
                     onClick={() => {
-                      setIsSkuManual(false);
                       const generated = computeLocalSku(itemForm.name, itemForm.categoryId, categories, items);
                       setItemForm((p) => ({ ...p, sku: generated }));
+                      setIsSkuManual(false);
+                      toast.success(`SKU set to ${generated}`);
                     }}
-                    className="text-[11px] font-medium text-brand-600 dark:text-brand-accent hover:underline inline-flex items-center gap-1 cursor-pointer"
-                    title="Generate unique SKU automatically"
+                    className="text-[10px] text-brand-700 dark:text-brand-accent hover:underline font-semibold"
                   >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <span>Auto-generate</span>
+                    Auto-Generate
                   </button>
                 </div>
                 <Input
@@ -1063,9 +1077,23 @@ export default function ItemsCatalog() {
                     isSkuManual
                       ? 'Custom SKU'
                       : itemForm.sku
-                        ? 'Auto-generated unique code'
-                        : 'Auto-generates as you type'
+                        ? 'Auto-generated code'
+                        : 'Auto as you type'
                   }
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                  Barcode / UPC
+                </label>
+                <Input
+                  maxLength={100}
+                  value={itemForm.barcode}
+                  onChange={(e) => setItemForm((p) => ({ ...p, barcode: e.target.value }))}
+                  placeholder="Scan or type…"
+                  className="font-mono"
+                  helperText="Optional barcode"
                 />
               </div>
 
@@ -1213,27 +1241,24 @@ export default function ItemsCatalog() {
               </CustomSelect>
             </div>
 
-            {/* SKU & Unit */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* SKU, Barcode & Unit */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 select-none">
+                  <label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
                     SKU Code
                   </label>
                   <button
                     type="button"
                     onClick={() => {
-                      const otherItems = items.filter((i) => i._id !== editTarget?._id);
+                      const otherItems = items.filter((it) => it._id !== editTarget?._id);
                       const generated = computeLocalSku(editForm.name, editForm.categoryId, categories, otherItems);
                       setEditForm((p) => ({ ...p, sku: generated }));
+                      toast.success(`Regenerated SKU: ${generated}`);
                     }}
-                    className="text-[11px] font-medium text-brand-600 dark:text-brand-accent hover:underline inline-flex items-center gap-1 cursor-pointer"
-                    title="Generate unique SKU automatically"
+                    className="text-[10px] text-brand-700 dark:text-brand-accent hover:underline font-semibold"
                   >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <span>Auto-generate</span>
+                    Regenerate
                   </button>
                 </div>
                 <Input
