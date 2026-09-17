@@ -25,6 +25,7 @@ import { getBranches } from '../services/branchService';
 import { getItems } from '../services/itemService';
 import { getExpenses } from '../services/expenseService';
 import { getSalaryPayments } from '../services/salaryService';
+import OnboardingChecklist from '../components/ui/OnboardingChecklist';
 
 // Currency and numeric formatters
 const fmtInt = (n) => Number(n ?? 0).toLocaleString('en-US');
@@ -404,7 +405,7 @@ export default function Dashboard() {
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
-                Executive Business Overview
+                Business Dashboard
               </h1>
               <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-brand-50 text-brand-800 dark:bg-brand-900/60 dark:text-brand-accent border border-brand-200/60 dark:border-brand-700/50">
                 Live
@@ -412,8 +413,8 @@ export default function Dashboard() {
             </div>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
               {isManager
-                ? `Operational performance and inventory posture for ${managerBranchName}.`
-                : 'Consolidated real-time operational performance, revenue breakdowns, and inventory posture.'}
+                ? `Sales and stock overview for ${managerBranchName}.`
+                : 'Your business at a glance — sales, stock, and outstanding payments.'}
             </p>
           </div>
 
@@ -440,6 +441,76 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
+
+        {/* ── Onboarding Checklist (admin only, dismissible) ──────────── */}
+        {user?.role === 'admin' && <OnboardingChecklist />}
+
+        {/* ── Low Stock Alert Banner ─────────────────────────────────── */}
+        {!loading && lowStockCount > 0 && (
+          <Link
+            to="/stock"
+            className="flex items-center gap-3 px-4 py-3 rounded-card bg-danger-50 dark:bg-danger-950/40 border border-danger-200 dark:border-danger-800/60 text-danger-800 dark:text-danger-300 hover:bg-danger-100 dark:hover:bg-danger-900/40 transition-colors group"
+          >
+            <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-danger-100 dark:bg-danger-900/50 text-danger-600 dark:text-danger-400">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">
+                ⚠️ {lowStockCount} item{lowStockCount !== 1 ? 's are' : ' is'} running low on stock
+              </p>
+              <p className="text-xs text-danger-600/80 dark:text-danger-400/80">
+                Click here to view and restock these items before they run out.
+              </p>
+            </div>
+            <svg className="w-4 h-4 shrink-0 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        )}
+
+        {/* ── Quick Actions ─────────────────────────────────────────── */}
+        {!isCashier && (
+          <div className="flex flex-wrap gap-2">
+            <Link
+              to="/sales"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-800 hover:bg-brand-700 dark:bg-brand-700 dark:hover:bg-brand-600 text-white text-xs font-semibold shadow-sm transition-all duration-150 hover:shadow-md active:scale-95"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              New Sale
+            </Link>
+            <Link
+              to="/purchase-entry"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-200 text-xs font-semibold shadow-sm hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:border-brand-300 dark:hover:border-brand-700 transition-all duration-150 hover:shadow-md active:scale-95"
+            >
+              <svg className="w-3.5 h-3.5 text-brand-700 dark:text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Receive Stock
+            </Link>
+            <Link
+              to="/customers"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-200 text-xs font-semibold shadow-sm hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:border-brand-300 dark:hover:border-brand-700 transition-all duration-150 hover:shadow-md active:scale-95"
+            >
+              <svg className="w-3.5 h-3.5 text-brand-700 dark:text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              Add Customer
+            </Link>
+            <Link
+              to="/payments"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-200 text-xs font-semibold shadow-sm hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:border-brand-300 dark:hover:border-brand-700 transition-all duration-150 hover:shadow-md active:scale-95"
+            >
+              <svg className="w-3.5 h-3.5 text-brand-700 dark:text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Record Payment
+            </Link>
+          </div>
+        )}
 
         {/* ── 4 Hero StatCards in a Grid ─────────────────────────────── */}
         {loading ? (
@@ -487,14 +558,14 @@ export default function Dashboard() {
               }
             />
 
-            {/* Card 3: Outstanding Credit */}
+            {/* Card 3: Amount Owed to You */}
             <StatCard
-              label="Outstanding Credit"
+              label="Amount Owed to You"
               value={fmtCurr(outstandingCredit)}
               accentColor="warning"
               secondaryStats={[
                 { label: 'Receivables', value: 'Active' },
-                { label: 'Risk State', value: 'Unsettled' },
+                { label: 'Status', value: 'Unsettled' },
               ]}
               icon={
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -503,14 +574,14 @@ export default function Dashboard() {
               }
             />
 
-            {/* Card 4: Low Stock Items */}
+            {/* Card 4: Low Stock Alert */}
             <StatCard
               label="Low Stock Items"
               value={fmtInt(lowStockCount)}
               accentColor="danger"
               secondaryStats={[
-                { label: 'Action', value: lowStockCount > 0 ? 'Restock Req.' : 'Optimal' },
-                { label: 'Threshold', value: '≤ Reorder' },
+                { label: 'Action', value: lowStockCount > 0 ? 'Restock Now' : 'All Good' },
+                { label: 'Threshold', value: '≤ Min Level' },
               ]}
               icon={
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -571,7 +642,7 @@ export default function Dashboard() {
           >
             <div className="flex items-center justify-between text-neutral-400 group-hover:text-brand-800 dark:group-hover:text-brand-accent transition-colors">
               <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                Total SKUs
+                Total Products
               </span>
               <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -592,7 +663,7 @@ export default function Dashboard() {
           >
             <div className="flex items-center justify-between text-neutral-400 group-hover:text-brand-800 dark:group-hover:text-brand-accent transition-colors">
               <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                Month Orders
+                Sales This Month
               </span>
               <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -613,7 +684,7 @@ export default function Dashboard() {
           >
             <div className="flex items-center justify-between text-neutral-400 group-hover:text-brand-800 dark:group-hover:text-brand-accent transition-colors">
               <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                Total Expenses
+                Expenses This Month
               </span>
               <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -623,7 +694,7 @@ export default function Dashboard() {
               <span className="font-mono text-xl font-bold text-neutral-900 dark:text-white">
                 {loading ? '—' : fmtCurr(expensesMtd)}
               </span>
-              <span className="text-[11px] text-neutral-400">MTD</span>
+              <span className="text-[11px] text-neutral-400">This Month</span>
             </div>
           </Link>
 
@@ -634,7 +705,7 @@ export default function Dashboard() {
           >
             <div className="flex items-center justify-between text-neutral-400 group-hover:text-brand-800 dark:group-hover:text-brand-accent transition-colors">
               <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                Payroll Status
+                Salary Status
               </span>
               <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -654,10 +725,10 @@ export default function Dashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
             <div>
               <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
-                Revenue Dynamics (Last 14 Days)
+                Sales Chart (Last 14 Days)
               </h3>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                Stacked daily comparison of cash settlements vs. credit extensions.
+                Daily cash vs. credit sales for the past two weeks.
               </p>
             </div>
 

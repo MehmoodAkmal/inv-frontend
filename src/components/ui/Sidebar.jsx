@@ -69,7 +69,7 @@ export const DEFAULT_NAV_GROUPS = [
       },
       {
         to: '/branch-comparison',
-        label: 'Branch Comparison',
+        label: 'Compare Branches',
         roles: ['admin'],
         icon: (
           <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -94,7 +94,7 @@ export const DEFAULT_NAV_GROUPS = [
     items: [
       {
         to: '/sales',
-        label: 'Sales Register',
+        label: 'Sales',
         roles: ['admin', 'manager', 'cashier'],
         permission: ['sales', 'view'],
         icon: (
@@ -105,7 +105,7 @@ export const DEFAULT_NAV_GROUPS = [
       },
       {
         to: '/customer-ledgers',
-        label: 'Customer Ledgers',
+        label: 'Money Owed to Me',
         roles: ['admin', 'manager', 'cashier'],
         permission: ['payments', 'viewLedger'],
         icon: (
@@ -116,7 +116,7 @@ export const DEFAULT_NAV_GROUPS = [
       },
       {
         to: '/customers',
-        label: 'Customer Directory',
+        label: 'Customers',
         roles: ['admin', 'manager', 'cashier'],
         permission: ['customers', 'view'],
         icon: (
@@ -143,7 +143,7 @@ export const DEFAULT_NAV_GROUPS = [
     items: [
       {
         to: '/items',
-        label: 'Items Catalog',
+        label: 'Products',
         roles: ['admin', 'manager', 'cashier'],
         permission: ['items', 'view'],
         icon: (
@@ -165,7 +165,7 @@ export const DEFAULT_NAV_GROUPS = [
       },
       {
         to: '/stock',
-        label: 'Stock & Inventory',
+        label: 'My Stock',
         roles: ['admin', 'manager', 'cashier'],
         permission: ['stock', 'view'],
         icon: (
@@ -176,7 +176,7 @@ export const DEFAULT_NAV_GROUPS = [
       },
       {
         to: '/purchase-entry',
-        label: 'Purchase Entry',
+        label: 'Buy / Receive Stock',
         roles: ['admin', 'manager'],
         permission: ['stock', 'addPurchase'],
         icon: (
@@ -203,7 +203,7 @@ export const DEFAULT_NAV_GROUPS = [
       },
       {
         to: '/salary',
-        label: 'Salary/Payroll',
+        label: 'Pay Salaries',
         roles: ['admin', 'manager'],
         permission: ['salary', 'view'],
         icon: (
@@ -240,7 +240,7 @@ export const DEFAULT_NAV_GROUPS = [
       },
       {
         to: '/staff',
-        label: 'App Users & Staff',
+        label: 'My Team',
         roles: ['admin'],
         icon: (
           <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -358,11 +358,10 @@ export default function Sidebar({
               if (!item.to.startsWith('/superadmin')) return false;
             }
 
-            // Manager role: hide Branch Comparison, Branches, and App Users & Staff entirely
+            // Manager role: hide Compare Branches, Branches, and My Team entirely
             if (user?.role === 'manager') {
-              const hiddenLabels = ['Branch Comparison', 'Branches', 'App Users & Staff'];
               const hiddenPaths = ['/branch-comparison', '/branches', '/staff', '/app-users-staff'];
-              if (hiddenLabels.includes(item.label) || hiddenPaths.includes(item.to)) {
+              if (hiddenPaths.includes(item.to)) {
                 return false;
               }
             }
