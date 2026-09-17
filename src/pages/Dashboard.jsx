@@ -445,31 +445,6 @@ export default function Dashboard() {
         {/* ── Onboarding Checklist (admin only, dismissible) ──────────── */}
         {user?.role === 'admin' && <OnboardingChecklist />}
 
-        {/* ── Low Stock Alert Banner ─────────────────────────────────── */}
-        {!loading && lowStockCount > 0 && (
-          <Link
-            to="/stock"
-            className="flex items-center gap-3 px-4 py-3 rounded-card bg-danger-50 dark:bg-danger-950/40 border border-danger-200 dark:border-danger-800/60 text-danger-800 dark:text-danger-300 hover:bg-danger-100 dark:hover:bg-danger-900/40 transition-colors group"
-          >
-            <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-danger-100 dark:bg-danger-900/50 text-danger-600 dark:text-danger-400">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold">
-                ⚠️ {lowStockCount} item{lowStockCount !== 1 ? 's are' : ' is'} running low on stock
-              </p>
-              <p className="text-xs text-danger-600/80 dark:text-danger-400/80">
-                Click here to view and restock these items before they run out.
-              </p>
-            </div>
-            <svg className="w-4 h-4 shrink-0 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        )}
-
         {/* ── Quick Actions ─────────────────────────────────────────── */}
         {!isCashier && (
           <div className="flex flex-wrap gap-2">

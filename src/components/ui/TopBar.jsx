@@ -162,7 +162,7 @@ export default function TopBar({
         ) : (
           <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 border-l border-neutral-200 dark:border-neutral-800">
             <ThemeToggle />
-            <NotificationBell count={0} />
+            <NotificationBell />
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-brand-900 border border-brand-800 text-brand-accent flex items-center justify-center text-xs font-mono font-bold shadow-sm">
                 {user?.firstName?.[0]?.toUpperCase() || 'A'}

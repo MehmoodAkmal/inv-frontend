@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, Suspense } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ThemeToggle from '../ui/ThemeToggle';
+import NotificationBell from '../ui/NotificationBell';
 
 const MinimalLayoutContext = createContext(false);
 
@@ -130,9 +131,10 @@ export default function MinimalLayout({ children }) {
               })}
             </nav>
 
-            {/* Right: Cashier User Chip, ThemeToggle, Logout */}
+            {/* Right: Cashier User Chip, ThemeToggle, NotificationBell, Logout */}
             <div className="flex items-center gap-2.5 shrink-0">
               <ThemeToggle />
+              <NotificationBell />
 
               {/* Cashier profile info */}
               <div className="hidden sm:flex items-center gap-2.5 pl-2.5 border-l border-neutral-200 dark:border-neutral-800">
