@@ -15,6 +15,7 @@ let mockUser = {
   firstName: 'Sam',
   lastName: 'Cashier',
   role: 'cashier',
+  currencySymbol: '$',
   branchId: { _id: 'b1', name: 'Downtown Branch' },
 };
 const mockLogout = vi.fn();
@@ -168,6 +169,8 @@ describe('MinimalLayout (Cashier Variant)', () => {
       firstName: 'Sam',
       lastName: 'Cashier',
       role: 'cashier',
+      currencySymbol: '$',
+      currency: { code: 'USD', symbol: '$' },
       branchId: { _id: 'b1', name: 'Downtown Branch' },
     };
   });
@@ -242,6 +245,8 @@ describe('CashierPOS Page', () => {
       firstName: 'Sam',
       lastName: 'Cashier',
       role: 'cashier',
+      currencySymbol: '$',
+      currency: { code: 'USD', symbol: '$' },
       branchId: { _id: 'b1', name: 'Downtown Branch' },
     };
   });

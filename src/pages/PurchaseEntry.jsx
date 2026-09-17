@@ -1098,7 +1098,7 @@ export function PurchaseEntryForm({
       </div>
 
       {/* Right Column: Interactive Digital Goods Receipt Note (GRN) Voucher */}
-      <div className="lg:col-span-5 xl:col-span-5 sticky top-6">
+      <div className="lg:col-span-5 xl:col-span-5 lg:sticky lg:top-6">
         <DigitalGrnVoucher
           branchName={activeBranchName}
           selectedItem={selectedItem}

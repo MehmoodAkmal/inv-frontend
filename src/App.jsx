@@ -18,6 +18,8 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Branches = lazy(() => import('./pages/Branches'));
 const Staff = lazy(() => import('./pages/Staff'));
 const AppUsersStaff = lazy(() => import('./pages/AppUsersStaff'));
+const AppUsers = lazy(() => import('./pages/AppUsers'));
+const MyTeam = lazy(() => import('./pages/MyTeam'));
 const Categories = lazy(() => import('./pages/Categories'));
 const Items = lazy(() => import('./pages/Items'));
 const ItemsCatalog = lazy(() => import('./pages/ItemsCatalog'));
@@ -86,6 +88,8 @@ function AppContent() {
       import('./pages/Branches');
       import('./pages/Payments');
       import('./pages/AppUsersStaff');
+      import('./pages/AppUsers');
+      import('./pages/MyTeam');
       import('./pages/Permissions');
     };
 
@@ -137,6 +141,8 @@ function AppContent() {
                 <Route path="/branches" element={<Branches />} />
                 <Route path="/staff" element={<AppUsersStaff />} />
                 <Route path="/app-users-staff" element={<AppUsersStaff />} />
+                <Route path="/app-users" element={<AppUsers />} />
+                <Route path="/my-team" element={<MyTeam />} />
                 <Route path="/permissions" element={<Permissions />} />
                 <Route path="/employees" element={<AppUsersStaff />} />
                 <Route path="/branch-comparison" element={<BranchComparison />} />

@@ -199,19 +199,19 @@ describe('Manager Role Dashboard & Navigation', () => {
         </MemoryRouter>
       );
 
-      expect(screen.queryByText('Branch Comparison')).not.toBeInTheDocument();
+      expect(screen.queryByText('Compare Branches')).not.toBeInTheDocument();
       expect(screen.queryByText('Branches')).not.toBeInTheDocument();
-      expect(screen.queryByText('App Users & Staff')).not.toBeInTheDocument();
+      expect(screen.queryByText('My Team')).not.toBeInTheDocument();
 
       // Manager-allowed items should be visible
       expect(screen.getByText('Dashboard')).toBeInTheDocument();
-      expect(screen.getByText('Sales Register')).toBeInTheDocument();
-      expect(screen.getByText('Stock & Inventory')).toBeInTheDocument();
+      expect(screen.getByText('Sales')).toBeInTheDocument();
+      expect(screen.getByText('My Stock')).toBeInTheDocument();
       expect(screen.getByText('Expenses')).toBeInTheDocument();
-      expect(screen.getByText('Salary/Payroll')).toBeInTheDocument();
+      expect(screen.getByText('Pay Salaries')).toBeInTheDocument();
     });
 
-    it('renders "Branch Comparison", "Branches", and "App Users & Staff" for admin', () => {
+    it('renders "Compare Branches", "Branches", and "My Team" for admin', () => {
       mockUser = {
         id: 'u2',
         firstName: 'Bob',
@@ -227,9 +227,9 @@ describe('Manager Role Dashboard & Navigation', () => {
         </MemoryRouter>
       );
 
-      expect(screen.getByText('Branch Comparison')).toBeInTheDocument();
+      expect(screen.getByText('Compare Branches')).toBeInTheDocument();
       expect(screen.getByText('Branches')).toBeInTheDocument();
-      expect(screen.getByText('App Users & Staff')).toBeInTheDocument();
+      expect(screen.getByText('My Team')).toBeInTheDocument();
     });
   });
 
@@ -299,7 +299,7 @@ describe('Manager Role Dashboard & Navigation', () => {
       expect(headerLabels).toContain('Branch');
 
       // Admin has the link(s) to /branches (Sidebar and/or Dashboard tile)
-      const branchLinks = screen.getAllByRole('link', { name: /branches/i });
+      const branchLinks = screen.getAllByRole('link', { name: /^branches$/i });
       expect(branchLinks.length).toBeGreaterThanOrEqual(1);
       branchLinks.forEach((link) => {
         expect(link).toHaveAttribute('href', '/branches');

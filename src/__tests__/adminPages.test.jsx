@@ -165,7 +165,7 @@ describe('Branches Page', () => {
 describe('AppUsersStaff Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUser = { role: 'admin', organizationId: 'org1' };
+    mockUser = { role: 'admin', organizationId: 'org1', currencySymbol: '$' };
   });
 
   it('redirects non-admin users', () => {

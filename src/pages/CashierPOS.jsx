@@ -221,6 +221,7 @@ export default function CashierPOS() {
   const handleSearchKeyDown = (e) => {
     if (e.key === 'Enter' && searchQuery.trim()) {
       e.preventDefault();
+      const q = searchQuery.trim().toLowerCase();
       // Look for exact Barcode match first, then exact SKU match, then exact name match
       const exactMatch =
         items.find((i) => i.barcode && i.barcode.toLowerCase() === q) ||
@@ -1132,7 +1133,7 @@ export default function CashierPOS() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-white/80 mb-0.5">Sale Complete</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-white/80 mb-0.5">Transaction Completed</p>
             <p className="font-mono text-3xl font-black tracking-tight">{fmtCurr(lastSale?.totalAmount)}</p>
             <span className="inline-flex items-center mt-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/20 text-white uppercase tracking-wide">
               {lastSale?.paymentType === 'cash' ? '💵 Cash' : '📋 Credit'}
@@ -1226,7 +1227,7 @@ export default function CashierPOS() {
               onClick={handleNextSale}
               className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow-sm transition-all active:scale-95"
             >
-              <span>Next Sale</span>
+              <span>Next Sale (Enter)</span>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>

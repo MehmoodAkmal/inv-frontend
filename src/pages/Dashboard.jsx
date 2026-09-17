@@ -593,7 +593,7 @@ export default function Dashboard() {
         )}
 
         {/* ── Secondary Row of Smaller Stat Tiles ────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1 lg:[&>*:last-child]:col-span-1">
           {/* Tile 1: Branches Count / Assigned Branch */}
           {isManager ? (
             <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-4 shadow-card flex flex-col justify-between select-none">
