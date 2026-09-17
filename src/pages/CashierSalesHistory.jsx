@@ -3,7 +3,9 @@ import toast from 'react-hot-toast';
 import { getSales, getSaleById } from '../services/saleService';
 import MinimalLayout from '../components/layout/MinimalLayout';
 import { StatCard, DataTable, Modal } from '../components/ui';
-import { useCurrency } from '../utils/currency';
+import { useCurrency, formatCurrency } from '../utils/currency';
+import { useAuth } from '../context/AuthContext';
+import { printThermalReceipt } from '../utils/printReceipt';
 
 const formatTime = (isoStr) => {
   if (!isoStr) return '—';
@@ -20,7 +22,9 @@ const formatDate = (isoStr) => {
 };
 
 export default function CashierSalesHistory() {
-  const { fmtCurr } = useCurrency();
+  const { currencySymbol, fmtCurr } = useCurrency();
+  const { user } = useAuth();
+  const businessName = user?.organizationName || user?.businessName || user?.tenantId?.name || 'Inventory Manager';
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -417,21 +421,27 @@ export default function CashierSalesHistory() {
               <div className="space-y-2">
                 <div className="text-[11px] font-bold uppercase text-neutral-400">Items Purchased</div>
                 <div className="divide-y divide-neutral-200/60 dark:divide-neutral-700/60 max-h-48 overflow-y-auto pr-1">
-                  {selectedSale.items?.map((it, idx) => (
-                    <div key={idx} className="py-1.5 flex justify-between text-xs">
-                      <div>
-                        <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                          {it.itemName}
-                        </span>
-                        <div className="text-[11px] text-neutral-400 font-mono">
-                          {it.quantity} x {fmtCurr(it.sellingPrice)}
+                  {selectedSale.items?.map((it, idx) => {
+                    const unitPrice =
+                      it.sellingPrice ??
+                      it.unitPrice ??
+                      (it.quantity > 0 ? (it.lineTotal || 0) / it.quantity : 0);
+                    return (
+                      <div key={idx} className="py-1.5 flex justify-between text-xs">
+                        <div>
+                          <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                            {it.itemName}
+                          </span>
+                          <div className="text-[11px] text-neutral-400 font-mono">
+                            Qty: {it.quantity}{it.unit ? ` ${it.unit}` : ''} × {fmtCurr(unitPrice)}
+                          </div>
                         </div>
+                        <span className="font-mono font-bold text-neutral-900 dark:text-neutral-100">
+                          {fmtCurr(it.lineTotal || it.quantity * unitPrice)}
+                        </span>
                       </div>
-                      <span className="font-mono font-bold text-neutral-900 dark:text-neutral-100">
-                        {fmtCurr(it.lineTotal || it.quantity * it.sellingPrice)}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -463,7 +473,13 @@ export default function CashierSalesHistory() {
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={() =>
+                  printThermalReceipt({
+                    businessName,
+                    sale: selectedSale,
+                    currencySymbol,
+                  })
+                }
                 className="btn-secondary px-4 py-2 text-xs flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

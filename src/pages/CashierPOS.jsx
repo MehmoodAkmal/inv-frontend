@@ -11,6 +11,7 @@ import Modal from '../components/ui/Modal';
 import Spinner from '../components/ui/Spinner';
 import { useCurrency, formatCurrency } from '../utils/currency';
 import { useAuth } from '../context/AuthContext';
+import { printThermalReceipt } from '../utils/printReceipt';
 
 // ── Currency / Number formatting ─────────────────────────────────────────────
 const fmt = (n) =>
@@ -1161,15 +1162,23 @@ export default function CashierPOS() {
               <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Items Sold</p>
             </div>
             <div className="divide-y divide-neutral-100 dark:divide-neutral-800 max-h-40 overflow-y-auto">
-              {lastSale?.lineItems?.map((it, idx) => (
-                <div key={idx} className="flex justify-between items-center px-3 py-2 text-xs bg-white dark:bg-neutral-900">
-                  <div className="min-w-0 flex-1">
-                    <span className="font-semibold text-neutral-800 dark:text-neutral-200 block truncate">{it.itemName}</span>
-                    <span className="text-neutral-400">{it.quantity} × {fmtCurr(it.sellingPrice ?? it.unitPrice)}</span>
+              {lastSale?.lineItems?.map((it, idx) => {
+                const unitPrice =
+                  it.sellingPrice ??
+                  it.unitPrice ??
+                  (it.quantity > 0 ? (it.lineTotal || 0) / it.quantity : 0);
+                return (
+                  <div key={idx} className="flex justify-between items-center px-3 py-2 text-xs bg-white dark:bg-neutral-900">
+                    <div className="min-w-0 flex-1">
+                      <span className="font-semibold text-neutral-800 dark:text-neutral-200 block truncate">{it.itemName}</span>
+                      <span className="text-neutral-400 font-mono text-[11px]">
+                        Qty: {it.quantity}{it.unit ? ` ${it.unit}` : ''} × {fmtCurr(unitPrice)}
+                      </span>
+                    </div>
+                    <span className="font-mono font-bold text-neutral-900 dark:text-white ml-3 shrink-0">{fmtCurr(it.lineTotal)}</span>
                   </div>
-                  <span className="font-mono font-bold text-neutral-900 dark:text-white ml-3 shrink-0">{fmtCurr(it.lineTotal)}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
             {/* Total row */}
             <div className="flex justify-between items-center px-3 py-2.5 bg-neutral-50 dark:bg-neutral-800/80 border-t border-neutral-200 dark:border-neutral-800">
@@ -1183,35 +1192,11 @@ export default function CashierPOS() {
             <button
               type="button"
               onClick={() => {
-                const receiptEl = document.getElementById('pos-receipt-print');
-                if (!receiptEl) return;
-                const printWin = window.open('', '_blank', 'width=400,height=600');
-                printWin.document.write(`<!DOCTYPE html><html><head><title>Receipt</title><style>
-                  * { margin: 0; padding: 0; box-sizing: border-box; }
-                  body { font-family: 'Courier New', monospace; font-size: 12px; color: #000; background: #fff; width: 80mm; margin: 0 auto; padding: 10px; }
-                  .receipt-header { text-align: center; margin-bottom: 12px; }
-                  .receipt-header h1 { font-size: 16px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
-                  .receipt-header p { font-size: 11px; color: #555; margin-top: 2px; }
-                  .divider { border: none; border-top: 1px dashed #999; margin: 10px 0; }
-                  .divider-solid { border: none; border-top: 1px solid #000; margin: 10px 0; }
-                  .badge { display: inline-block; border: 1px solid #000; padding: 2px 8px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border-radius: 3px; }
-                  .items-table { width: 100%; }
-                  .items-table .item-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-                  .items-table .item-name { flex: 1; }
-                  .items-table .item-qty { width: 30px; text-align: center; }
-                  .items-table .item-price { width: 60px; text-align: right; }
-                  .totals { margin-top: 5px; }
-                  .totals .row { display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 12px; }
-                  .totals .total-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: 900; margin-top: 6px; border-top: 1px solid #000; padding-top: 6px; }
-                  .change-box { border: 1px solid #000; text-align: center; padding: 8px; margin-top: 10px; }
-                  .change-box .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
-                  .change-box .amount { font-size: 20px; font-weight: 900; }
-                  .footer { text-align: center; margin-top: 14px; font-size: 10px; color: #555; }
-                  @media print { body { width: 80mm; } }
-                </style></head><body>${receiptEl.innerHTML}</body></html>`);
-                printWin.document.close();
-                printWin.focus();
-                setTimeout(() => { printWin.print(); printWin.close(); }, 300);
+                printThermalReceipt({
+                  businessName,
+                  sale: lastSale,
+                  currencySymbol,
+                });
               }}
               className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-xs font-bold transition-all active:scale-95"
             >
@@ -1261,21 +1246,33 @@ export default function CashierPOS() {
 
           <hr className="divider" />
 
-          {/* Items */}
-          <div className="items-table">
-            <div className="item-row" style={{ fontWeight: 'bold', borderBottom: '1px solid #000', paddingBottom: '4px', marginBottom: '6px', fontSize: '11px' }}>
-              <span className="item-name">Item</span>
-              <span className="item-qty">Qty</span>
-              <span className="item-price">Total</span>
-            </div>
-            {lastSale.lineItems?.map((it, idx) => (
-              <div key={idx} className="item-row">
-                <span className="item-name" style={{ wordBreak: 'break-word', paddingRight: '4px' }}>{it.itemName}</span>
-                <span className="item-qty">{it.quantity}</span>
-                <span className="item-price">{currencySymbol} {Number(it.lineTotal).toFixed(2)}</span>
-              </div>
-            ))}
-          </div>
+          {/* Items Table with explicit Unit Price column */}
+          <table className="receipt-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #000', fontSize: '10px' }}>
+                <th style={{ textAlign: 'left', padding: '4px 1px' }}>Item</th>
+                <th style={{ textAlign: 'center', padding: '4px 2px', whiteSpace: 'nowrap' }}>Qty</th>
+                <th style={{ textAlign: 'right', padding: '4px 2px', whiteSpace: 'nowrap' }}>Unit Price</th>
+                <th style={{ textAlign: 'right', padding: '4px 1px', whiteSpace: 'nowrap' }}>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lastSale.lineItems?.map((it, idx) => {
+                const unitPrice =
+                  it.sellingPrice ??
+                  it.unitPrice ??
+                  (it.quantity > 0 ? (it.lineTotal || 0) / it.quantity : 0);
+                return (
+                  <tr key={idx} style={{ fontSize: '11px', verticalAlign: 'top' }}>
+                    <td style={{ textAlign: 'left', wordBreak: 'break-word', padding: '4px 1px' }}>{it.itemName}</td>
+                    <td style={{ textAlign: 'center', whiteSpace: 'nowrap', padding: '4px 2px' }}>{it.quantity}{it.unit ? ` ${it.unit}` : ''}</td>
+                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap', padding: '4px 2px' }}>{formatCurrency(unitPrice, currencySymbol)}</td>
+                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap', padding: '4px 1px', fontWeight: 'bold' }}>{formatCurrency(it.lineTotal, currencySymbol)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
 
           <hr className="divider-solid" />
 
@@ -1284,23 +1281,23 @@ export default function CashierPOS() {
             {lastSale.discount > 0 && (
               <div className="row">
                 <span>Discount</span>
-                <span>- {currencySymbol} {Number(lastSale.discount).toFixed(2)}</span>
+                <span>- {formatCurrency(lastSale.discount, currencySymbol)}</span>
               </div>
             )}
             <div className="total-row">
               <span>TOTAL</span>
-              <span>{currencySymbol} {Number(lastSale.totalAmount).toFixed(2)}</span>
+              <span>{formatCurrency(lastSale.totalAmount, currencySymbol)}</span>
             </div>
             {lastSale.paymentType === 'cash' && (
               <>
                 <div className="row" style={{ marginTop: '4px' }}>
                   <span>Cash Given</span>
-                  <span>{currencySymbol} {Number(lastSale.tenderedCash).toFixed(2)}</span>
+                  <span>{formatCurrency(lastSale.tenderedCash ?? lastSale.totalAmount, currencySymbol)}</span>
                 </div>
-                {lastSale.changeDue > 0 && (
+                {(lastSale.changeDue ?? 0) > 0 && (
                   <div className="change-box">
                     <div className="label">Change Due</div>
-                    <div className="amount">{currencySymbol} {Number(lastSale.changeDue).toFixed(2)}</div>
+                    <div className="amount">{formatCurrency(lastSale.changeDue, currencySymbol)}</div>
                   </div>
                 )}
               </>
@@ -1308,7 +1305,7 @@ export default function CashierPOS() {
             {lastSale.paymentType === 'credit' && (
               <div className="row" style={{ marginTop: '4px', color: '#c00' }}>
                 <span>Balance Due</span>
-                <span>{currencySymbol} {Number(lastSale.balance ?? lastSale.totalAmount).toFixed(2)}</span>
+                <span>{formatCurrency(lastSale.balance ?? lastSale.totalAmount, currencySymbol)}</span>
               </div>
             )}
           </div>
