@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useCurrency } from '../utils/currency';
+import { exportToCsv } from '../utils/exportCsv';
 import { recordSalaryPayment, getSalaryPayments } from '../services/salaryService';
 import {
   getEmployees,
@@ -292,6 +293,37 @@ export default function SalaryPayroll() {
 
     return rows;
   }, [employees, payments, isManager, managerBranchId, selectedBranch, branches, statusFilter, searchEmployee]);
+
+  const handleExportPayroll = () => {
+    if (!payrollRows || payrollRows.length === 0) {
+      toast.error('No payroll records to export for this period.');
+      return;
+    }
+    const headers = [
+      'Employee Name',
+      'Designation',
+      'Branch',
+      'Agreed Base Salary',
+      'Amount Paid',
+      'Balance Remaining',
+      'Status',
+      'Payment Method',
+      'Payment Date',
+    ];
+    const rows = payrollRows.map((r) => [
+      r.employeeName,
+      r.designation || 'Staff',
+      r.branchName || '—',
+      r.monthlySalary || 0,
+      r.amountPaid || 0,
+      r.balanceRemaining || 0,
+      r.status ? r.status.toUpperCase() : 'PENDING',
+      r.paymentRecord?.paymentMethod || '—',
+      r.paymentRecord?.paymentDate ? new Date(r.paymentRecord.paymentDate).toLocaleDateString() : '—',
+    ]);
+    exportToCsv(`payroll-${selectedMonth || 'period'}.csv`, { headers, rows });
+    toast.success('Payroll exported successfully');
+  };
 
   // ── 5. Derived StatCards Calculations ─────────────────────────────────────
   const statMetrics = useMemo(() => {
@@ -756,6 +788,21 @@ export default function SalaryPayroll() {
 
           {/* Quick Header Actions */}
           <div className="flex items-center gap-2.5">
+            {activeTab === 'payroll' && (
+              <button
+                type="button"
+                onClick={handleExportPayroll}
+                disabled={loading || payrollRows.length === 0}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-semibold bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-all shadow-sm disabled:opacity-50"
+                title="Export current payroll to CSV"
+              >
+                <svg className="w-4 h-4 text-brand-700 dark:text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Export Payroll</span>
+              </button>
+            )}
+
             {isAdmin && activeTab === 'employees' && (
               <button
                 type="button"

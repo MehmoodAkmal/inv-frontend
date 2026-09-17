@@ -364,3 +364,26 @@ input:-webkit-autofill:active {
   caret-color: #7fd4a8 !important;
   transition: background-color 9999s ease-in-out 0s;
 }
+
+/* ── Global Print Styles ───────────────────────────────────────────── */
+@media print {
+  aside,
+  nav,
+  header,
+  .no-print,
+  [data-no-print="true"] {
+    display: none !important;
+  }
+  body,
+  main {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .card,
+  .rounded-card {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+  }
+}

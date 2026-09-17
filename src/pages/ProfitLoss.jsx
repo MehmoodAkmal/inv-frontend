@@ -16,6 +16,7 @@ import { StatCard, Badge, DataTable, DashboardLayout } from '../components/ui';
 import InfoTooltip from '../components/ui/InfoTooltip';
 import { useAuth } from '../context/AuthContext';
 import { useCurrency, getCurrencySymbol, formatCurrency } from '../utils/currency';
+import { exportToCsv } from '../utils/exportCsv';
 import { getProfitLoss } from '../services/reportService';
 import { getBranches } from '../services/branchService';
 import { getExpenses } from '../services/expenseService';
@@ -271,6 +272,31 @@ export default function ProfitLoss() {
 
   const d = data ?? {};
 
+  const handleExportReport = () => {
+    if (!data) return;
+    const headers = ['Financial Metric', 'Amount', 'Description'];
+    const rows = [
+      ['Revenue', d.revenue || 0, 'Total sales revenue for the period'],
+      ['Cost of Goods Sold (COGS)', d.cogs || 0, 'Direct cost of inventory sold'],
+      ['Gross Profit', d.grossProfit || 0, 'Revenue minus Cost of Goods Sold'],
+      ['Operating Expenses', d.expenses || 0, 'Operational expenses (rent, utilities, etc.)'],
+      ['Salaries & Payroll', d.salaries || 0, 'Total employee salaries paid/recorded'],
+      ['Net Profit', d.netProfit || 0, 'Final net profit/loss after all costs'],
+      ['', '', ''],
+      ['EXPENSE BREAKDOWN', '', ''],
+      ['Category', 'Amount', '% of Revenue'],
+      ...(d.expenseBreakdown || []).map((e) => [
+        EXPENSE_CATEGORY_LABELS[e.category] || e.category,
+        e.amount,
+        `${(e.pctRevenue ?? 0).toFixed(1)}%`,
+      ]),
+    ];
+    exportToCsv(`profit-loss-${preset}-${new Date().toISOString().slice(0, 10)}.csv`, {
+      headers,
+      rows,
+    });
+  };
+
   // ── Expense breakdown table columns ───────────────────────────────────────
   const expCols = [
     {
@@ -366,6 +392,20 @@ export default function ProfitLoss() {
               <button className={presetBtn('last3months')} onClick={() => setPreset('last3months')}>3 Months</button>
               <button className={presetBtn('custom')}      onClick={() => setPreset('custom')}>Custom</button>
             </div>
+
+            {/* Download CSV Report */}
+            <button
+              type="button"
+              onClick={handleExportReport}
+              disabled={loading || !data}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-neutral-200 dark:border-neutral-700 rounded-md bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors shadow-sm disabled:opacity-50"
+              title="Download Profit & Loss report as CSV"
+            >
+              <svg className="w-4 h-4 text-brand-700 dark:text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Download Report</span>
+            </button>
 
             {/* Admin branch selector */}
             {isAdmin && (
