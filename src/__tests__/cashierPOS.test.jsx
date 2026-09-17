@@ -446,6 +446,8 @@ describe('Cashier Sales History & Stock Lookup Views', () => {
 
     // Check table content
     expect(screen.getByText('Counter Sale')).toBeDefined();
+    expect(screen.getByText('1 item')).toBeDefined();
+    expect(screen.getByText('(1 SKU)')).toBeDefined();
     expect(screen.getByText('View')).toBeDefined();
 
     // Open receipt modal

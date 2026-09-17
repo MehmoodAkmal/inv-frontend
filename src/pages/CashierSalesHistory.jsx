@@ -93,13 +93,16 @@ export default function CashierSalesHistory() {
       // Payment Type
       if (paymentFilter && s.paymentType !== paymentFilter) return false;
 
-      // Search Query (invoice number, note, or customer name)
+      // Search Query (invoice number, note, customer name, or product name)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const ref = (s._id || '').toLowerCase();
         const note = (s.note || '').toLowerCase();
         const cust = (s.customerId?.name || '').toLowerCase();
-        if (!ref.includes(q) && !note.includes(q) && !cust.includes(q)) {
+        const itemNames = (s.items || s.lineItems || [])
+          .map((it) => it.itemName?.toLowerCase())
+          .join(' ');
+        if (!ref.includes(q) && !note.includes(q) && !cust.includes(q) && !itemNames.includes(q)) {
           return false;
         }
       }
@@ -189,15 +192,18 @@ export default function CashierSalesHistory() {
     {
       key: 'items',
       label: 'Items Sold',
-      render: (itemsList = []) => {
-        const totalItems = itemsList.reduce((sum, it) => sum + (it.quantity || 1), 0);
+      render: (itemsList = [], row) => {
+        const list = Array.isArray(itemsList) && itemsList.length > 0
+          ? itemsList
+          : (Array.isArray(row?.items) ? row.items : (Array.isArray(row?.lineItems) ? row.lineItems : []));
+        const totalItems = list.reduce((sum, it) => sum + (Number(it.quantity) || 1), 0);
         return (
           <div className="text-xs">
             <span className="font-semibold text-neutral-800 dark:text-neutral-200">
               {totalItems} item{totalItems === 1 ? '' : 's'}
             </span>
             <span className="text-[11px] text-neutral-400 ml-1">
-              ({itemsList.length} SKU{itemsList.length === 1 ? '' : 's'})
+              ({list.length} SKU{list.length === 1 ? '' : 's'})
             </span>
           </div>
         );
