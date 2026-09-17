@@ -315,7 +315,7 @@ export default function CustomerLedgers() {
           to={`/customers/${row._id}/ledger`}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-brand-50 dark:bg-brand-900/40 text-brand-800 dark:text-brand-accent border border-brand-200/60 dark:border-brand-700/50 hover:bg-brand-100 dark:hover:bg-brand-900/70 transition-colors shadow-sm"
         >
-          <span>View Ledger</span>
+          <span>View History</span>
           <svg
             className="w-3.5 h-3.5"
             fill="none"
@@ -337,14 +337,14 @@ export default function CustomerLedgers() {
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
-                Customer Ledgers
+                Money Owed to Me
               </h1>
               <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-brand-50 text-brand-800 dark:bg-brand-900/60 dark:text-brand-accent border border-brand-200/60 dark:border-brand-700/50">
-                Accounts Receivable
+                Credit Tracking
               </span>
             </div>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-              Track customer credit accounts, overdue aging, and complete chronological statement history.
+              See how much each customer owes you and their full payment history.
             </p>
           </div>
 

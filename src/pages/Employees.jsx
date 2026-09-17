@@ -327,21 +327,16 @@ export default function Employees() {
             <Spinner size="lg" className="text-primary-600" />
           </div>
         ) : employees.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <svg
-              className="w-10 h-10 mx-auto mb-3 opacity-40"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
-            <p className="text-sm">No employees found.</p>
+          <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-brand-50 dark:bg-brand-950/40 border border-brand-200/60 dark:border-brand-800/50 text-brand-700 dark:text-brand-accent flex items-center justify-center mb-4 shadow-sm">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-200 mb-1">No employees added yet</h3>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-xs leading-relaxed">
+              Add your employees here to manage their records and process salary payments.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">

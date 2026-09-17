@@ -345,7 +345,7 @@ export default function Signup() {
                 htmlFor="organizationName"
                 className="block text-[11px] font-bold uppercase tracking-wider text-neutral-300 mb-1.5"
               >
-                Organization name
+                Your Business Name
               </label>
               <div className="relative">
                 <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">

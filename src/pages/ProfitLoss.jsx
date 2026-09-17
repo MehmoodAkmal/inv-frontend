@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 
 import { StatCard, Badge, DataTable, DashboardLayout } from '../components/ui';
+import InfoTooltip from '../components/ui/InfoTooltip';
 import { useAuth } from '../context/AuthContext';
 import { useCurrency, getCurrencySymbol, formatCurrency } from '../utils/currency';
 import { getProfitLoss } from '../services/reportService';
@@ -436,7 +437,12 @@ export default function ProfitLoss() {
 
             {/* Total COGS */}
             <StatCard
-              label="Cost of Goods Sold"
+              label={
+                <span className="flex items-center gap-1">
+                  Cost of Goods Sold
+                  <InfoTooltip text="The total cost to buy or produce the items you sold. Revenue minus this = Gross Profit." />
+                </span>
+              }
               value={fmtCurr(d.totalCOGS)}
               icon={<IconCOGS />}
               accentColor="danger"
@@ -448,7 +454,12 @@ export default function ProfitLoss() {
 
             {/* Gross Profit */}
             <StatCard
-              label="Gross Profit"
+              label={
+                <span className="flex items-center gap-1">
+                  Gross Profit
+                  <InfoTooltip text="Revenue minus Cost of Goods Sold. This is your profit before deducting expenses and salaries." />
+                </span>
+              }
               value={fmtCurr(d.grossProfit)}
               icon={<IconGrossProfit />}
               accentColor={d.grossProfit >= 0 ? 'success' : 'danger'}
@@ -472,10 +483,11 @@ export default function ProfitLoss() {
                   <IconNetProfit />
                 </div>
               </div>
-              <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${
+              <p className={`text-xs font-semibold uppercase tracking-widest mb-1 flex items-center gap-1 ${
                 d.netProfit >= 0 ? 'text-brand-accent/70' : 'text-danger-400/70'
               }`}>
                 Net Profit
+                <InfoTooltip text="Your final profit after all costs: Cost of Goods + Expenses + Salaries subtracted from Revenue." />
               </p>
               <p className={`font-bold text-2xl font-mono truncate mt-1 ${
                 d.netProfit >= 0 ? 'text-white' : 'text-danger-300'

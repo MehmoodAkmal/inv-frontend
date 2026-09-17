@@ -197,7 +197,7 @@ function PurchaseKpiBar({ branchId, refreshTrigger }) {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-              Active FIFO Batches
+              Open Stock Batches
             </p>
             <div className="mt-1.5 flex items-baseline gap-2">
               <span className="font-mono text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
@@ -338,7 +338,7 @@ function DigitalGrnVoucher({
         <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800"></div>
         <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800"></div>
         <div className="text-center text-[10px] font-mono tracking-widest text-neutral-400 uppercase">
-          ✦ FIFO Batch Intake Verification ✦
+          ✦ Stock Intake Summary ✦
         </div>
       </div>
 
@@ -402,7 +402,7 @@ function DigitalGrnVoucher({
                 </div>
 
                 <div className="text-right shrink-0">
-                  <span className="text-[10px] uppercase font-semibold text-neutral-400 block">Batch Code</span>
+                  <span className="text-[10px] uppercase font-semibold text-neutral-400 block">Lot Code</span>
                   <span className="font-mono text-xs font-bold text-brand-800 dark:text-brand-accent bg-brand-50 dark:bg-brand-950/60 px-2 py-0.5 rounded border border-brand-200 dark:border-brand-800 block mt-0.5">
                     {batchNumber || 'AUTO-ASSIGN'}
                   </span>
@@ -420,7 +420,7 @@ function DigitalGrnVoucher({
             {/* Financial Breakdown Table */}
             <div className="rounded-xl border border-neutral-200/80 dark:border-neutral-800 overflow-hidden divide-y divide-neutral-100 dark:divide-neutral-800 text-xs">
               <div className="flex items-center justify-between p-2.5 bg-white dark:bg-neutral-900">
-                <span className="text-neutral-500 dark:text-neutral-400">Inflow Quantity</span>
+                <span className="text-neutral-500 dark:text-neutral-400">Items Received</span>
                 <span className="font-mono font-bold text-neutral-900 dark:text-white">
                   {addedQty > 0 ? `${fmt(addedQty)} ${selectedItem.unit || 'units'}` : '—'}
                 </span>
@@ -889,7 +889,7 @@ export function PurchaseEntryForm({
           <div>
             <div className="flex items-center justify-between h-5 mb-1.5">
               <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-                Batch Number / Lot Code
+                Delivery / Lot Code
               </label>
               <button
                 type="button"
@@ -938,7 +938,7 @@ export function PurchaseEntryForm({
               3
             </span>
             <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-800 dark:text-neutral-200">
-              FIFO Lot Financials & Pricing
+              Pricing &amp; Cost Breakdown
             </h3>
           </div>
           <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
@@ -1428,7 +1428,7 @@ export default function PurchaseEntry() {
                 Purchase Entry
               </h1>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                FIFO Batch Intake
+                Stock Intake
               </span>
             </div>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
