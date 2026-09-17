@@ -1,5 +1,4 @@
-import { forwardRef } from "react";
-import { useState } from "react";
+import { forwardRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 export const SharedModal = forwardRef(
