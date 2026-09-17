@@ -304,10 +304,14 @@ export default function CashierPOS() {
     }
     setCreatingCustomer(true);
     try {
+      const cashierBranchId =
+        (typeof user?.branchId === 'object' ? user.branchId?._id : user?.branchId) || undefined;
+
       const res = await createCustomer({
         name: newCustomerForm.name.trim(),
         phone: newCustomerForm.phone.trim() || undefined,
         address: newCustomerForm.address.trim() || undefined,
+        branchId: cashierBranchId,
       });
       if (res.data?.success) {
         const created = res.data.data;
