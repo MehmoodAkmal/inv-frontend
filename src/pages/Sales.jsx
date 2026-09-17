@@ -9,6 +9,7 @@ import { getItems } from '../services/itemService';
 import api from '../services/api';
 import Modal from '../components/ui/Modal';
 import Spinner from '../components/ui/Spinner';
+import SkeletonRow from '../components/ui/SkeletonRow';
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 const fmt = (n) => Number(n ?? 0).toFixed(2);
@@ -747,8 +748,24 @@ export default function Sales() {
       {/* Table */}
       <div className="card overflow-hidden">
         {loading ? (
-          <div className="flex justify-center py-16">
-            <Spinner size="lg" className="text-primary-600" />
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  {['Date', 'Customer', 'Type', 'Total', 'Paid', 'Balance Due', 'By', ''].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                      >
+                        {h}
+                      </th>
+                    )
+                  )}
+                </tr>
+              </thead>
+              <SkeletonRow cols={8} count={6} />
+            </table>
           </div>
         ) : sales.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">

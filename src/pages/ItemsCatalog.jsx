@@ -20,6 +20,8 @@ import {
   CustomSelect,
   Spinner,
   Input,
+  SkeletonRow,
+  SkeletonCard,
 } from '../components/ui';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -657,7 +659,10 @@ export default function ItemsCatalog() {
         </div>
 
         {/* ── Summary StatCards ───────────────────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {loading ? (
+          <SkeletonCard count={3} className="grid grid-cols-1 sm:grid-cols-3 gap-4" />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
             label="Total Products Tracked"
             value={fmt(stats.totalItems)}
@@ -713,6 +718,7 @@ export default function ItemsCatalog() {
             ]}
           />
         </div>
+        )}
 
         {/* ── Category Filter Horizontal Pill Tabs ────────────────────── */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
@@ -828,10 +834,39 @@ export default function ItemsCatalog() {
 
         {/* ── Content View: Grid or Table ─────────────────────────────── */}
         {loading ? (
-          <div className="py-16 flex flex-col items-center justify-center">
-            <Spinner size="lg" className="text-brand-800 dark:text-brand-accent" />
-            <span className="text-xs text-neutral-400 mt-2">Loading catalog items…</span>
-          </div>
+          viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-pulse">
+              {Array.from({ length: 8 }).map((_, idx) => (
+                <div key={idx} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-4 shadow-card">
+                  <div className="flex justify-between mb-3">
+                    <div className="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-16" />
+                    <div className="w-5 h-5 bg-neutral-100 dark:bg-neutral-800 rounded" />
+                  </div>
+                  <div className="h-5 bg-neutral-200 dark:bg-neutral-800 rounded w-3/4 mb-2" />
+                  <div className="h-3 bg-neutral-100 dark:bg-neutral-800 rounded w-20 mb-4" />
+                  <div className="h-12 bg-neutral-50 dark:bg-neutral-800/60 rounded mb-3" />
+                  <div className="h-6 bg-neutral-100 dark:bg-neutral-800 rounded w-24" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-6 shadow-card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800">
+                  <thead className="bg-neutral-50 dark:bg-neutral-800/60">
+                    <tr>
+                      {['Item Name', 'Category', 'Unit', 'Cost Price', 'Selling Price', 'Margin', 'Actions'].map((h) => (
+                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <SkeletonRow cols={7} count={8} />
+                </table>
+              </div>
+            </div>
+          )
         ) : filteredItems.length === 0 ? (
           <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-12 text-center shadow-card">
             <div className="w-12 h-12 rounded-full bg-brand-50 dark:bg-brand-900/40 text-brand-800 dark:text-brand-accent flex items-center justify-center mx-auto mb-3">

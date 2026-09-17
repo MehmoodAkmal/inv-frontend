@@ -15,6 +15,7 @@ import {
   Modal,
   CustomSelect,
   Spinner,
+  SkeletonCard,
 } from '../components/ui';
 
 import { PurchaseEntryForm } from './PurchaseEntry';
@@ -491,7 +492,10 @@ export default function StockInventory() {
         </div>
 
         {/* ── Summary StatCards ───────────────────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {loading ? (
+          <SkeletonCard count={4} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label="Total SKUs"
             value={fmt(statMetrics.totalSKUs)}
@@ -564,6 +568,7 @@ export default function StockInventory() {
             ]}
           />
         </div>
+      )}
 
         {/* ── Filters Bar ─────────────────────────────────────────────── */}
         <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-4 shadow-card">
