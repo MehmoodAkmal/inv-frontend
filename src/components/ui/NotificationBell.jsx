@@ -136,15 +136,15 @@ export default function NotificationBell({ count: propCount, items: propItems })
         {/* Dynamic Notification Badge */}
         {count > 0 && (
           <span
-            className={`absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold leading-none tabular-nums flex items-center justify-center text-center text-white ring-2 ring-white dark:ring-neutral-900 shadow-xs pointer-events-none select-none transition-colors ${
+            className={`absolute -top-1 -right-1 h-[18px] ${
+              count > 9 ? 'min-w-[18px] px-1.5' : 'w-[18px]'
+            } rounded-full text-[10px] font-sans font-bold leading-none grid place-items-center text-center text-white ring-2 ring-white dark:ring-neutral-900 shadow-xs pointer-events-none select-none transition-colors ${
               hasViewed
                 ? 'bg-amber-500'
                 : 'bg-rose-500 animate-pulse'
             }`}
           >
-            <span className="inline-flex items-center justify-center leading-none -translate-y-px">
-              {count > 99 ? '99+' : count}
-            </span>
+            {count > 99 ? '99+' : count}
           </span>
         )}
       </button>
