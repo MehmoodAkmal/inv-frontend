@@ -750,6 +750,7 @@ export default function Sales() {
           <div className="flex justify-center py-16">
             <Spinner size="lg" className="text-primary-600" />
           </div>
+        ) : sales.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
             <div className="w-16 h-16 rounded-2xl bg-brand-50 dark:bg-brand-950/40 border border-brand-200/60 dark:border-brand-800/50 text-brand-700 dark:text-brand-accent flex items-center justify-center mb-4 shadow-sm">
               <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
