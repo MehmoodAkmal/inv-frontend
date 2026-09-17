@@ -417,9 +417,9 @@ export default function CashierPOS() {
 
   return (
     <MinimalLayout>
-      <div className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row h-full min-h-0 overflow-hidden">
         {/* ── LEFT / MAIN: Product Search, Category Tabs, Touch Item Grid ───── */}
-        <div className="flex-1 flex flex-col min-w-0 bg-neutral-100/60 dark:bg-neutral-950 p-3 sm:p-4 overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0 h-full min-h-0 bg-neutral-100/60 dark:bg-neutral-950 p-3 sm:p-4 overflow-hidden">
           {/* Top Search & Barcode Scan Bar */}
           <div className="mb-3 shrink-0">
             <div className="relative">
@@ -500,7 +500,7 @@ export default function CashierPOS() {
           </div>
 
           {/* Touch-Friendly Item Grid */}
-          <div className="flex-1 overflow-y-auto pr-1">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1">
             {loading ? (
               <div className="h-64 flex flex-col items-center justify-center gap-3">
                 <Spinner size="lg" />
@@ -631,7 +631,7 @@ export default function CashierPOS() {
         {/* ── RIGHT: Responsive Cart & Checkout Panel ───────────────────────── */}
         {/* On desktop: fixed right sidebar (w-96 to w-[420px]). On mobile: bottom sheet modal drawer */}
         <div
-          className={`fixed inset-0 z-50 lg:relative lg:inset-auto lg:z-0 flex flex-col w-full lg:w-[420px] 2xl:w-[460px] bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 shadow-xl lg:shadow-none transition-transform duration-200 ${
+          className={`fixed inset-0 z-50 lg:relative lg:inset-auto lg:z-0 flex flex-col w-full lg:w-[420px] 2xl:w-[460px] h-full max-h-full min-h-0 overflow-hidden bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 shadow-xl lg:shadow-none transition-transform duration-200 ${
             mobileCartOpen ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'
           }`}
         >
@@ -675,7 +675,7 @@ export default function CashierPOS() {
           </div>
 
           {/* Cart Items Scroll Area */}
-          <div className="flex-1 overflow-y-auto p-3 sm:p-4 divide-y divide-neutral-100 dark:divide-neutral-800/80">
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 divide-y divide-neutral-100 dark:divide-neutral-800/80 overscroll-contain">
             {cart.length === 0 ? (
               <div className="h-full min-h-[220px] flex flex-col items-center justify-center text-center p-6">
                 <div className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800/80 text-neutral-300 dark:text-neutral-600 flex items-center justify-center mb-3">

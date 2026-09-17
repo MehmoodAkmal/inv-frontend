@@ -68,11 +68,17 @@ export default function MinimalLayout({ children }) {
     (user?.firstName ? user.firstName[0] : 'C') +
     (user?.lastName ? user.lastName[0] : 'S');
 
+  const isPosRegister = location.pathname === '/pos';
+
   return (
     <MinimalLayoutContext.Provider value={true}>
-      <div className="flex flex-col min-h-screen bg-neutral-100/70 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 antialiased font-sans">
+      <div
+        className={`flex flex-col ${
+          isPosRegister ? 'h-screen max-h-screen overflow-hidden' : 'min-h-screen'
+        } bg-neutral-100/70 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 antialiased font-sans`}
+      >
         {/* ── Top Header Bar ───────────────────────────────────────────── */}
-        <header className="sticky top-0 z-40 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 shadow-xs">
+        <header className="sticky top-0 z-40 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 shadow-xs shrink-0">
           <div className="max-w-[1700px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
             {/* Left: Brand / Terminal Station */}
             <div className="flex items-center gap-3 shrink-0">
@@ -184,7 +190,7 @@ export default function MinimalLayout({ children }) {
         </header>
 
         {/* ── Main View Area ───────────────────────────────────────────── */}
-        <main className="flex-1 flex flex-col w-full max-w-[1700px] mx-auto overflow-hidden">
+        <main className="flex-1 flex flex-col w-full max-w-[1700px] mx-auto min-h-0 overflow-hidden">
           <Suspense
             fallback={
               <div className="flex flex-col items-center justify-center flex-1 py-28 gap-3">
