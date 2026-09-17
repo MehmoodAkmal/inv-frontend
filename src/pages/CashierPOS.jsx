@@ -51,7 +51,7 @@ export default function CashierPOS() {
   const [customerSearch, setCustomerSearch] = useState('');
   const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false);
   const [tenderedCash, setTenderedCash] = useState(''); // what customer handed the cashier
-  const [partialCreditPaid, setPartialCreditPaid] = useState(0); // optional deposit on credit sale
+  const [partialCreditPaid, setPartialCreditPaid] = useState(''); // optional deposit on credit sale
   const [saleNote, setSaleNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -136,6 +136,18 @@ export default function CashierPOS() {
     return round2(Math.max(0, cashGiven - totalAmount));
   }, [paymentType, cashGiven, totalAmount]);
 
+  // Partial payment calculations for Credit
+  const numericPartialPaid = useMemo(() => {
+    if (paymentType !== 'credit') return 0;
+    const val = parseFloat(partialCreditPaid);
+    return isNaN(val) || val < 0 ? 0 : round2(val);
+  }, [paymentType, partialCreditPaid]);
+
+  const creditBalanceDue = useMemo(() => {
+    if (paymentType !== 'credit') return 0;
+    return round2(Math.max(0, totalAmount - numericPartialPaid));
+  }, [paymentType, totalAmount, numericPartialPaid]);
+
   // ── Add Item to Cart ───────────────────────────────────────────────────────
   const handleAddToCart = useCallback(
     (item) => {
@@ -213,7 +225,7 @@ export default function CashierPOS() {
     setDiscount(0);
     setDiscountPercent(0);
     setTenderedCash('');
-    setPartialCreditPaid(0);
+    setPartialCreditPaid('');
     setSaleNote('');
     toast('Cart cleared', { icon: '🗑️' });
   };
@@ -317,8 +329,16 @@ export default function CashierPOS() {
   // ── Validation Rules ───────────────────────────────────────────────────────
   const validationError = useMemo(() => {
     if (cart.length === 0) return 'Add at least one item to cart';
-    if (paymentType === 'credit' && !selectedCustomerId) {
-      return 'Please select a customer for credit sales';
+    if (paymentType === 'credit') {
+      if (!selectedCustomerId) {
+        return 'Please select a customer for credit sales';
+      }
+      if (Number(partialCreditPaid) < 0) {
+        return 'Paid upfront amount cannot be negative';
+      }
+      if (numericPartialPaid > totalAmount) {
+        return `Paid upfront amount (${fmtCurr(numericPartialPaid)}) cannot exceed total sale (${fmtCurr(totalAmount)})`;
+      }
     }
     for (const line of cart) {
       const liveStock = stockMap[line.itemId] ?? 0;
@@ -327,7 +347,7 @@ export default function CashierPOS() {
       }
     }
     return null;
-  }, [cart, paymentType, selectedCustomerId, stockMap]);
+  }, [cart, paymentType, selectedCustomerId, partialCreditPaid, numericPartialPaid, totalAmount, stockMap]);
 
   // ── Complete Sale Execution (POST /sales) ──────────────────────────────────
   const handleCompleteSale = async () => {
@@ -344,7 +364,7 @@ export default function CashierPOS() {
       const finalAmountPaid =
         paymentType === 'cash'
           ? totalAmount
-          : round2(Math.min(Number(partialCreditPaid) || 0, totalAmount));
+          : round2(Math.min(numericPartialPaid, totalAmount));
 
       const payload = {
         paymentType,
@@ -381,6 +401,9 @@ export default function CashierPOS() {
           lineItems: [...cart],
           tenderedCash: cashGiven,
           changeDue: paymentType === 'cash' ? changeDue : 0,
+          customerName: selectedCustomer?.name,
+          amountPaid: finalAmountPaid,
+          balanceDue: paymentType === 'credit' ? round2(totalAmount - finalAmountPaid) : 0,
         });
 
         setSuccessModalOpen(true);
@@ -391,7 +414,7 @@ export default function CashierPOS() {
         setDiscount(0);
         setDiscountPercent(0);
         setTenderedCash('');
-        setPartialCreditPaid(0);
+        setPartialCreditPaid('');
         setSaleNote('');
         setSelectedCustomerId('');
         setCustomerSearch('');
@@ -747,7 +770,7 @@ export default function CashierPOS() {
           </div>
 
           {/* ── Checkout & Totals Summary Area ─────────────────────────────── */}
-          <div className="p-4 bg-neutral-50 dark:bg-neutral-900/95 border-t border-neutral-200 dark:border-neutral-800 space-y-3.5 shrink-0">
+          <div className="p-4 bg-neutral-50 dark:bg-neutral-900/95 border-t border-neutral-200 dark:border-neutral-800 space-y-3.5 shrink-0 max-h-[72vh] overflow-y-auto">
             {/* Subtotal & Discount rows */}
             <div className="space-y-1.5 text-xs">
               <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400">
@@ -897,9 +920,9 @@ export default function CashierPOS() {
               </div>
             )}
 
-            {/* Credit Customer Selector (when Credit selected) */}
+            {/* Credit Customer Selector & Partial Payment Options */}
             {paymentType === 'credit' && (
-              <div className="p-3 bg-brand-50/70 dark:bg-neutral-800/80 rounded-xl border border-brand-200/80 dark:border-neutral-700 space-y-2">
+              <div className="p-3 bg-brand-50/70 dark:bg-neutral-800/80 rounded-xl border border-brand-200/80 dark:border-neutral-700 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
                     Customer Account <span className="text-rose-500">*</span>
@@ -985,9 +1008,9 @@ export default function CashierPOS() {
                   )}
                 </div>
 
-                {/* Selected customer current balance warning if overdue */}
+                {/* Selected customer current balance */}
                 {selectedCustomer && (
-                  <div className="text-[11px] text-neutral-500 flex items-center justify-between pt-1">
+                  <div className="text-[11px] text-neutral-500 flex items-center justify-between pt-0.5">
                     <span>Current Outstanding:</span>
                     <span
                       className={`font-mono font-bold ${
@@ -1000,6 +1023,84 @@ export default function CashierPOS() {
                     </span>
                   </div>
                 )}
+
+                {/* ── Partial / Upfront Cash Deposit Section ────────── */}
+                <div className="pt-2.5 border-t border-brand-200/70 dark:border-neutral-700/80 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                      Cash Paid Upfront <span className="text-neutral-400 font-normal">(Optional)</span>
+                    </label>
+                    {/* Quick Preset Pills: Full Credit, 50% Half */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setPartialCreditPaid('0')}
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-all ${
+                          numericPartialPaid === 0
+                            ? 'bg-brand-800 text-brand-accent dark:bg-brand-accent dark:text-brand-950 shadow-2xs'
+                            : 'bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                        }`}
+                        title="Customer pays 0 cash now; full sale goes on credit"
+                      >
+                        Full Credit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPartialCreditPaid(String(round2(totalAmount / 2)))}
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-all ${
+                          totalAmount > 0 && numericPartialPaid === round2(totalAmount / 2)
+                            ? 'bg-brand-800 text-brand-accent dark:bg-brand-accent dark:text-brand-950 shadow-2xs'
+                            : 'bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                        }`}
+                        title="Customer pays 50% half now and remainder on credit"
+                      >
+                        50% Half
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Input field with currency prefix */}
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs text-neutral-400">
+                      {currencySymbol}
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      max={totalAmount}
+                      step="any"
+                      value={partialCreditPaid}
+                      onChange={(e) => setPartialCreditPaid(e.target.value)}
+                      placeholder="0.00 (Customer pays partial cash now)"
+                      style={{ paddingLeft: `${Math.max(28, currencySymbol.length * 8 + 16)}px` }}
+                      className="w-full pr-3 py-1.5 text-xs font-mono font-bold bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                    />
+                  </div>
+
+                  {/* Real-Time Balance Breakdown Pill */}
+                  <div className="bg-white/90 dark:bg-neutral-900/90 p-2 rounded-lg border border-neutral-200/80 dark:border-neutral-700/80 text-[11px] space-y-1">
+                    <div className="flex items-center justify-between text-neutral-600 dark:text-neutral-400">
+                      <span>Paid Upfront (Cash):</span>
+                      <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                        {fmtCurr(numericPartialPaid)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-neutral-600 dark:text-neutral-400">
+                      <span>Balance Added to Credit:</span>
+                      <span className="font-mono font-bold text-amber-600 dark:text-amber-400">
+                        {fmtCurr(creditBalanceDue)}
+                      </span>
+                    </div>
+                    {selectedCustomer && (
+                      <div className="flex items-center justify-between border-t border-neutral-100 dark:border-neutral-800 pt-1 text-neutral-700 dark:text-neutral-300 font-semibold">
+                        <span>New Customer Balance:</span>
+                        <span className="font-mono font-extrabold text-neutral-900 dark:text-white">
+                          {fmtCurr(selectedCustomer.currentBalance + creditBalanceDue)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1033,11 +1134,15 @@ export default function CashierPOS() {
                 </>
               ) : (
                 <>
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                   <span>
-                    Complete Sale • {fmtCurr(totalAmount)}
+                    {paymentType === 'cash'
+                      ? `Complete Sale • ${fmtCurr(totalAmount)}`
+                      : numericPartialPaid > 0
+                      ? `Complete Sale • Pay ${fmtCurr(numericPartialPaid)} & Credit ${fmtCurr(creditBalanceDue)}`
+                      : `Complete Sale • Credit ${fmtCurr(totalAmount)}`}
                   </span>
                 </>
               )}
@@ -1151,6 +1256,30 @@ export default function CashierPOS() {
               <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
                 <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+            </div>
+          )}
+
+          {/* Credit Sale Banner with Partial Payment Display */}
+          {lastSale?.paymentType === 'credit' && (
+            <div className="mx-1 mb-3 px-4 py-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                  {lastSale?.amountPaid > 0 ? 'Balance Added to Credit' : 'Total Added to Credit'}
+                </p>
+                <p className="font-mono text-2xl font-black text-amber-800 dark:text-amber-300">
+                  {fmtCurr(lastSale.balanceDue ?? (lastSale.totalAmount - (lastSale.amountPaid || 0)))}
+                </p>
+                {lastSale?.amountPaid > 0 && (
+                  <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mt-0.5">
+                    ✓ Paid upfront in cash: {fmtCurr(lastSale.amountPaid)}
+                  </p>
+                )}
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
+                <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
               </div>
             </div>
@@ -1303,10 +1432,18 @@ export default function CashierPOS() {
               </>
             )}
             {lastSale.paymentType === 'credit' && (
-              <div className="row" style={{ marginTop: '4px', color: '#c00' }}>
-                <span>Balance Due</span>
-                <span>{formatCurrency(lastSale.balance ?? lastSale.totalAmount, currencySymbol)}</span>
-              </div>
+              <>
+                {(lastSale.amountPaid || 0) > 0 && (
+                  <div className="row" style={{ marginTop: '4px' }}>
+                    <span>Paid Upfront (Cash)</span>
+                    <span>{formatCurrency(lastSale.amountPaid, currencySymbol)}</span>
+                  </div>
+                )}
+                <div className="row" style={{ marginTop: '4px', color: '#c00', fontWeight: 'bold' }}>
+                  <span>Balance Due (Credit)</span>
+                  <span>{formatCurrency(lastSale.balanceDue ?? lastSale.balance ?? (lastSale.totalAmount - (lastSale.amountPaid || 0)), currencySymbol)}</span>
+                </div>
+              </>
             )}
           </div>
 

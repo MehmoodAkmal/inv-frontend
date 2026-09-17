@@ -86,9 +86,19 @@ export function printThermalReceipt({
     }
   `
     : `
-    <div class="row" style="margin-top: 4px; color: #c00;">
-      <span>Balance Due</span>
-      <span>${formatCurrency(sale.balance ?? sale.totalAmount, currencySymbol)}</span>
+    ${
+      (sale.amountPaid || 0) > 0
+        ? `
+      <div class="row" style="margin-top: 4px;">
+        <span>Paid Upfront (Cash)</span>
+        <span>${formatCurrency(sale.amountPaid, currencySymbol)}</span>
+      </div>
+    `
+        : ''
+    }
+    <div class="row" style="margin-top: 4px; color: #c00; font-weight: bold;">
+      <span>Balance Due (Credit)</span>
+      <span>${formatCurrency(sale.balanceDue ?? sale.balance ?? (sale.totalAmount - (sale.amountPaid || 0)), currencySymbol)}</span>
     </div>
   `;
 

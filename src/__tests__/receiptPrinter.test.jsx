@@ -101,4 +101,37 @@ describe('printThermalReceipt utility', () => {
     expect(printedHtml).toContain('$1,000.00');
     expect(printedHtml).toContain('Balance Due');
   });
+
+  it('prints partial upfront cash and remaining balance due for credit sales', () => {
+    const mockSale = {
+      _id: 'sale456',
+      paymentType: 'credit',
+      customerName: 'Bilal Tariq',
+      totalAmount: 4000,
+      amountPaid: 2000, // half payment
+      balanceDue: 2000,
+      items: [
+        {
+          itemName: 'Super Basmati',
+          quantity: 10,
+          sellingPrice: 400,
+          lineTotal: 4000,
+        },
+      ],
+    };
+
+    printThermalReceipt({
+      businessName: 'Modern Mart',
+      sale: mockSale,
+      currencySymbol: 'Rs.',
+    });
+
+    const printedHtml = mockPrintWin.document.write.mock.calls[0][0];
+    expect(printedHtml).toContain('CREDIT SALE');
+    expect(printedHtml).toContain('Bilal Tariq');
+    expect(printedHtml).toContain('Rs. 4,000.00');
+    expect(printedHtml).toContain('Paid Upfront (Cash)');
+    expect(printedHtml).toContain('Rs. 2,000.00');
+    expect(printedHtml).toContain('Balance Due (Credit)');
+  });
 });

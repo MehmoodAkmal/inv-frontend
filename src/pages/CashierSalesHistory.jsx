@@ -469,9 +469,23 @@ export default function CashierSalesHistory() {
                   </div>
                 )}
                 <div className="flex justify-between font-black text-sm text-neutral-900 dark:text-white pt-1 border-t border-neutral-200 dark:border-neutral-700">
-                  <span>Total Paid</span>
+                  <span>Total Amount</span>
                   <span className="font-mono">{fmtCurr(selectedSale.totalAmount)}</span>
                 </div>
+                {selectedSale.paymentType === 'credit' && (
+                  <>
+                    {(selectedSale.amountPaid || 0) > 0 && (
+                      <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold text-xs">
+                        <span>Paid Upfront (Cash)</span>
+                        <span className="font-mono">{fmtCurr(selectedSale.amountPaid)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-amber-600 dark:text-amber-400 font-bold text-xs">
+                      <span>Balance Due (Credit)</span>
+                      <span className="font-mono">{fmtCurr(selectedSale.balanceDue ?? (selectedSale.totalAmount - (selectedSale.amountPaid || 0)))}</span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between text-neutral-500 text-[11px] pt-1">
                   <span>Payment Type</span>
                   <span className="font-bold uppercase text-brand-800 dark:text-brand-accent">
