@@ -173,6 +173,7 @@ export default function Employees() {
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterBranch, setFilterBranch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [includeInactive, setIncludeInactive] = useState(false);
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -277,6 +278,18 @@ export default function Employees() {
 
   const branchName = (id) => branches.find((b) => b._id === id)?.name ?? '—';
 
+  const filteredEmployees = useMemo(() => {
+    if (!searchQuery.trim()) return employees;
+    const q = searchQuery.toLowerCase().trim();
+    return employees.filter(
+      (emp) =>
+        emp.name?.toLowerCase().includes(q) ||
+        emp.designation?.toLowerCase().includes(q) ||
+        emp.phone?.toLowerCase().includes(q) ||
+        branchName(emp.branchId?._id ?? emp.branchId)?.toLowerCase().includes(q)
+    );
+  }, [employees, searchQuery, branches]);
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -295,6 +308,29 @@ export default function Employees() {
       </div>
 
       <div className="flex flex-wrap items-end gap-3 mb-4">
+        {/* Search Employee */}
+        <div className="w-64">
+          <label className="label text-xs">Search</label>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search by name, role, phone…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="input-field w-full text-sm py-2 pl-9"
+            />
+            <svg
+              className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+
         <div>
           <label className="label text-xs">Branch</label>
           <CustomSelect
@@ -310,7 +346,7 @@ export default function Employees() {
             ))}
           </CustomSelect>
         </div>
-        <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+        <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none pb-2">
           <input
             type="checkbox"
             checked={includeInactive}
@@ -326,17 +362,30 @@ export default function Employees() {
           <div className="flex justify-center py-16">
             <Spinner size="lg" className="text-primary-600" />
           </div>
-        ) : employees.length === 0 ? (
+        ) : filteredEmployees.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
             <div className="w-16 h-16 rounded-2xl bg-brand-50 dark:bg-brand-950/40 border border-brand-200/60 dark:border-brand-800/50 text-brand-700 dark:text-brand-accent flex items-center justify-center mb-4 shadow-sm">
               <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-200 mb-1">No employees added yet</h3>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-xs leading-relaxed">
-              Add your employees here to manage their records and process salary payments.
+            <h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-200 mb-1">
+              {searchQuery ? 'No matching employees' : 'No employees added yet'}
+            </h3>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-xs leading-relaxed mb-4">
+              {searchQuery
+                ? `No employees match "${searchQuery}". Try a different name or clear the search.`
+                : 'Salaried staff (helpers, drivers, assistants) will appear here once added.'}
             </p>
+            {!searchQuery && (
+              <button
+                type="button"
+                onClick={() => setCreateOpen(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-900 dark:bg-brand-800 text-brand-accent border border-brand-700 hover:bg-brand-950 text-xs font-bold transition-all shadow-sm active:scale-95"
+              >
+                + Add Employee
+              </button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -362,7 +411,7 @@ export default function Employees() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
-                {employees.map((emp) => (
+                {filteredEmployees.map((emp) => (
                   <tr key={emp._id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-4 text-sm font-medium text-gray-900">{emp.name}</td>
                     <td className="px-5 py-4 text-sm text-gray-500">{branchName(emp.branchId)}</td>

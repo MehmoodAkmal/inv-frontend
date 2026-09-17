@@ -216,13 +216,18 @@ function LedgerDrawer({ customerId, customers, onClose }) {
   const [data, setData] = useState(null);
   const [pagination, setPagination] = useState(null);
   const [page, setPage] = useState(1);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   const customerInfo = customers.find((c) => c._id === customerId);
 
   const fetchLedger = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getCustomerLedger(customerId, { page, limit: 20 });
+      const params = { page, limit: 20 };
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
+      const res = await getCustomerLedger(customerId, params);
       setData(res.data.data);
       setPagination(res.data.pagination);
     } catch {
@@ -230,7 +235,7 @@ function LedgerDrawer({ customerId, customers, onClose }) {
     } finally {
       setLoading(false);
     }
-  }, [customerId, page]);
+  }, [customerId, page, startDate, endDate]);
 
   useEffect(() => {
     fetchLedger();
@@ -269,6 +274,43 @@ function LedgerDrawer({ customerId, customers, onClose }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+        </div>
+
+        {/* Date Filter Bar */}
+        <div className="flex flex-wrap items-center gap-2 px-6 py-2.5 bg-neutral-50 dark:bg-neutral-800/60 border-b border-neutral-200 dark:border-neutral-700 text-xs">
+          <span className="text-neutral-500 font-medium">Dates:</span>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => {
+              setStartDate(e.target.value);
+              setPage(1);
+            }}
+            className="input-field text-xs py-1 px-2 w-32"
+          />
+          <span className="text-neutral-400">–</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => {
+              setEndDate(e.target.value);
+              setPage(1);
+            }}
+            className="input-field text-xs py-1 px-2 w-32"
+          />
+          {(startDate || endDate) && (
+            <button
+              type="button"
+              onClick={() => {
+                setStartDate('');
+                setEndDate('');
+                setPage(1);
+              }}
+              className="text-xs text-rose-500 hover:underline ml-auto font-medium"
+            >
+              Clear
+            </button>
+          )}
         </div>
 
         {/* Entries */}
@@ -371,6 +413,7 @@ export default function Payments() {
   const [outstanding, setOutstanding] = useState([]);
   const [outLoading, setOutLoading] = useState(true);
   const [filterBranch, setFilterBranch] = useState('');
+  const [searchCustomer, setSearchCustomer] = useState('');
 
   // Record payment modal
   const [payOpen, setPayOpen] = useState(false);
@@ -433,6 +476,16 @@ export default function Payments() {
   };
 
   const totalOutstanding = outstanding.reduce((s, c) => s + c.currentBalance, 0);
+
+  const filteredOutstanding = useMemo(() => {
+    if (!searchCustomer.trim()) return outstanding;
+    const q = searchCustomer.toLowerCase().trim();
+    return outstanding.filter(
+      (c) =>
+        c.name?.toLowerCase().includes(q) ||
+        c.phone?.toLowerCase().includes(q)
+    );
+  }, [outstanding, searchCustomer]);
 
   return (
     <div className="space-y-6">
@@ -504,36 +557,49 @@ export default function Payments() {
         </div>
       )}
 
-      {/* ── Branch filter ─────────────────────────────────────────────── */}
-      {isAdmin && (
-        <div className="flex items-end gap-3">
+      {/* ── Filters Bar ─────────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-end gap-3">
+        {/* Search by Customer Name / Phone */}
+        <div className="w-64">
+          <label className="label text-xs">Search Customer</label>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search by customer or phone…"
+              value={searchCustomer}
+              onChange={(e) => setSearchCustomer(e.target.value)}
+              className="input-field w-full text-sm py-2 pl-9"
+            />
+            <svg
+              className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+
+        {isAdmin && (
           <div>
-            <label className="label">Branch</label>
+            <label className="label text-xs">Branch</label>
             <CustomSelect
               value={filterBranch}
               onChange={(e) => setFilterBranch(e.target.value)}
               className="input-field w-auto text-sm py-2"
             >
               <option value="">All branches</option>
-              {customers
-                .filter(
-                  (c, i, arr) =>
-                    arr.findIndex(
-                      (x) => (x.branchId?._id ?? x.branchId) === (c.branchId?._id ?? c.branchId)
-                    ) === i
-                )
-                .map((c) => {
-                  const bid = c.branchId?._id ?? c.branchId;
-                  return (
-                    <option key={bid} value={bid}>
-                      {bid}
-                    </option>
-                  );
-                })}
+              {branches.map((b) => (
+                <option key={b._id} value={b._id}>
+                  {b.name}
+                </option>
+              ))}
             </CustomSelect>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* ── Outstanding table ─────────────────────────────────────────── */}
       <div className="card overflow-hidden">
@@ -547,7 +613,7 @@ export default function Payments() {
           <div className="flex justify-center py-10">
             <Spinner size="lg" className="text-primary-500" />
           </div>
-        ) : outstanding.length === 0 ? (
+        ) : filteredOutstanding.length === 0 ? (
           <div className="empty-state">
             <svg className="empty-state-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
@@ -557,8 +623,14 @@ export default function Payments() {
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <p className="empty-state-title">All settled</p>
-            <p className="empty-state-desc">No outstanding credit balances</p>
+            <p className="empty-state-title">
+              {searchCustomer ? 'No matching balances' : 'All settled'}
+            </p>
+            <p className="empty-state-desc">
+              {searchCustomer
+                ? `No customers match "${searchCustomer}".`
+                : 'No outstanding credit balances'}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -573,7 +645,7 @@ export default function Payments() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-brand-50">
-                {outstanding.map((c) => {
+                {filteredOutstanding.map((c) => {
                   const pct =
                     totalOutstanding > 0 ? (c.currentBalance / totalOutstanding) * 100 : 0;
                   return (
