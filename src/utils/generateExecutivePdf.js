@@ -78,13 +78,6 @@ export function generateExecutivePdf({
 
   currentY += 34;
 
-  // ── 1. Executive Financial Summary Cards (Table Grid) ──────────────────────
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(20, 30, 25);
-  doc.text('1. EXECUTIVE FINANCIAL SUMMARY', margin, currentY);
-  currentY += 4;
-
   const totalRev = financials.totalRevenue ?? financials.revenue ?? 0;
   const totalCogs = financials.totalCOGS ?? financials.cogs ?? 0;
   const grossProf = financials.grossProfit ?? (totalRev - totalCogs);
@@ -93,30 +86,87 @@ export function generateExecutivePdf({
   const salaries = financials.totalSalaries ?? financials.salaries ?? 0;
   const netProf = financials.netProfit ?? (grossProf - expenses - salaries);
   const netMargin = financials.netMarginPct ?? (totalRev > 0 ? ((netProf / totalRev) * 100).toFixed(1) : 0);
+  const breakEvenRev = financials.breakEvenRevenue ?? (grossMargin > 0 ? ((expenses + salaries) / (grossMargin / 100)) : null);
+
+  const saleCount = sales.saleCount ?? sales.totalTransactions ?? 0;
+  const totalUnits = sales.totalUnitsSold ?? 0;
+  const avgTicket = sales.averageTicketSize ?? sales.avgTicketSize ?? 0;
+  const cashSales = sales.totalCashSales ?? sales.cashSalesTotal ?? 0;
+  const creditSales = sales.totalCreditSales ?? sales.creditSalesTotal ?? 0;
+
+  const stockCost = inventory.valuationAtCost ?? inventory.stockValueAtCost ?? 0;
+  const stockRetail = inventory.valuationAtRetail ?? inventory.stockValueAtRetail ?? 0;
+  const unitsInStock = inventory.totalUnitsInStock ?? inventory.totalUnits ?? 0;
+  const lowStock = inventory.lowStockCount ?? inventory.lowStockItemsCount ?? 0;
+  const daysOfInventory = inventory.daysOfInventory;
+
+  const debtTotal = receivables.totalOutstandingCredit ?? receivables.totalOutstandingDebt ?? 0;
+  const debtIssued = receivables.periodCreditIssued ?? receivables.creditIssuedInPeriod ?? 0;
+  const debtCollected = receivables.periodDebtCollected ?? receivables.debtCollectedInPeriod ?? 0;
+  const debtRecoveryRate = receivables.debtRecoveryRate ?? ((debtTotal + debtCollected > 0) ? ((debtCollected / (debtTotal + debtCollected)) * 100).toFixed(1) : 0);
+
+  // ── Executive Intelligence Summary Box ─────────────────────────────────────
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(203, 213, 225);
+  doc.roundedRect(margin, currentY, pageWidth - margin * 2, 17, 2, 2, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(15, 60, 45);
+  doc.text('EXECUTIVE AUDIT INTELLIGENCE SUMMARY:', margin + 4, currentY + 5);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(51, 65, 85);
+  const pSummary = netProf >= 0
+    ? `Net Operating Profit: ${formatMoney(netProf)} (${netMargin}% margin) on revenue of ${formatMoney(totalRev)}. Gross margin stands at ${grossMargin}%.`
+    : `Net Deficit: ${formatMoney(Math.abs(netProf))} (${netMargin}% margin). Overheads exceed gross profit.`;
+  const tSummary = topItems && topItems[0]
+    ? `Leading Product: "${topItems[0].name}" (${formatMoney(topItems[0].revenueGenerated || topItems[0].totalRevenue || 0)}).`
+    : 'Leading Product: None recorded.';
+  const bSummary = breakEvenRev ? `Break-Even Sales Threshold: ${formatMoney(breakEvenRev)}.` : '';
+  const rSummary = `Receivables: ${formatMoney(debtTotal)} (${debtRecoveryRate}% recovered in period).`;
+
+  doc.text(`• ${pSummary}`, margin + 4, currentY + 9.5);
+  doc.text(`• ${tSummary} ${rSummary} ${bSummary}`, margin + 4, currentY + 14);
+
+  currentY += 23;
+
+  // ── 1. Executive Financial Summary Cards (Table Grid) ──────────────────────
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(20, 30, 25);
+  doc.text('1. EXECUTIVE FINANCIAL SUMMARY (COMMON-SIZE ANALYSIS)', margin, currentY);
+  currentY += 4;
+
+  const cogsPct = totalRev > 0 ? ((totalCogs / totalRev) * 100).toFixed(1) : 0;
+  const expPct = totalRev > 0 ? ((expenses / totalRev) * 100).toFixed(1) : 0;
+  const salPct = totalRev > 0 ? ((salaries / totalRev) * 100).toFixed(1) : 0;
+  const overheadPct = totalRev > 0 ? (((expenses + salaries) / totalRev) * 100).toFixed(1) : 0;
 
   autoTable(doc, {
     startY: currentY,
     margin: { left: margin, right: margin },
     theme: 'grid',
-    head: [['Key Metric', 'Amount (PKR)', 'Key Metric', 'Amount (PKR)']],
+    head: [['Key Financial Metric', 'Amount & % of Sales', 'Key Cost Metric', 'Amount & % of Sales']],
     body: [
       [
         'Total Gross Revenue',
-        formatMoney(totalRev),
+        `${formatMoney(totalRev)} (100.0%)`,
         'Cost of Goods Sold (COGS)',
-        formatMoney(totalCogs),
+        `${formatMoney(totalCogs)} (-${cogsPct}%)`,
       ],
       [
         'Gross Operating Profit',
         `${formatMoney(grossProf)} (${grossMargin}%)`,
         'Operating Expenses',
-        formatMoney(expenses),
+        `${formatMoney(expenses)} (-${expPct}%)`,
       ],
       [
         'Salaries & Payroll',
-        formatMoney(salaries),
+        `${formatMoney(salaries)} (-${salPct}%)`,
         'Total Operating Overhead',
-        formatMoney(expenses + salaries),
+        `${formatMoney(expenses + salaries)} (-${overheadPct}%)`,
       ],
       [
         'Net Operating Profit (P&L)',
@@ -128,7 +178,7 @@ export function generateExecutivePdf({
             fillColor: netProf >= 0 ? [240, 253, 244] : [254, 242, 242],
           },
         },
-        'Profit Status',
+        'Profitability Assessment',
         netProf >= 0 ? 'NET PROFITABLE' : 'NET OPERATING LOSS',
       ],
     ],
@@ -160,26 +210,11 @@ export function generateExecutivePdf({
   doc.text('2. OPERATIONAL, INVENTORY & CREDIT HEALTH', margin, currentY);
   currentY += 4;
 
-  const saleCount = sales.saleCount ?? sales.totalTransactions ?? 0;
-  const totalUnits = sales.totalUnitsSold ?? 0;
-  const avgTicket = sales.averageTicketSize ?? sales.avgTicketSize ?? 0;
-  const cashSales = sales.totalCashSales ?? sales.cashSalesTotal ?? 0;
-  const creditSales = sales.totalCreditSales ?? sales.creditSalesTotal ?? 0;
-
-  const stockCost = inventory.valuationAtCost ?? inventory.stockValueAtCost ?? 0;
-  const stockRetail = inventory.valuationAtRetail ?? inventory.stockValueAtRetail ?? 0;
-  const unitsInStock = inventory.totalUnitsInStock ?? inventory.totalUnits ?? 0;
-  const lowStock = inventory.lowStockCount ?? inventory.lowStockItemsCount ?? 0;
-
-  const debtTotal = receivables.totalOutstandingCredit ?? receivables.totalOutstandingDebt ?? 0;
-  const debtIssued = receivables.periodCreditIssued ?? receivables.creditIssuedInPeriod ?? 0;
-  const debtCollected = receivables.periodDebtCollected ?? receivables.debtCollectedInPeriod ?? 0;
-
   autoTable(doc, {
     startY: currentY,
     margin: { left: margin, right: margin },
     theme: 'grid',
-    head: [['Sales Volume & Cash Flow', 'Value', 'Inventory & Receivables', 'Value']],
+    head: [['Sales Volume & Cash Flow', 'Value', 'Inventory & Credit Health', 'Value']],
     body: [
       [
         'Total Sales Transactions',
@@ -197,19 +232,19 @@ export function generateExecutivePdf({
         'Average Ticket Size',
         formatMoney(avgTicket),
         'Total Units On-Hand',
-        `${unitsInStock} units (${lowStock} low-stock alerts)`,
+        `${unitsInStock} units (${lowStock} alerts)`,
       ],
       [
         'Cash Collections',
         formatMoney(cashSales),
         'Outstanding Customer Debt',
-        formatMoney(debtTotal),
+        `${formatMoney(debtTotal)} (${debtRecoveryRate}% recovered)`,
       ],
       [
         'Credit (Receivable) Sales',
         formatMoney(creditSales),
-        'Debt Recovered in Period',
-        formatMoney(debtCollected),
+        'Break-Even Threshold',
+        breakEvenRev ? formatMoney(breakEvenRev) : 'N/A',
       ],
     ],
     headStyles: {

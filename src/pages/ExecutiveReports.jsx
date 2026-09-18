@@ -182,6 +182,84 @@ export default function ExecutiveReports() {
     contributionPct: b.contributionPct ?? b.contributionPercent ?? 0,
   }));
 
+  // ── Executive Operational Ratios ───────────────────────────────────────────
+  const breakEvenRevenue = grossMarginPct > 0 ? Math.round(totalOperatingCost / (grossMarginPct / 100)) : null;
+  const debtTotalPool = totalOutstandingDebt + debtCollectedInPeriod;
+  const debtRecoveryRate = debtTotalPool > 0 ? Number(((debtCollectedInPeriod / debtTotalPool) * 100).toFixed(1)) : 0;
+
+  const startMs = meta.startDate ? new Date(meta.startDate).getTime() : 0;
+  const endMs = meta.endDate ? new Date(meta.endDate).getTime() : 0;
+  const daysInPeriod = (startMs && endMs && endMs > startMs)
+    ? Math.max(1, Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)))
+    : 30;
+  const dailyAvgCogs = totalCOGS / daysInPeriod;
+  const daysOfInventory = (dailyAvgCogs > 0 && stockValCost > 0)
+    ? Math.round(stockValCost / dailyAvgCogs)
+    : null;
+
+  // ── Step Navigation ────────────────────────────────────────────────────────
+  const handleStepPeriod = (direction) => {
+    if (interval === 'daily') {
+      const d = new Date(dailyDate);
+      d.setDate(d.getDate() + direction);
+      setDailyDate(d.toISOString().slice(0, 10));
+    } else if (interval === 'monthly') {
+      let nextM = monthVal + direction;
+      let nextY = yearVal;
+      if (nextM > 12) {
+        nextM = 1;
+        nextY += 1;
+      } else if (nextM < 1) {
+        nextM = 12;
+        nextY -= 1;
+      }
+      setMonthVal(nextM);
+      setYearVal(nextY);
+    } else if (interval === '6months') {
+      if (direction > 0) {
+        if (halfVal === 'H1') setHalfVal('H2');
+        else {
+          setHalfVal('H1');
+          setYearVal((y) => y + 1);
+        }
+      } else {
+        if (halfVal === 'H2') setHalfVal('H1');
+        else {
+          setHalfVal('H2');
+          setYearVal((y) => y - 1);
+        }
+      }
+    } else if (interval === 'annually') {
+      setYearVal((y) => y + direction);
+    }
+  };
+
+  // ── Quick Presets ──────────────────────────────────────────────────────────
+  const handlePreset = (preset) => {
+    const now = new Date();
+    if (preset === 'today') {
+      setInterval('daily');
+      setDailyDate(now.toISOString().slice(0, 10));
+    } else if (preset === 'thisMonth') {
+      setInterval('monthly');
+      setMonthVal(now.getMonth() + 1);
+      setYearVal(now.getFullYear());
+    } else if (preset === 'lastMonth') {
+      setInterval('monthly');
+      let m = now.getMonth();
+      let y = now.getFullYear();
+      if (m === 0) {
+        m = 12;
+        y -= 1;
+      }
+      setMonthVal(m);
+      setYearVal(y);
+    } else if (preset === 'thisYear') {
+      setInterval('annually');
+      setYearVal(now.getFullYear());
+    }
+  };
+
   // ── Export CSV Handler ─────────────────────────────────────────────────────
   const handleExportCsv = () => {
     if (!reportData) return;
@@ -266,6 +344,7 @@ export default function ExecutiveReports() {
             totalOperatingCost,
             netProfit,
             netMarginPct,
+            breakEvenRevenue,
           },
           sales: {
             saleCount,
@@ -282,12 +361,14 @@ export default function ExecutiveReports() {
             potentialRetailProfit: potentialProfit,
             totalUnitsInStock,
             lowStockCount,
+            daysOfInventory,
           },
           receivables: {
             totalOutstandingCredit: totalOutstandingDebt,
             periodCreditIssued: creditIssuedInPeriod,
             periodDebtCollected: debtCollectedInPeriod,
             debtorCount,
+            debtRecoveryRate,
           },
           topItems,
           branchBreakdown,
@@ -394,6 +475,28 @@ export default function ExecutiveReports() {
 
           {/* Right: Interval Segmented Switcher & Context Pickers */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            {/* Quick Presets */}
+            <div className="hidden sm:flex items-center gap-1 mr-1">
+              <span className="text-[11px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mr-1">
+                Presets:
+              </span>
+              {[
+                { id: 'today', label: 'Today' },
+                { id: 'thisMonth', label: 'This Month' },
+                { id: 'lastMonth', label: 'Last Month' },
+                { id: 'thisYear', label: 'This Year' },
+              ].map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handlePreset(p.id)}
+                  className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 transition-colors"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
             <div className="flex items-center p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl border border-neutral-200/80 dark:border-neutral-700/80">
               {[
                 { id: 'daily', label: 'Daily' },
@@ -417,53 +520,58 @@ export default function ExecutiveReports() {
               ))}
             </div>
 
-            {/* Contextual Date Controls */}
-            {interval === 'daily' && (
-              <input
-                type="date"
-                value={dailyDate}
-                onChange={(e) => setDailyDate(e.target.value)}
-                className="px-3 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-brand-accent"
-              />
-            )}
+            {/* Contextual Date Controls with Step Navigation */}
+            <div className="flex items-center gap-1.5">
+              {interval !== 'custom' && (
+                <div className="flex items-center gap-0.5 bg-neutral-100 dark:bg-neutral-800 p-0.5 rounded-xl border border-neutral-200/80 dark:border-neutral-700/80">
+                  <button
+                    type="button"
+                    onClick={() => handleStepPeriod(-1)}
+                    className="p-1 rounded-lg hover:bg-white dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 transition-colors"
+                    title="Previous period"
+                    aria-label="Previous period"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleStepPeriod(1)}
+                    className="p-1 rounded-lg hover:bg-white dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 transition-colors"
+                    title="Next period"
+                    aria-label="Next period"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
 
-            {interval === 'monthly' && (
-              <div className="flex items-center gap-1.5">
-                <select
-                  value={monthVal}
-                  onChange={(e) => setMonthVal(Number(e.target.value))}
-                  className="px-2.5 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100"
-                >
-                  {[
-                    'January', 'February', 'March', 'April', 'May', 'June',
-                    'July', 'August', 'September', 'October', 'November', 'December'
-                  ].map((m, idx) => (
-                    <option key={m} value={idx + 1}>{m}</option>
-                  ))}
-                </select>
+              {interval === 'daily' && (
                 <input
-                  type="number"
-                  min="2020"
-                  max="2035"
-                  value={yearVal}
-                  onChange={(e) => setYearVal(Number(e.target.value))}
-                  className="w-20 px-2.5 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100"
+                  type="date"
+                  value={dailyDate}
+                  onChange={(e) => setDailyDate(e.target.value)}
+                  className="px-3 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-brand-accent"
                 />
-              </div>
-            )}
+              )}
 
-            {interval === '6months' && (
-              <div className="flex items-center gap-1.5">
-                <select
-                  value={halfVal}
-                  onChange={(e) => setHalfVal(e.target.value)}
-                  className="px-2.5 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100"
-                >
-                  <option value="H1">H1 (Jan - Jun)</option>
-                  <option value="H2">H2 (Jul - Dec)</option>
-                  <option value="rolling">Last 6 Months (Rolling)</option>
-                </select>
-                {halfVal !== 'rolling' && (
+              {interval === 'monthly' && (
+                <div className="flex items-center gap-1.5">
+                  <select
+                    value={monthVal}
+                    onChange={(e) => setMonthVal(Number(e.target.value))}
+                    className="px-2.5 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100"
+                  >
+                    {[
+                      'January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December'
+                    ].map((m, idx) => (
+                      <option key={m} value={idx + 1}>{m}</option>
+                    ))}
+                  </select>
                   <input
                     type="number"
                     min="2020"
@@ -472,38 +580,62 @@ export default function ExecutiveReports() {
                     onChange={(e) => setYearVal(Number(e.target.value))}
                     className="w-20 px-2.5 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100"
                   />
-                )}
-              </div>
-            )}
+                </div>
+              )}
 
-            {interval === 'annually' && (
-              <input
-                type="number"
-                min="2020"
-                max="2035"
-                value={yearVal}
-                onChange={(e) => setYearVal(Number(e.target.value))}
-                className="w-24 px-3 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100"
-              />
-            )}
+              {interval === '6months' && (
+                <div className="flex items-center gap-1.5">
+                  <select
+                    value={halfVal}
+                    onChange={(e) => setHalfVal(e.target.value)}
+                    className="px-2.5 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100"
+                  >
+                    <option value="H1">H1 (Jan - Jun)</option>
+                    <option value="H2">H2 (Jul - Dec)</option>
+                    <option value="rolling">Last 6 Months (Rolling)</option>
+                  </select>
+                  {halfVal !== 'rolling' && (
+                    <input
+                      type="number"
+                      min="2020"
+                      max="2035"
+                      value={yearVal}
+                      onChange={(e) => setYearVal(Number(e.target.value))}
+                      className="w-20 px-2.5 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100"
+                    />
+                  )}
+                </div>
+              )}
 
-            {interval === 'custom' && (
-              <div className="flex items-center gap-1.5">
+              {interval === 'annually' && (
                 <input
-                  type="date"
-                  value={customStart}
-                  onChange={(e) => setCustomStart(e.target.value)}
-                  className="px-2.5 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100"
+                  type="number"
+                  min="2020"
+                  max="2035"
+                  value={yearVal}
+                  onChange={(e) => setYearVal(Number(e.target.value))}
+                  className="w-24 px-3 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100"
                 />
-                <span className="text-xs text-neutral-400">to</span>
-                <input
-                  type="date"
-                  value={customEnd}
-                  onChange={(e) => setCustomEnd(e.target.value)}
-                  className="px-2.5 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100"
-                />
-              </div>
-            )}
+              )}
+
+              {interval === 'custom' && (
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="date"
+                    value={customStart}
+                    onChange={(e) => setCustomStart(e.target.value)}
+                    className="px-2.5 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100"
+                  />
+                  <span className="text-xs text-neutral-400">to</span>
+                  <input
+                    type="date"
+                    value={customEnd}
+                    onChange={(e) => setCustomEnd(e.target.value)}
+                    className="px-2.5 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -549,15 +681,98 @@ export default function ExecutiveReports() {
               <p className="text-xs font-mono tracking-wider text-brand-accent uppercase font-bold">
                 Reporting Window
               </p>
-              <h2 className="text-lg sm:text-xl font-black tracking-tight">
+              <h2 className="text-lg sm:text-xl font-black tracking-tight !text-white">
                 {reportData.meta.periodLabel}
               </h2>
             </div>
-            <div className="text-left sm:text-right text-xs text-brand-200">
-              <p>Dates: {new Date(reportData.meta.startDate).toLocaleDateString()} — {new Date(reportData.meta.endDate).toLocaleDateString()}</p>
-              <p className="text-[11px] text-brand-300">Target: {isOverall ? 'Entire Organization' : reportData.meta.branch?.name}</p>
+            <div className="text-left sm:text-right text-xs">
+              <p className="!text-white font-medium">Dates: {new Date(reportData.meta.startDate).toLocaleDateString()} — {new Date(reportData.meta.endDate).toLocaleDateString()}</p>
+              <p className="text-[11px] text-emerald-200 font-semibold mt-0.5">Target: {isOverall ? 'Entire Organization' : reportData.meta.branch?.name}</p>
             </div>
           </div>
+
+          {/* ── Executive Intelligence Summary Card ─────────────────────────── */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 shadow-xs print:hidden space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+                <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-neutral-900 dark:text-white">
+                  Executive Intelligence Summary
+                </h3>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
+                  AI Computed
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                  netProfit >= 0
+                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                    : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300'
+                }`}>
+                  {netProfit >= 0 ? 'Net Profitable' : 'Net Operating Loss'}
+                </span>
+                {breakEvenRevenue && totalRevenue >= breakEvenRevenue && (
+                  <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300">
+                    Break-Even Achieved
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+              {/* Insight 1: Profitability */}
+              <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/60 dark:border-neutral-700/60">
+                <div className="flex items-center gap-2 text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                  <span className="text-base">{netProfit >= 0 ? '📈' : '📉'}</span>
+                  <span>Profitability & Margins</span>
+                </div>
+                <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1.5 leading-relaxed">
+                  {netProfit >= 0
+                    ? `Net profit of ${fmtCurr(netProfit)} (${netMarginPct}% margin) achieved on sales of ${fmtCurr(totalRevenue)}.`
+                    : `Net loss of ${fmtCurr(Math.abs(netProfit))} (${netMarginPct}% margin). Overhead exceeds gross profit.`}
+                </p>
+              </div>
+
+              {/* Insight 2: Top Revenue Driver */}
+              <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/60 dark:border-neutral-700/60">
+                <div className="flex items-center gap-2 text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                  <span className="text-base">🏆</span>
+                  <span>Leading Product</span>
+                </div>
+                <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1.5 leading-relaxed">
+                  {topItems && topItems[0]
+                    ? `"${topItems[0].name}" generated ${fmtCurr(topItems[0].revenueGenerated)} (${totalRevenue > 0 ? ((topItems[0].revenueGenerated / totalRevenue) * 100).toFixed(1) : 0}% of sales) across ${topItems[0].quantitySold} units.`
+                    : 'No product sales recorded in this interval.'}
+                </p>
+              </div>
+
+              {/* Insight 3: Credit & Cash Health */}
+              <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/60 dark:border-neutral-700/60">
+                <div className="flex items-center gap-2 text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                  <span className="text-base">💳</span>
+                  <span>Cash & Debt Exposure</span>
+                </div>
+                <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1.5 leading-relaxed">
+                  {`Cash generated ${cashSalesPct}% (${fmtCurr(totalCashSales)}) of sales. Customer receivables: ${fmtCurr(totalOutstandingDebt)} across ${debtorCount} accounts (${debtRecoveryRate}% recovered).`}
+                </p>
+              </div>
+
+              {/* Insight 4: Working Capital & Break-Even */}
+              <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/60 dark:border-neutral-700/60">
+                <div className="flex items-center gap-2 text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                  <span className="text-base">⚖️</span>
+                  <span>Break-Even & Runway</span>
+                </div>
+                <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1.5 leading-relaxed">
+                  {breakEvenRevenue
+                    ? `Break-even threshold: ${fmtCurr(breakEvenRevenue)} against overhead of ${fmtCurr(totalOperatingCost)}.`
+                    : `Operating overhead: ${fmtCurr(totalOperatingCost)}.`}
+                  {daysOfInventory ? ` Stock runway estimated at ~${daysOfInventory} days.` : ''}
+                </p>
+              </div>
+            </div>
+          </div>
+
 
           {/* ── 1. Key Financial KPI Cards (6 Grid) ─────────────────────────── */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
@@ -767,7 +982,7 @@ export default function ExecutiveReports() {
                       <Legend />
                       <Bar dataKey="revenue" name="Revenue" fill="#0284c7" radius={[4, 4, 0, 0]} />
                       <Bar dataKey="expenses" name="Expenses" fill="#f43f5e" radius={[4, 4, 0, 0]} />
-                      <Line type="monotone" dataKey="netProfit" name="Net Profit" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3 }} />
+                      <Line type="linear" dataKey="netProfit" name="Net Profit" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3.5 }} />
                     </ComposedChart>
                   </ResponsiveContainer>
                 ) : (
@@ -783,39 +998,47 @@ export default function ExecutiveReports() {
               <h3 className="text-sm font-bold text-neutral-900 dark:text-white mb-1">
                 Category Contribution
               </h3>
-              <p className="text-xs text-neutral-500 mb-4">Revenue breakdown by product category</p>
-              <div className="h-44 w-full">
+              <p className="text-xs text-neutral-500 mb-2">Revenue breakdown by product category</p>
+              <div className="relative h-44 w-full flex items-center justify-center">
                 {categoryBreakdown && categoryBreakdown.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryBreakdown}
-                        dataKey="revenue"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={42}
-                        outerRadius={65}
-                        paddingAngle={3}
-                      >
-                        {categoryBreakdown.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(val, name) => [fmtCurr(val), name || 'Revenue']}
-                        contentStyle={{
-                          backgroundColor: '#ffffff',
-                          borderRadius: '12px',
-                          border: '1px solid #e2e8f0',
-                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                          fontSize: '12px',
-                          fontWeight: '500',
-                          padding: '8px 12px',
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={categoryBreakdown}
+                          dataKey="revenue"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={44}
+                          outerRadius={65}
+                          paddingAngle={3}
+                        >
+                          {categoryBreakdown.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(val, name) => [fmtCurr(val), name || 'Revenue']}
+                          contentStyle={{
+                            backgroundColor: '#ffffff',
+                            borderRadius: '12px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                            fontSize: '12px',
+                            fontWeight: '500',
+                            padding: '8px 12px',
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                      <span className="text-[9px] uppercase font-bold text-neutral-400">Total</span>
+                      <span className="text-xs font-black text-neutral-900 dark:text-white leading-tight">
+                        {fmtCurr(totalRevenue)}
+                      </span>
+                    </div>
+                  </>
                 ) : (
                   <div className="h-full flex items-center justify-center text-xs text-neutral-400">
                     No category sales in this period.
@@ -845,7 +1068,7 @@ export default function ExecutiveReports() {
                     Multi-Branch Contribution Breakdown
                   </h3>
                   <p className="text-xs text-neutral-500 mt-0.5">
-                    Comparative breakdown across all active company branches
+                    Comparative breakdown across active company branches (click row to isolate audit)
                   </p>
                 </div>
                 <span className="text-xs font-mono font-semibold text-brand-700 dark:text-brand-accent">
@@ -868,10 +1091,20 @@ export default function ExecutiveReports() {
                   </thead>
                   <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                     {branchBreakdown.map((b) => (
-                      <tr key={b.branchId} className="hover:bg-neutral-50/80 dark:hover:bg-neutral-800/40 transition-colors">
-                        <td className="py-3 px-4 font-bold text-neutral-900 dark:text-white">
-                          <div>{b.name}</div>
-                          <span className="text-[10px] font-mono text-neutral-400">{b.code}</span>
+                      <tr
+                        key={b.branchId}
+                        onClick={() => setSelectedBranchId(b.branchId)}
+                        className="hover:bg-brand-50/50 dark:hover:bg-brand-950/20 cursor-pointer transition-colors group"
+                        title={`Click to isolate ${b.name} audit report`}
+                      >
+                        <td className="py-3 px-4 font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                          <div>
+                            <div className="group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors">{b.name}</div>
+                            <span className="text-[10px] font-mono text-neutral-400">{b.code}</span>
+                          </div>
+                          <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-brand-600 dark:text-brand-400">
+                            →
+                          </span>
                         </td>
                         <td className="py-3 px-4 text-right font-semibold text-neutral-900 dark:text-neutral-100">
                           {fmtCurr(b.revenue)}
@@ -906,42 +1139,68 @@ export default function ExecutiveReports() {
 
           {/* ── 5. P&L Statement & Top 5 Items Grid ─────────────────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* P&L Statement Table */}
+            {/* P&L Statement Table (Common-Size Analysis) */}
             <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-xs">
-              <div className="p-4 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/60">
-                <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
-                  Profit & Loss Statement
-                </h3>
-                <p className="text-xs text-neutral-500">Summary of income, cost of goods, and overheads</p>
+              <div className="p-4 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/60 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
+                    Profit & Loss Statement
+                  </h3>
+                  <p className="text-xs text-neutral-500">Vertical common-size statement of revenue, COGS, and overheads</p>
+                </div>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500">
+                  % of Sales
+                </span>
               </div>
               <div className="p-4 divide-y divide-neutral-100 dark:divide-neutral-800 text-xs">
                 <div className="py-2.5 flex justify-between items-center">
                   <span className="font-semibold text-neutral-800 dark:text-neutral-200">1. Gross Revenue (Total Sales)</span>
-                  <span className="font-bold text-neutral-900 dark:text-white">{fmtCurr(totalRevenue)}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[11px] text-neutral-400">100.0%</span>
+                    <span className="font-bold text-neutral-900 dark:text-white min-w-[90px] text-right">{fmtCurr(totalRevenue)}</span>
+                  </div>
                 </div>
                 <div className="py-2.5 pl-4 flex justify-between items-center text-neutral-500">
                   <span>• Cash Sales</span>
-                  <span>{fmtCurr(totalCashSales)}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[11px] text-neutral-400">{totalRevenue > 0 ? ((totalCashSales / totalRevenue) * 100).toFixed(1) : 0}%</span>
+                    <span className="min-w-[90px] text-right">{fmtCurr(totalCashSales)}</span>
+                  </div>
                 </div>
                 <div className="py-2.5 pl-4 flex justify-between items-center text-neutral-500">
                   <span>• Credit Sales (Receivables)</span>
-                  <span>{fmtCurr(totalCreditSales)}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[11px] text-neutral-400">{totalRevenue > 0 ? ((totalCreditSales / totalRevenue) * 100).toFixed(1) : 0}%</span>
+                    <span className="min-w-[90px] text-right">{fmtCurr(totalCreditSales)}</span>
+                  </div>
                 </div>
                 <div className="py-2.5 flex justify-between items-center text-amber-700 dark:text-amber-400">
                   <span className="font-semibold">2. Less: Cost of Goods Sold (COGS)</span>
-                  <span className="font-bold">({fmtCurr(totalCOGS)})</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[11px]">-{totalRevenue > 0 ? ((totalCOGS / totalRevenue) * 100).toFixed(1) : 0}%</span>
+                    <span className="font-bold min-w-[90px] text-right">({fmtCurr(totalCOGS)})</span>
+                  </div>
                 </div>
                 <div className="py-2.5 flex justify-between items-center font-bold text-blue-700 dark:text-blue-400 bg-blue-50/40 dark:bg-blue-950/20 px-2 rounded-lg">
-                  <span>Gross Profit</span>
-                  <span>{fmtCurr(grossProfit)}</span>
+                  <span>Gross Operating Profit</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[11px]">{grossMarginPct}%</span>
+                    <span className="min-w-[90px] text-right">{fmtCurr(grossProfit)}</span>
+                  </div>
                 </div>
                 <div className="py-2.5 flex justify-between items-center text-rose-700 dark:text-rose-400">
                   <span className="font-semibold">3. Less: Operating Expenses</span>
-                  <span className="font-bold">({fmtCurr(totalExpenses)})</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[11px]">-{totalRevenue > 0 ? ((totalExpenses / totalRevenue) * 100).toFixed(1) : 0}%</span>
+                    <span className="font-bold min-w-[90px] text-right">({fmtCurr(totalExpenses)})</span>
+                  </div>
                 </div>
                 <div className="py-2.5 flex justify-between items-center text-purple-700 dark:text-purple-400">
                   <span className="font-semibold">4. Less: Salaries & Payroll</span>
-                  <span className="font-bold">({fmtCurr(totalSalaries)})</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[11px]">-{totalRevenue > 0 ? ((totalSalaries / totalRevenue) * 100).toFixed(1) : 0}%</span>
+                    <span className="font-bold min-w-[90px] text-right">({fmtCurr(totalSalaries)})</span>
+                  </div>
                 </div>
                 <div className={`py-3 flex justify-between items-center text-sm font-black px-2.5 rounded-xl ${
                   netProfit >= 0
@@ -949,7 +1208,10 @@ export default function ExecutiveReports() {
                     : 'bg-rose-100/70 text-rose-900 dark:bg-rose-950/60 dark:text-rose-300'
                 }`}>
                   <span>Net Operating Profit</span>
-                  <span>{fmtCurr(netProfit)}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-xs font-bold">{netMarginPct}%</span>
+                    <span className="min-w-[90px] text-right">{fmtCurr(netProfit)}</span>
+                  </div>
                 </div>
               </div>
             </div>

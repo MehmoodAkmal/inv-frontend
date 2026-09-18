@@ -236,4 +236,62 @@ describe('ExecutiveReports Page', () => {
       expect(screen.getByText('Westside Branch')).toBeInTheDocument();
     });
   });
+
+  it('renders Executive Intelligence Summary and P&L % of Sales column', async () => {
+    render(
+      <MemoryRouter>
+        <ExecutiveReports />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Executive Intelligence Summary')).toBeInTheDocument();
+      expect(screen.getByText('Profitability & Margins')).toBeInTheDocument();
+      expect(screen.getByText('% of Sales')).toBeInTheDocument();
+      expect(screen.getByText('100.0%')).toBeInTheDocument();
+    });
+  });
+
+  it('drills down to branch audit when clicking a branch in the table', async () => {
+    render(
+      <MemoryRouter>
+        <ExecutiveReports />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Downtown Branch')).toBeInTheDocument();
+    });
+
+    const branchRow = screen.getByText('Downtown Branch').closest('tr');
+    fireEvent.click(branchRow);
+
+    await waitFor(() => {
+      expect(getComprehensiveReport).toHaveBeenLastCalledWith(
+        expect.objectContaining({ branchId: 'b1' })
+      );
+    });
+  });
+
+  it('supports quick preset navigation buttons', async () => {
+    render(
+      <MemoryRouter>
+        <ExecutiveReports />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Executive Intelligence Summary')).toBeInTheDocument();
+    });
+
+    const thisYearBtn = screen.getByRole('button', { name: 'This Year' });
+    fireEvent.click(thisYearBtn);
+
+    await waitFor(() => {
+      expect(getComprehensiveReport).toHaveBeenLastCalledWith(
+        expect.objectContaining({ interval: 'annually' })
+      );
+    });
+  });
 });
+
