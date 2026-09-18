@@ -45,6 +45,7 @@ const ProfitLoss = lazy(() => import('./pages/ProfitLoss'));
 const CashierPOS = lazy(() => import('./pages/CashierPOS'));
 const CashierSalesHistory = lazy(() => import('./pages/CashierSalesHistory'));
 const CashierStockLookup = lazy(() => import('./pages/CashierStockLookup'));
+const ExecutiveReports = lazy(() => import('./pages/ExecutiveReports'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -76,6 +77,7 @@ function AppContent() {
       import('./pages/Dashboard');
       import('./pages/BranchComparison');
       import('./pages/ProfitLoss');
+      import('./pages/ExecutiveReports');
       import('./pages/Sales');
       import('./pages/CustomerLedgers');
       import('./pages/Customers');
@@ -146,6 +148,8 @@ function AppContent() {
                 <Route path="/permissions" element={<Permissions />} />
                 <Route path="/employees" element={<AppUsersStaff />} />
                 <Route path="/branch-comparison" element={<BranchComparison />} />
+                <Route path="/admin/reports" element={<ExecutiveReports />} />
+                <Route path="/executive-reports" element={<ExecutiveReports />} />
               </Route>
 
               <Route element={<RoleRoute allowedRoles={['admin', 'manager']} />}>
