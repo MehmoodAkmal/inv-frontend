@@ -711,99 +711,85 @@ export default function Expenses() {
         </div>
 
         {/* ── Filter Bar ─────────────────────────────────────────────── */}
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card p-4 shadow-card">
-          <div className="flex flex-wrap items-end gap-3 justify-between">
-            <div className="flex flex-wrap items-end gap-3 flex-1">
-              {/* Date Range: From */}
-              <Input
-                label="From Date"
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card px-4 py-3 shadow-card">
+          <div className="flex flex-wrap items-center gap-2">
+
+            {/* Date Range inline */}
+            <div className="flex items-center gap-1 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg px-2 py-1.5">
+              <input
                 type="date"
-                size="sm"
                 value={filterStartDate}
                 onChange={(e) => setFilterStartDate(e.target.value)}
-                wrapperClassName="w-36"
+                title="From Date"
+                className="text-xs text-neutral-700 dark:text-neutral-200 bg-transparent border-none outline-none focus:ring-0 w-[118px] cursor-pointer"
               />
-
-              {/* Date Range: To */}
-              <Input
-                label="To Date"
+              <span className="text-neutral-300 dark:text-neutral-600 text-xs mx-0.5">→</span>
+              <input
                 type="date"
-                size="sm"
                 value={filterEndDate}
                 onChange={(e) => setFilterEndDate(e.target.value)}
-                wrapperClassName="w-36"
+                title="To Date"
+                className="text-xs text-neutral-700 dark:text-neutral-200 bg-transparent border-none outline-none focus:ring-0 w-[118px] cursor-pointer"
               />
-
-              {/* Branch Filter (Selectable for admin, locked for manager) */}
-              <div className="w-48">
-                <label className="block text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-1">
-                  Branch
-                </label>
-                {isAdmin ? (
-                  <CustomSelect
-                    value={filterBranch}
-                    onChange={(e) => setFilterBranch(e.target.value)}
-                    className="text-xs py-1.5 bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 rounded-md"
-                  >
-                    <option value="">All Branches</option>
-                    {branches
-                      .filter((b) => b.isActive)
-                      .map((b) => (
-                        <option key={b._id} value={b._id}>
-                          {b.name}
-                        </option>
-                      ))}
-                  </CustomSelect>
-                ) : (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs text-neutral-600 dark:text-neutral-300">
-                    <svg className="w-3.5 h-3.5 text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    <span className="truncate max-w-[140px] font-medium" title={userBranchName}>
-                      {userBranchName}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Category Filter Dropdown */}
-              <div className="w-44">
-                <label className="block text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-1">
-                  Category
-                </label>
-                <CustomSelect
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className="text-xs py-1.5 bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 rounded-md"
-                >
-                  <option value="">All Categories</option>
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {CATEGORY_META[c]?.label || c}
-                    </option>
-                  ))}
-                </CustomSelect>
-              </div>
-
-              {/* Reset Filters */}
-              {(filterStartDate || filterEndDate || filterBranch || filterCategory) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFilterStartDate('');
-                    setFilterEndDate('');
-                    setFilterBranch('');
-                    setFilterCategory('');
-                  }}
-                  className="px-3 py-1.5 rounded-md text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                >
-                  Reset
-                </button>
-              )}
             </div>
 
-            {/* Results Count */}
-            <div className="text-xs text-neutral-400 font-mono self-center">
+            {/* Divider */}
+            <span className="h-5 w-px bg-neutral-200 dark:bg-neutral-700 hidden sm:block" />
+
+            {/* Branch Filter */}
+            {isAdmin ? (
+              <CustomSelect
+                value={filterBranch}
+                onChange={(e) => setFilterBranch(e.target.value)}
+                size="sm"
+              >
+                <option value="">All Branches</option>
+                {branches
+                  .filter((b) => b.isActive)
+                  .map((b) => (
+                    <option key={b._id} value={b._id}>
+                      {b.name}
+                    </option>
+                  ))}
+              </CustomSelect>
+            ) : (
+              <span className="text-xs text-neutral-600 dark:text-neutral-300 font-medium truncate max-w-[130px]" title={userBranchName}>
+                {userBranchName}
+              </span>
+            )}
+
+            {/* Category Filter */}
+            <CustomSelect
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              size="sm"
+            >
+              <option value="">All Categories</option>
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {CATEGORY_META[c]?.label || c}
+                </option>
+              ))}
+            </CustomSelect>
+
+            {/* Reset Filters */}
+            {(filterStartDate || filterEndDate || filterBranch || filterCategory) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterStartDate('');
+                  setFilterEndDate('');
+                  setFilterBranch('');
+                  setFilterCategory('');
+                }}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors border border-rose-200 dark:border-rose-800/50"
+              >
+                Clear
+              </button>
+            )}
+
+            {/* Spacer + Results Count */}
+            <div className="ml-auto text-[11px] text-neutral-400 font-mono">
               {expenses.length} {expenses.length === 1 ? 'record' : 'records'}
             </div>
           </div>
