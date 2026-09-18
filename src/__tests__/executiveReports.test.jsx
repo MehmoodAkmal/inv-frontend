@@ -106,8 +106,11 @@ vi.mock('../services/reportService', () => ({
   ),
 }));
 
-// Mock exportToCsv
+import * as pdfModule from '../utils/generateExecutivePdf';
+
+// Mock exportToCsv and generateExecutivePdf
 vi.spyOn(exportCsvModule, 'exportToCsv').mockImplementation(() => {});
+vi.spyOn(pdfModule, 'generateExecutivePdf').mockImplementation(() => 'Executive_Report.pdf');
 
 // Mock Recharts ResponsiveContainer to render children reliably in JSDOM
 vi.mock('recharts', async () => {
@@ -200,6 +203,23 @@ describe('ExecutiveReports Page', () => {
     fireEvent.click(exportBtn);
 
     expect(exportCsvModule.exportToCsv).toHaveBeenCalled();
+  });
+
+  it('downloads PDF when Download PDF button is clicked', async () => {
+    render(
+      <MemoryRouter>
+        <ExecutiveReports />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Consolidated Multi-Branch Audit')).toBeInTheDocument();
+    });
+
+    const downloadBtn = screen.getByRole('button', { name: /Download PDF/i });
+    fireEvent.click(downloadBtn);
+
+    expect(pdfModule.generateExecutivePdf).toHaveBeenCalled();
   });
 
   it('renders top performing products and branch breakdown table', async () => {

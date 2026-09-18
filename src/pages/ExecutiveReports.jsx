@@ -19,6 +19,7 @@ import { useCurrency } from '../utils/currency';
 import { exportToCsv } from '../utils/exportCsv';
 import { getComprehensiveReport } from '../services/reportService';
 import { getBranches } from '../services/branchService';
+import { generateExecutivePdf } from '../utils/generateExecutivePdf';
 import Spinner from '../components/ui/Spinner';
 
 // ── Chart Colors & Palettes ──────────────────────────────────────────────────
@@ -248,9 +249,58 @@ export default function ExecutiveReports() {
     toast.success('Report exported to CSV');
   };
 
-  // ── Print / Save PDF Handler ───────────────────────────────────────────────
-  const handlePrint = () => {
-    window.print();
+  // ── Download PDF Handler (Direct File Download) ────────────────────────────
+  const handleDownloadPdf = () => {
+    if (!reportData) return;
+    try {
+      generateExecutivePdf({
+        reportData: {
+          meta,
+          financials: {
+            totalRevenue,
+            totalCOGS,
+            grossProfit,
+            grossMarginPct,
+            totalExpenses,
+            totalSalaries,
+            totalOperatingCost,
+            netProfit,
+            netMarginPct,
+          },
+          sales: {
+            saleCount,
+            totalUnitsSold,
+            averageTicketSize: avgTicketSize,
+            totalCashSales,
+            totalCreditSales,
+            totalDiscount,
+            cashSalesPct,
+          },
+          inventory: {
+            valuationAtCost: stockValCost,
+            valuationAtRetail: stockValRetail,
+            potentialRetailProfit: potentialProfit,
+            totalUnitsInStock,
+            lowStockCount,
+          },
+          receivables: {
+            totalOutstandingCredit: totalOutstandingDebt,
+            periodCreditIssued: creditIssuedInPeriod,
+            periodDebtCollected: debtCollectedInPeriod,
+            debtorCount,
+          },
+          topItems,
+          branchBreakdown,
+          isOverall,
+        },
+        businessName,
+        fmtCurr,
+      });
+      toast.success('PDF report downloaded successfully');
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      toast.error('Failed to download PDF. Please try again.');
+    }
   };
 
   return (
@@ -301,14 +351,15 @@ export default function ExecutiveReports() {
 
             <button
               type="button"
-              onClick={handlePrint}
+              onClick={handleDownloadPdf}
               disabled={!reportData || loading}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-brand-800 hover:bg-brand-700 dark:bg-brand-700 dark:hover:bg-brand-600 text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
+              title="Download executive audit report as PDF"
             >
               <svg className="w-4 h-4 text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
-              <span>Print / PDF</span>
+              <span>Download PDF</span>
             </button>
           </div>
         </div>
