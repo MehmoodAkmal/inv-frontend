@@ -694,10 +694,24 @@ export default function ExecutiveReports() {
                       <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} />
                       <Tooltip
-                        formatter={(val, name) => [
-                          fmtCurr(val),
-                          name === 'revenue' ? 'Revenue' : name === 'expenses' ? 'Expenses' : 'Net Profit'
-                        ]}
+                        formatter={(val, name, item) => {
+                          const key = String(item?.dataKey || name || '').toLowerCase();
+                          const label =
+                            key.includes('rev') ? 'Revenue' :
+                            key.includes('exp') ? 'Expenses' :
+                            'Net Profit';
+                          return [fmtCurr(val), label];
+                        }}
+                        contentStyle={{
+                          backgroundColor: '#ffffff',
+                          borderRadius: '12px',
+                          border: '1px solid #e2e8f0',
+                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          padding: '10px 14px',
+                        }}
+                        labelStyle={{ fontWeight: 'bold', color: '#0f172a', marginBottom: '6px' }}
                       />
                       <Legend />
                       <Bar dataKey="revenue" name="Revenue" fill="#0284c7" radius={[4, 4, 0, 0]} />
@@ -737,7 +751,18 @@ export default function ExecutiveReports() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(val) => [fmtCurr(val), 'Revenue']} />
+                      <Tooltip
+                        formatter={(val, name) => [fmtCurr(val), name || 'Revenue']}
+                        contentStyle={{
+                          backgroundColor: '#ffffff',
+                          borderRadius: '12px',
+                          border: '1px solid #e2e8f0',
+                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          padding: '8px 12px',
+                        }}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
