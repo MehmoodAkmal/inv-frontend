@@ -63,13 +63,57 @@ export default function MinimalLayout({ children }) {
   const branchName =
     typeof user?.branchId === 'object' && user?.branchId?.name
       ? user.branchId.name
-      : user?.branchName || 'Assigned Branch';
+      : user?.branchName || (user?.role === 'admin' ? 'All Branches (Admin)' : 'Assigned Branch');
 
   const userInitials =
     (user?.firstName ? user.firstName[0] : 'C') +
     (user?.lastName ? user.lastName[0] : 'S');
 
-  const isPosRegister = location.pathname === '/pos';
+  const isPosRegister = location.pathname === '/pos' || location.pathname === '/cashier-pos';
+
+  const roleLabel =
+    user?.role === 'admin'
+      ? 'Admin POS Register'
+      : user?.role === 'manager'
+      ? 'Manager POS Register'
+      : 'Cashier Station';
+
+  const shiftLabel =
+    user?.role === 'admin'
+      ? 'Admin Mode'
+      : user?.role === 'manager'
+      ? 'Store Manager'
+      : 'Active Shift';
+
+  const navItems = [
+    {
+      name: 'New Sale',
+      path: '/pos',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+    },
+    {
+      name: 'Sales History',
+      path: user?.role === 'cashier' ? '/pos/sales' : '/sales',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    },
+    {
+      name: 'Stock Lookup',
+      path: user?.role === 'cashier' ? '/pos/stock' : '/stock',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+      ),
+    },
+  ];
 
   return (
     <MinimalLayoutContext.Provider value={true}>
@@ -94,7 +138,7 @@ export default function MinimalLayout({ children }) {
                     Retail<span className="text-brand-700 dark:text-brand-accent">POS</span>
                   </span>
                   <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-50 text-brand-800 border border-brand-200 dark:bg-brand-900/50 dark:text-brand-accent dark:border-brand-700/60 uppercase tracking-wide">
-                    Cashier Station
+                    {roleLabel}
                   </span>
                 </div>
                 {/* Branch Location Badge */}
@@ -109,12 +153,17 @@ export default function MinimalLayout({ children }) {
             </div>
 
             {/* Center: EXACT 3 Navigation Items (Desktop & Tablet) */}
-            <nav className="hidden md:flex items-center gap-1.5 p-1 bg-neutral-100 dark:bg-neutral-800/80 rounded-xl border border-neutral-200/80 dark:border-neutral-700/60" aria-label="Cashier Navigation">
-              {CASHIER_NAV_ITEMS.map((item) => {
-                const isActive = location.pathname === item.path || (item.path === '/pos/sales' && location.pathname.startsWith('/pos/history'));
+            <nav className="hidden md:flex items-center gap-1.5 p-1 bg-neutral-100 dark:bg-neutral-800/80 rounded-xl border border-neutral-200/80 dark:border-neutral-700/60" aria-label="Terminal Navigation">
+              {navItems.map((item) => {
+                const isActive =
+                  location.pathname === item.path ||
+                  (item.path === '/pos' && location.pathname === '/cashier-pos') ||
+                  (item.name === 'Sales History' && (location.pathname.startsWith('/pos/sales') || location.pathname.startsWith('/pos/history') || location.pathname.startsWith('/sales'))) ||
+                  (item.name === 'Stock Lookup' && (location.pathname.startsWith('/pos/stock') || location.pathname.startsWith('/pos/lookup') || location.pathname.startsWith('/stock')));
+
                 return (
                   <NavLink
-                    key={item.path}
+                    key={item.name}
                     to={item.path}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 ${
                       isActive
@@ -131,22 +180,37 @@ export default function MinimalLayout({ children }) {
               })}
             </nav>
 
-            {/* Right: Cashier User Chip, ThemeToggle, NotificationBell, Logout */}
+            {/* Right: Dashboard link for Admin/Manager, Controls, Profile, Logout */}
             <div className="flex items-center gap-2.5 shrink-0">
+              {/* Back to Dashboard Button for Admin & Manager */}
+              {user && (user.role === 'admin' || user.role === 'manager') && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/dashboard')}
+                  title="Back to Management Dashboard"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-brand-800 dark:text-brand-accent bg-brand-50 dark:bg-brand-900/40 border border-brand-200 dark:border-brand-700/60 rounded-xl hover:bg-brand-100 dark:hover:bg-brand-900/60 transition-colors shadow-xs"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  <span className="hidden sm:inline">Dashboard</span>
+                </button>
+              )}
+
               <ThemeToggle />
               <NotificationBell />
 
-              {/* Cashier profile info */}
+              {/* User profile info */}
               <div className="hidden sm:flex items-center gap-2.5 pl-2.5 border-l border-neutral-200 dark:border-neutral-800">
                 <div className="w-8 h-8 rounded-full bg-cyan-100 text-cyan-800 dark:bg-cyan-900/60 dark:text-cyan-300 flex items-center justify-center font-bold text-xs shadow-xs">
                   {userInitials}
                 </div>
                 <div className="text-left leading-tight hidden lg:block">
                   <div className="text-xs font-bold text-neutral-900 dark:text-neutral-100 truncate max-w-[120px]">
-                    {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : 'Cashier'}
+                    {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : 'User'}
                   </div>
                   <div className="text-[10px] uppercase font-semibold tracking-wider text-neutral-400">
-                    Active Shift
+                    {shiftLabel}
                   </div>
                 </div>
               </div>
@@ -155,8 +219,8 @@ export default function MinimalLayout({ children }) {
               <button
                 type="button"
                 onClick={handleLogout}
-                title="End Shift & Sign Out"
-                aria-label="End Shift & Sign Out"
+                title="Sign Out"
+                aria-label="Sign Out"
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-900/50 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors shadow-xs"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -169,11 +233,16 @@ export default function MinimalLayout({ children }) {
 
           {/* Mobile sub-bar: 3 Nav buttons (visible only on small screens < md) */}
           <div className="flex md:hidden border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/90 dark:bg-neutral-900/90 px-2 py-1.5 justify-around">
-            {CASHIER_NAV_ITEMS.map((item) => {
-              const isActive = location.pathname === item.path || (item.path === '/pos/sales' && location.pathname.startsWith('/pos/history'));
+            {navItems.map((item) => {
+              const isActive =
+                location.pathname === item.path ||
+                (item.path === '/pos' && location.pathname === '/cashier-pos') ||
+                (item.name === 'Sales History' && (location.pathname.startsWith('/pos/sales') || location.pathname.startsWith('/pos/history') || location.pathname.startsWith('/sales'))) ||
+                (item.name === 'Stock Lookup' && (location.pathname.startsWith('/pos/stock') || location.pathname.startsWith('/pos/lookup') || location.pathname.startsWith('/stock')));
+
               return (
                 <NavLink
-                  key={item.path}
+                  key={item.name}
                   to={item.path}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-semibold transition-all ${
                     isActive

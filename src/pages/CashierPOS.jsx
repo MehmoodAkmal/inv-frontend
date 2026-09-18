@@ -6,6 +6,7 @@ import { getCategories } from '../services/categoryService';
 import { formatCategoryName } from '../utils/formatters';
 import { getCustomers, createCustomer } from '../services/customerService';
 import { createSale } from '../services/saleService';
+import { getBranches } from '../services/branchService';
 import MinimalLayout from '../components/layout/MinimalLayout';
 import Modal from '../components/ui/Modal';
 import Spinner from '../components/ui/Spinner';
@@ -26,6 +27,7 @@ export default function CashierPOS() {
   const { currencySymbol, fmtCurr } = useCurrency();
   const { user } = useAuth();
   const businessName = user?.organizationName || user?.businessName || 'Inventory Manager';
+  const isAdmin = user?.role === 'admin';
 
   // ── Data States ────────────────────────────────────────────────────────────
   const [items, setItems] = useState([]);
@@ -33,6 +35,30 @@ export default function CashierPOS() {
   const [categories, setCategories] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // ── Branch States (For Admin multi-branch control) ─────────────────────────
+  const [branches, setBranches] = useState([]);
+  const [selectedBranchId, setSelectedBranchId] = useState(
+    (typeof user?.branchId === 'object' ? user?.branchId?._id : user?.branchId) || ''
+  );
+  const [stockLoading, setStockLoading] = useState(false);
+
+  // Computed effective branch ID & human label
+  const effectiveBranchId = useMemo(() => {
+    if (isAdmin) return selectedBranchId;
+    return (typeof user?.branchId === 'object' ? user?.branchId?._id : user?.branchId) || '';
+  }, [isAdmin, selectedBranchId, user?.branchId]);
+
+  const activeBranchName = useMemo(() => {
+    if (isAdmin) {
+      const found = branches.find((b) => b._id === selectedBranchId);
+      return found?.name || 'Selected Branch';
+    }
+    if (typeof user?.branchId === 'object' && user?.branchId?.name) {
+      return user.branchId.name;
+    }
+    return user?.branchName || 'Assigned Branch';
+  }, [isAdmin, branches, selectedBranchId, user?.branchId, user?.branchName]);
 
   // ── Filter States ──────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,9 +97,28 @@ export default function CashierPOS() {
   const loadInitialData = useCallback(async () => {
     setLoading(true);
     try {
+      let activeBranch = selectedBranchId;
+      if (isAdmin) {
+        const bRes = await getBranches({ isActive: true }).catch(() => ({ data: { success: true, data: [] } }));
+        const branchList = bRes.data?.data || [];
+        setBranches(branchList);
+        if (!activeBranch) {
+          const defaultBranch =
+            (typeof user?.branchId === 'object' ? user?.branchId?._id : user?.branchId) ||
+            branchList[0]?._id ||
+            '';
+          if (defaultBranch) {
+            activeBranch = defaultBranch;
+            setSelectedBranchId(defaultBranch);
+          }
+        }
+      }
+
+      const stockParams = isAdmin && activeBranch ? { branchId: activeBranch } : {};
+
       const [itemsRes, stockRes, catRes, custRes] = await Promise.all([
         getItems({ includeInactive: false }),
-        getStock().catch(() => ({ data: { success: true, data: [] } })),
+        getStock(stockParams).catch(() => ({ data: { success: true, data: [] } })),
         getCategories({ includeInactive: false }).catch(() => ({ data: { success: true, data: [] } })),
         getCustomers({ includeInactive: false }).catch(() => ({ data: { success: true, data: [] } })),
       ]);
@@ -106,11 +151,41 @@ export default function CashierPOS() {
       // Auto focus search input for quick barcode scanning
       setTimeout(() => searchInputRef.current?.focus(), 150);
     }
-  }, []);
+  }, [isAdmin, user?.branchId]);
 
   useEffect(() => {
     loadInitialData();
   }, [loadInitialData]);
+
+  // ── Switch Branch Handler (Admin only) ─────────────────────────────────────
+  const handleBranchChange = async (newBranchId) => {
+    if (!newBranchId || newBranchId === selectedBranchId) return;
+    if (cart.length > 0) {
+      toast('Active cart cleared due to branch change', { icon: 'ℹ️' });
+      setCart([]);
+    }
+    setSelectedBranchId(newBranchId);
+    setStockLoading(true);
+    try {
+      const res = await getStock({ branchId: newBranchId });
+      const sDocs = res.data?.data || [];
+      const sMap = {};
+      sDocs.forEach((s) => {
+        const iId = typeof s.itemId === 'object' ? s.itemId?._id : s.itemId;
+        if (iId) {
+          sMap[iId] = s.quantity ?? 0;
+        }
+      });
+      setStockMap(sMap);
+      toast.success('Inventory updated for selected branch');
+    } catch (err) {
+      console.error('Failed to load stock for branch:', err);
+      toast.error('Failed to load stock for selected branch');
+    } finally {
+      setStockLoading(false);
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  };
 
   // ── Cart Calculations ──────────────────────────────────────────────────────
   const subtotal = useMemo(() => {
@@ -304,14 +379,11 @@ export default function CashierPOS() {
     }
     setCreatingCustomer(true);
     try {
-      const cashierBranchId =
-        (typeof user?.branchId === 'object' ? user.branchId?._id : user?.branchId) || undefined;
-
       const res = await createCustomer({
         name: newCustomerForm.name.trim(),
         phone: newCustomerForm.phone.trim() || undefined,
         address: newCustomerForm.address.trim() || undefined,
-        branchId: cashierBranchId,
+        branchId: effectiveBranchId || undefined,
       });
       if (res.data?.success) {
         const created = res.data.data;
@@ -333,6 +405,9 @@ export default function CashierPOS() {
   // ── Validation Rules ───────────────────────────────────────────────────────
   const validationError = useMemo(() => {
     if (cart.length === 0) return 'Add at least one item to cart';
+    if (isAdmin && !effectiveBranchId) {
+      return 'Please select an active branch before completing sale';
+    }
     if (paymentType === 'credit') {
       if (!selectedCustomerId) {
         return 'Please select a customer for credit sales';
@@ -351,7 +426,7 @@ export default function CashierPOS() {
       }
     }
     return null;
-  }, [cart, paymentType, selectedCustomerId, partialCreditPaid, numericPartialPaid, totalAmount, stockMap]);
+  }, [cart, isAdmin, effectiveBranchId, paymentType, selectedCustomerId, partialCreditPaid, numericPartialPaid, totalAmount, stockMap]);
 
   // ── Complete Sale Execution (POST /sales) ──────────────────────────────────
   const handleCompleteSale = async () => {
@@ -371,6 +446,7 @@ export default function CashierPOS() {
           : round2(Math.min(numericPartialPaid, totalAmount));
 
       const payload = {
+        branchId: effectiveBranchId || undefined,
         paymentType,
         customerId: paymentType === 'credit' ? selectedCustomerId : undefined,
         items: cart.map((line) => ({
@@ -403,6 +479,7 @@ export default function CashierPOS() {
         setLastSale({
           ...saleDoc,
           lineItems: [...cart],
+          branchName: activeBranchName,
           tenderedCash: cashGiven,
           changeDue: paymentType === 'cash' ? changeDue : 0,
           customerName: selectedCustomer?.name,
@@ -447,6 +524,51 @@ export default function CashierPOS() {
       <div className="flex-1 flex flex-col lg:flex-row h-full min-h-0 overflow-hidden">
         {/* ── LEFT / MAIN: Product Search, Category Tabs, Touch Item Grid ───── */}
         <div className="flex-1 flex flex-col min-w-0 h-full min-h-0 bg-neutral-100/60 dark:bg-neutral-950 p-3 sm:p-4 overflow-hidden">
+          {/* Admin Selling Branch Control Bar */}
+          {isAdmin && (
+            <div className="mb-3 p-2.5 sm:p-3 bg-white dark:bg-neutral-900 border border-brand-200 dark:border-brand-800/70 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0 shadow-xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-brand-800 text-brand-accent flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5">
+                    <span>Active Register Branch</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-brand-100 text-brand-800 dark:bg-brand-900/60 dark:text-brand-accent rounded font-mono font-semibold uppercase">
+                      Admin Mode
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                    Live inventory & sales will be registered under this branch
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <label htmlFor="pos-admin-branch-select" className="sr-only">Select Branch</label>
+                <select
+                  id="pos-admin-branch-select"
+                  value={selectedBranchId}
+                  onChange={(e) => handleBranchChange(e.target.value)}
+                  disabled={loading || stockLoading}
+                  className="w-full sm:w-60 px-3 py-1.5 text-xs font-semibold bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-brand-accent shadow-xs"
+                >
+                  {branches.length === 0 && <option value="">Loading branches...</option>}
+                  {branches.map((b) => (
+                    <option key={b._id} value={b._id}>
+                      {b.name} {b.code ? `(${b.code})` : ''}
+                    </option>
+                  ))}
+                </select>
+                {stockLoading && (
+                  <div className="w-4 h-4 border-2 border-brand-700 border-t-transparent rounded-full animate-spin shrink-0" />
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Top Search & Barcode Scan Bar */}
           <div className="mb-3 shrink-0">
             <div className="relative">
@@ -1359,6 +1481,11 @@ export default function CashierPOS() {
           {/* Header */}
           <div className="receipt-header">
             <h1>{businessName}</h1>
+            {lastSale.branchName && (
+              <p style={{ fontSize: '11px', fontWeight: 'bold', margin: '2px 0' }}>
+                Branch: {lastSale.branchName}
+              </p>
+            )}
             <p>{new Date(lastSale.createdAt || Date.now()).toLocaleString()}</p>
           </div>
           <hr className="divider" />

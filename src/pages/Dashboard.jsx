@@ -449,7 +449,7 @@ export default function Dashboard() {
         {!isCashier && (
           <div className="flex flex-wrap gap-2">
             <Link
-              to="/sales"
+              to="/pos"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-800 hover:bg-brand-700 dark:bg-brand-700 dark:hover:bg-brand-600 text-white text-xs font-semibold shadow-sm transition-all duration-150 hover:shadow-md active:scale-95"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

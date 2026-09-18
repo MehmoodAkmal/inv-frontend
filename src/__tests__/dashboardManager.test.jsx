@@ -17,7 +17,7 @@ let mockUser = {
 };
 
 let mockPermissions = {
-  sales: { view: true },
+  sales: { view: true, create: true },
   stock: { view: true },
   expenses: { view: true },
   salary: { view: true },
@@ -205,7 +205,8 @@ describe('Manager Role Dashboard & Navigation', () => {
 
       // Manager-allowed items should be visible
       expect(screen.getByText('Dashboard')).toBeInTheDocument();
-      expect(screen.getByText('Sales')).toBeInTheDocument();
+      expect(screen.getByText('POS Register')).toBeInTheDocument();
+      expect(screen.getByText('Sales History')).toBeInTheDocument();
       expect(screen.getByText('My Stock')).toBeInTheDocument();
       expect(screen.getByText('Expenses')).toBeInTheDocument();
       expect(screen.getByText('Pay Salaries')).toBeInTheDocument();

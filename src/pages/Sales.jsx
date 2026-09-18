@@ -1,5 +1,6 @@
 import CustomSelect from '../components/ui/CustomSelect';
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useCurrency } from '../utils/currency';
@@ -656,15 +657,30 @@ export default function Sales() {
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sales</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Record and review cash and credit sales</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sales</h1>
+          <p className="text-sm text-gray-500 dark:text-neutral-400 mt-0.5">Record and review cash and credit sales</p>
         </div>
-        <button className="btn-primary" onClick={() => setNewOpen(true)}>
-          <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          New sale
-        </button>
+        <div className="flex items-center gap-2.5">
+          <Link
+            to="/pos"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-800 hover:bg-brand-700 dark:bg-brand-700 dark:hover:bg-brand-600 text-white text-sm font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
+          >
+            <svg className="w-4 h-4 text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            Open POS Register
+          </Link>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-sm font-semibold shadow-xs transition-colors"
+            onClick={() => setNewOpen(true)}
+          >
+            <svg className="w-4 h-4 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Manual Form
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
