@@ -1,16 +1,20 @@
 import { Children, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 /**
- * CustomSelect — a polished, accessible dropdown component.
+ * CustomSelect — a polished, accessible dropdown that behaves exactly like a
+ * native <select> or <input> inside a form.
+ *
+ * Design principles:
+ *  - Always fills its parent container width (block-level, just like <input>).
+ *  - Height matches the <input> height at each size so forms stay pixel-perfect.
+ *  - No outer wrapper box — the trigger IS the element, same visual weight as Input.
  *
  * Props:
- *  - value, onChange, name, id, disabled  — same as native <select>
- *  - size       : 'sm' | 'md' (default 'md') — controls height & font size
- *  - fullWidth  : boolean (default false)     — stretch to fill container
- *  - className  : extra classes on the wrapper div
- *  - aria-label : accessible label
- *
- * Children should be <option> elements, same as a native <select>.
+ *  value, onChange, name, id, disabled  — same API as native <select>
+ *  size       : 'sm' | 'md' (default 'md')
+ *  className  : extra classes on the root wrapper
+ *  aria-label : accessible label
+ *  placeholder: text shown when no option is selected (default 'Select…')
  */
 export default function CustomSelect({
   children,
@@ -20,8 +24,8 @@ export default function CustomSelect({
   id,
   disabled = false,
   size = 'md',
-  fullWidth = false,
   className = '',
+  placeholder = 'Select…',
   'aria-label': ariaLabel,
 }) {
   const [open, setOpen] = useState(false);
@@ -29,7 +33,7 @@ export default function CustomSelect({
   const generatedId = useId();
   const controlId = id ?? generatedId;
 
-  // Parse option children
+  // Parse <option> children into data objects
   const options = useMemo(
     () =>
       Children.toArray(children)
@@ -44,16 +48,18 @@ export default function CustomSelect({
 
   const selected = options.find((o) => o.value === String(value));
 
-  // ── Size variants ─────────────────────────────────────────────────────────
+  // ── Size variants — must match Input component heights exactly ─────────────
+  // 'sm'  → h-[30px]  (compact filter bars)
+  // 'md'  → h-10      (standard form fields — same as <Input size="md">)
   const sizeStyles = {
     sm: {
-      trigger: 'h-[30px] px-2.5 text-xs gap-2',
-      icon:    'w-3 h-3',
+      trigger: 'h-[30px] px-2.5 text-xs',
+      chevron: 'w-3 h-3',
       option:  'px-3 py-1.5 text-xs',
     },
     md: {
-      trigger: 'h-10 px-3 text-sm gap-2.5',
-      icon:    'w-4 h-4',
+      trigger: 'h-10 px-3 text-sm',
+      chevron: 'w-4 h-4',
       option:  'px-3.5 py-2 text-sm',
     },
   };
@@ -75,18 +81,18 @@ export default function CustomSelect({
 
   const choose = (nextValue) => {
     onChange?.({
-      target: { name, value: nextValue },
+      target:        { name, value: nextValue },
       currentTarget: { name, value: nextValue },
     });
     setOpen(false);
   };
 
   return (
-    <div
-      ref={rootRef}
-      className={`relative inline-block align-top ${fullWidth ? 'w-full' : ''} ${className}`}
-    >
-      {/* ── Trigger Button ─────────────────────────────────────────────── */}
+    // Root: block-level so it fills its parent, exactly like <input> does.
+    // No border/background here — the trigger below IS the visual element.
+    <div ref={rootRef} className={`relative w-full ${className}`}>
+
+      {/* ── Trigger — visually identical to <Input> ──────────────────────── */}
       <button
         id={controlId}
         type="button"
@@ -96,32 +102,40 @@ export default function CustomSelect({
         aria-expanded={open}
         onClick={() => setOpen((s) => !s)}
         className={[
-          // Layout
-          'flex items-center justify-between',
-          fullWidth ? 'w-full' : 'min-w-[120px]',
+          // Fill full width of wrapper, flex row
+          'w-full flex items-center justify-between',
           sz.trigger,
-          // Appearance
+          // Shape — match Input's rounded-lg
           'rounded-lg border',
+          // Colors — identical to Input idle state
           'bg-white dark:bg-neutral-900',
-          'border-neutral-200 dark:border-neutral-700',
-          'text-neutral-800 dark:text-neutral-100',
-          // Focus ring
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1',
+          'border-neutral-300 dark:border-neutral-600',
+          'text-neutral-900 dark:text-neutral-100',
+          // Focus ring — identical to Input focus
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-1',
           // Hover
-          'hover:border-neutral-300 dark:hover:border-neutral-600',
+          'hover:border-neutral-400 dark:hover:border-neutral-500',
           // Disabled
-          'disabled:opacity-50 disabled:cursor-not-allowed',
-          // Open state — highlight border
-          open ? 'border-brand-400 dark:border-brand-500 ring-2 ring-brand-200 dark:ring-brand-900' : '',
+          'disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-neutral-50 dark:disabled:bg-neutral-800',
+          // Open state — highlight border like focused input
+          open
+            ? 'border-primary-400 dark:border-primary-500 ring-2 ring-primary-100 dark:ring-primary-900/40'
+            : '',
           'transition-all duration-150',
         ].join(' ')}
       >
-        <span className={`truncate font-medium ${!selected ? 'text-neutral-400 dark:text-neutral-500' : ''}`}>
-          {selected?.label ?? 'Select…'}
+        {/* Selected label or placeholder */}
+        <span
+          className={`truncate font-medium leading-none ${
+            !selected ? 'text-neutral-400 dark:text-neutral-500' : ''
+          }`}
+        >
+          {selected?.label ?? placeholder}
         </span>
-        {/* Chevron */}
+
+        {/* Chevron icon */}
         <svg
-          className={`shrink-0 ${sz.icon} text-neutral-400 dark:text-neutral-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`shrink-0 ${sz.chevron} ml-2 text-neutral-400 dark:text-neutral-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -131,19 +145,18 @@ export default function CustomSelect({
         </svg>
       </button>
 
-      {/* ── Dropdown Panel ─────────────────────────────────────────────── */}
+      {/* ── Dropdown Panel ─────────────────────────────────────────────────── */}
       {open && !disabled && (
         <div
           role="listbox"
           aria-labelledby={controlId}
           className={[
-            'absolute z-50 mt-1 overflow-y-auto',
-            'w-full min-w-[140px] max-h-56',
-            'rounded-xl border border-neutral-200 dark:border-neutral-700',
+            'absolute z-50 left-0 right-0 mt-1',   // full width of trigger
+            'max-h-56 overflow-y-auto',
+            'rounded-lg border border-neutral-200 dark:border-neutral-700',
             'bg-white dark:bg-neutral-900',
-            'shadow-lg shadow-black/10 dark:shadow-black/40',
+            'shadow-card-md',
             'py-1',
-            'animate-in fade-in-0 zoom-in-95 duration-100',
           ].join(' ')}
         >
           {options.map((option) => {
@@ -162,14 +175,14 @@ export default function CustomSelect({
                   'text-left font-medium transition-colors duration-100',
                   'disabled:cursor-not-allowed disabled:opacity-40',
                   isSelected
-                    ? 'bg-brand-50 dark:bg-brand-950/50 text-brand-700 dark:text-brand-300'
+                    ? 'bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-300'
                     : 'text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800',
                 ].join(' ')}
               >
                 <span className="truncate">{option.label}</span>
                 {isSelected && (
                   <svg
-                    className="ml-2 h-3.5 w-3.5 shrink-0 text-brand-600 dark:text-brand-400"
+                    className="ml-2 h-3.5 w-3.5 shrink-0 text-primary-600 dark:text-primary-400"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
