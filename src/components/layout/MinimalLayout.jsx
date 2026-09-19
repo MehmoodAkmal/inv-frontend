@@ -200,8 +200,27 @@ export default function MinimalLayout({ children }) {
               <ThemeToggle />
               <NotificationBell />
 
-              {/* User profile info */}
-              <div className="hidden sm:flex items-center gap-2.5 pl-2.5 border-l border-neutral-200 dark:border-neutral-800">
+              {/* Settings shortcut button */}
+              <button
+                type="button"
+                onClick={() => navigate('/account-settings')}
+                title="Account Settings"
+                aria-label="Account Settings"
+                className="flex items-center gap-1.5 p-1.5 text-neutral-600 dark:text-neutral-300 hover:text-brand-800 dark:hover:text-brand-accent hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+
+              {/* User profile info (clickable to Account Settings) */}
+              <button
+                type="button"
+                onClick={() => navigate('/account-settings')}
+                title="View Account Settings"
+                className="hidden sm:flex items-center gap-2.5 pl-2.5 border-l border-neutral-200 dark:border-neutral-800 text-left hover:opacity-85 transition-opacity"
+              >
                 <div className="w-8 h-8 rounded-full bg-cyan-100 text-cyan-800 dark:bg-cyan-900/60 dark:text-cyan-300 flex items-center justify-center font-bold text-xs shadow-xs">
                   {userInitials}
                 </div>
@@ -213,7 +232,7 @@ export default function MinimalLayout({ children }) {
                     {shiftLabel}
                   </div>
                 </div>
-              </div>
+              </button>
 
               {/* Logout button */}
               <button

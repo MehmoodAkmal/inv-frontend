@@ -279,6 +279,17 @@ export const DEFAULT_NAV_GROUPS = [
           </svg>
         ),
       },
+      {
+        to: '/account-settings',
+        label: 'Account Settings',
+        roles: ['admin', 'manager', 'cashier'],
+        icon: (
+          <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        ),
+      },
     ],
   },
 ];
@@ -376,7 +387,7 @@ export default function Sidebar({
           const visibleItems = group.items.filter((item) => {
             // SuperAdmin: strictly allow only superadmin routes, no business items
             if (user?.role === 'superAdmin') {
-              if (!item.to.startsWith('/superadmin')) return false;
+              if (!item.to.startsWith('/superadmin') && item.to !== '/account-settings') return false;
             }
 
             // Manager role: hide Compare Branches, Branches, and My Team entirely
@@ -471,9 +482,25 @@ export default function Sidebar({
       <div className="shrink-0 border-t border-brand-800 p-2.5 bg-brand-950/30">
         {collapsed ? (
           <div className="flex flex-col items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-brand-800 border border-brand-700 flex items-center justify-center text-xs font-mono font-bold text-brand-accent">
+            <button
+              onClick={() => navigate('/account-settings')}
+              className="w-8 h-8 rounded-full bg-brand-800 border border-brand-700 flex items-center justify-center text-xs font-mono font-bold text-brand-accent hover:border-brand-accent transition-colors"
+              title="Account Settings"
+              aria-label="Account Settings"
+            >
               {user?.firstName?.[0]?.toUpperCase() || 'U'}
-            </div>
+            </button>
+            <button
+              onClick={() => navigate('/account-settings')}
+              className="p-1.5 rounded text-neutral-400 hover:text-brand-accent hover:bg-brand-800 transition-colors"
+              aria-label="Account Settings"
+              title="Account Settings"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
             <button
               onClick={handleLogout}
               className="p-1.5 rounded text-neutral-400 hover:text-danger-400 hover:bg-brand-800 transition-colors"
@@ -486,18 +513,37 @@ export default function Sidebar({
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-3 px-2 py-2 rounded-md bg-brand-800/60 border border-brand-700/50">
-            <div className="w-8 h-8 rounded-full bg-brand-800 border border-brand-700 flex items-center justify-center text-xs font-mono font-bold text-brand-accent shrink-0">
+          <div className="flex items-center gap-2.5 px-2 py-2 rounded-md bg-brand-800/60 border border-brand-700/50">
+            <button
+              onClick={() => navigate('/account-settings')}
+              className="w-8 h-8 rounded-full bg-brand-800 border border-brand-700 flex items-center justify-center text-xs font-mono font-bold text-brand-accent shrink-0 hover:border-brand-accent transition-colors"
+              title="Account Settings"
+            >
               {user?.firstName?.[0]?.toUpperCase() || 'U'}
-            </div>
-            <div className="overflow-hidden min-w-0 flex-1">
-              <p className="text-xs font-semibold text-neutral-100 truncate">
+            </button>
+            <div
+              className="overflow-hidden min-w-0 flex-1 cursor-pointer"
+              onClick={() => navigate('/account-settings')}
+              title="View Account Settings"
+            >
+              <p className="text-xs font-semibold text-neutral-100 truncate hover:text-brand-accent transition-colors">
                 {user?.firstName} {user?.lastName}
               </p>
               <p className="text-[11px] text-brand-300/80 truncate font-mono">
                 {ROLE_LABELS[user?.role] ?? user?.role}
               </p>
             </div>
+            <button
+              onClick={() => navigate('/account-settings')}
+              className="p-1.5 rounded text-neutral-400 hover:text-brand-accent hover:bg-brand-700 transition-colors shrink-0"
+              aria-label="Account Settings"
+              title="Account Settings"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
             <button
               onClick={handleLogout}
               className="p-1.5 rounded text-neutral-400 hover:text-danger-400 hover:bg-brand-700 transition-colors shrink-0"

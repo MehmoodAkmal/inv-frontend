@@ -46,6 +46,7 @@ const CashierPOS = lazy(() => import('./pages/CashierPOS'));
 const CashierSalesHistory = lazy(() => import('./pages/CashierSalesHistory'));
 const CashierStockLookup = lazy(() => import('./pages/CashierStockLookup'));
 const ExecutiveReports = lazy(() => import('./pages/ExecutiveReports'));
+const AccountSettings = lazy(() => import('./pages/AccountSettings'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -93,6 +94,7 @@ function AppContent() {
       import('./pages/AppUsers');
       import('./pages/MyTeam');
       import('./pages/Permissions');
+      import('./pages/AccountSettings');
     };
 
     if ('requestIdleCallback' in window) {
@@ -220,6 +222,11 @@ function AppContent() {
                 <Route path="/customer-ledgers" element={<CustomerLedgers />} />
                 <Route path="/customers/:id/ledger" element={<CustomerStatement />} />
                 <Route path="/payments" element={<Payments />} />
+              </Route>
+
+              <Route element={<RoleRoute allowedRoles={['admin', 'manager', 'cashier', 'superAdmin']} />}>
+                <Route path="/account-settings" element={<AccountSettings />} />
+                <Route path="/settings" element={<AccountSettings />} />
               </Route>
             </Route>
           </Route>

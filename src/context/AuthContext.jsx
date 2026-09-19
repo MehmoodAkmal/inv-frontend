@@ -69,6 +69,17 @@ export function AuthProvider({ children }) {
     setPermissions(null);
   }, []);
 
+  const updateUser = useCallback((nextUserOrUpdater) => {
+    setUser((prev) => {
+      const updated =
+        typeof nextUserOrUpdater === 'function'
+          ? nextUserOrUpdater(prev)
+          : { ...prev, ...nextUserOrUpdater };
+      localStorage.setItem('user', JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -79,6 +90,7 @@ export function AuthProvider({ children }) {
         login,
         signup,
         logout,
+        updateUser,
         isAuthenticated: !!token,
       }}
     >
