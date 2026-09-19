@@ -346,9 +346,15 @@ export default function AppUsersStaff() {
       });
 
       if (res.data?.success) {
-        toast.success(`App user account created for ${staffForm.firstName}`);
+        // Show guided toast — salary must be set on the Employees tab
+        toast.success(
+          `Account created for ${staffForm.firstName}. An employee record was added — go to the Employees tab to set their salary.`,
+          { duration: 6000 }
+        );
         setAddStaffOpen(false);
         fetchStaffData();
+        // Refresh employee list so the auto-created record is visible immediately
+        fetchEmployeeData();
       }
     } catch (err) {
       console.error('createStaff error:', err);
