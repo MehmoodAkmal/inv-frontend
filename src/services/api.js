@@ -1,7 +1,18 @@
 import axios from 'axios';
 
+// Dynamically normalize API base URL (supports full backend URL or relative path)
+const getBaseURL = () => {
+  const url = import.meta.env.VITE_API_URL?.trim();
+  if (!url) return '/api/v1';
+  const cleanUrl = url.replace(/\/+$/, '');
+  if (cleanUrl.endsWith('/api/v1')) {
+    return cleanUrl;
+  }
+  return `${cleanUrl}/api/v1`;
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
+  baseURL: getBaseURL(),
   headers: { 'Content-Type': 'application/json' },
 });
 
