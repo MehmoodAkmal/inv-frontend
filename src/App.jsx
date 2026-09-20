@@ -47,6 +47,7 @@ const CashierSalesHistory = lazy(() => import('./pages/CashierSalesHistory'));
 const CashierStockLookup = lazy(() => import('./pages/CashierStockLookup'));
 const ExecutiveReports = lazy(() => import('./pages/ExecutiveReports'));
 const AccountSettings = lazy(() => import('./pages/AccountSettings'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -95,6 +96,7 @@ function AppContent() {
       import('./pages/MyTeam');
       import('./pages/Permissions');
       import('./pages/AccountSettings');
+      import('./pages/LandingPage');
     };
 
     if ('requestIdleCallback' in window) {
@@ -231,7 +233,8 @@ function AppContent() {
             </Route>
           </Route>
 
-          <Route path="/" element={<HomeRedirect />} />
+          <Route path="/landing" element={<LandingPage />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="*" element={<HomeRedirect />} />
         </Routes>
       </div>
